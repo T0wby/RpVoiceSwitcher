@@ -71,6 +71,9 @@ public sealed class AppSettings
     /// <summary>Status-Anzeige nur zeigen, wenn eine Effekt-Stimme aktiv ist.</summary>
     public bool StatusOverlayHideNormal { get; set; }
 
+    /// <summary>Laufende Sounds mit Fortschritt in der Status-Anzeige zeigen.</summary>
+    public bool StatusOverlayShowSounds { get; set; } = true;
+
     /// <summary>
     /// Notfall-Taste: gilt in jedem Charakter, schaltet sofort auf "Normal" und stoppt alle Sounds.
     /// null = keine. Standard: Pause-Taste (stört in Spielen praktisch nie).

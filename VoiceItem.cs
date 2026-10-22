@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows;
@@ -99,18 +100,49 @@ public sealed class SoundItem : ViewModel
     public bool Repeats => Repeat != 1;
 
     private bool _isPlaying;
-    /// <summary>Nur für wiederholte Sounds relevant: dann stoppt erneutes Drücken.</summary>
+    /// <summary>Läuft gerade – dann stoppt erneutes Drücken (Klick oder Shortcut).</summary>
     public bool IsPlaying
     {
         get => _isPlaying;
-        set { Set(ref _isPlaying, value); Raise(nameof(PlayText)); Raise(nameof(PlayTooltip)); }
+        set
+        {
+            Set(ref _isPlaying, value);
+            Raise(nameof(PlayText)); Raise(nameof(PlayTooltip)); Raise(nameof(ProgressVisibility));
+            if (!value) { Progress = 0; TimeText = ""; }
+        }
     }
 
-    public string PlayText => IsPlaying && Repeats ? "■  Stoppen" : Repeat == 0 ? "▶  Loop starten" : "▶  Abspielen";
+    public string PlayText => IsPlaying ? "■  Stoppen" : Repeat == 0 ? "▶  Loop starten" : "▶  Abspielen";
 
-    public string PlayTooltip => Repeats
-        ? "Läuft der Sound, stoppt ihn ein zweiter Klick bzw. derselbe Shortcut."
-        : "Abspielen";
+    public string PlayTooltip => IsPlaying
+        ? "Stoppt den Sound (derselbe Shortcut geht auch)."
+        : "Abspielen – nochmal drücken (oder derselbe Shortcut) stoppt ihn wieder.";
+
+    // Fortschritt während des Abspielens
+    private double _progress;
+    public double Progress { get => _progress; set => Set(ref _progress, value); }
+
+    private string _timeText = "";
+    public string TimeText { get => _timeText; set => Set(ref _timeText, value); }
+
+    public Visibility ProgressVisibility => IsPlaying ? Visibility.Visible : Visibility.Collapsed;
+
+    /// <summary>Text wie „0:03 / 0:12“, bei Wiederholung mit Durchgang („2/3 · 0:03 / 0:12“, „Loop 4 · …“).</summary>
+    public static string FormatProgress(SoundEngine.Progress p)
+    {
+        static string T(TimeSpan t) => $"{(int)t.TotalMinutes}:{t.Seconds:00}";
+        // Am Ende nicht auf 0:00 zurückspringen, wenn die Länge minimal überschritten ist
+        var total = p.Repeat > 0 ? p.FileDuration * p.Repeat : TimeSpan.MaxValue;
+        var inPass = p.Elapsed >= total ? p.FileDuration : p.InPass;
+        // Gesamtlänge gerundet (1,9 s → 0:02), Position abgerundet – wie in üblichen Playern
+        string times = $"{T(inPass)} / {T(TimeSpan.FromSeconds(Math.Round(p.FileDuration.TotalSeconds)))}";
+        return p.Repeat switch
+        {
+            1 => times,
+            0 => $"Loop {p.Pass} · {times}",
+            _ => $"{Math.Min(p.Pass, p.Repeat)}/{p.Repeat} · {times}",
+        };
+    }
 }
 
 public sealed class ProfileChip : ViewModel

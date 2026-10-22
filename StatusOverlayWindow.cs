@@ -75,6 +75,7 @@ public sealed class StatusOverlayWindow : Window
 
         var stack = new StackPanel();
         stack.Children.Add(row);
+        stack.Children.Add(_soundRows);
         stack.Children.Add(_hint);
 
         _border = new Border
@@ -113,9 +114,58 @@ public sealed class StatusOverlayWindow : Window
         _dot.Fill = isNormal ? IdleBrush : AccentBrush;
     }
 
+    // ---------- Laufende Sounds ----------
+
+    /// <summary>Ein laufender Sound: Name, Fortschritt 0 … 1, Zeittext.</summary>
+    public sealed record SoundLine(string Name, double Fraction, string Time);
+
+    private readonly StackPanel _soundRows = new() { Margin = new Thickness(0, 0, 0, 0) };
+    private sealed record SoundRow(TextBlock Name, ProgressBar Bar, TextBlock Time);
+    private readonly System.Collections.Generic.List<SoundRow> _rows = new();
+
+    /// <summary>Zeigt unter der Stimme die laufenden Sounds mit Fortschrittsbalken (leer = keine Zeile).</summary>
+    public void SetSounds(System.Collections.Generic.IReadOnlyList<SoundLine> sounds)
+    {
+        // Zeilen wiederverwenden statt neu bauen – sonst flackert es bei jeder Aktualisierung
+        while (_rows.Count < sounds.Count)
+        {
+            var name = new TextBlock { Foreground = Brushes.White, FontSize = 12, Width = 130, TextTrimming = TextTrimming.CharacterEllipsis, VerticalAlignment = VerticalAlignment.Center };
+            var bar = new ProgressBar
+            {
+                Width = 110, Height = 4, Minimum = 0, Maximum = 1, Margin = new Thickness(8, 0, 8, 0), VerticalAlignment = VerticalAlignment.Center,
+                Background = new SolidColorBrush(Color.FromArgb(0x60, 0x80, 0x80, 0x88)), Foreground = AccentBrush, BorderThickness = new Thickness(0),
+            };
+            var time = new TextBlock { Foreground = IdleBrush, FontSize = 11, VerticalAlignment = VerticalAlignment.Center };
+            var icon = new TextBlock { Text = "♪", Foreground = AccentBrush, FontSize = 12, Margin = new Thickness(1, 0, 7, 0), VerticalAlignment = VerticalAlignment.Center };
+            var line = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 4, 0, 0) };
+            line.Children.Add(icon);
+            line.Children.Add(name);
+            line.Children.Add(bar);
+            line.Children.Add(time);
+            _soundRows.Children.Add(line);
+            _rows.Add(new SoundRow(name, bar, time));
+        }
+        while (_rows.Count > sounds.Count)
+        {
+            _soundRows.Children.RemoveAt(_soundRows.Children.Count - 1);
+            _rows.RemoveAt(_rows.Count - 1);
+        }
+        for (int i = 0; i < sounds.Count; i++)
+        {
+            _rows[i].Name.Text = sounds[i].Name;
+            _rows[i].Bar.Value = sounds[i].Fraction;
+            _rows[i].Time.Text = sounds[i].Time;
+        }
+    }
+
+    private double _scale = -1, _opacity = -1;
+
     /// <summary>Größe (1 = 100 %) und Deckkraft (0,3 … 1) der Anzeige.</summary>
     public void SetLook(double scale, double opacity)
     {
+        if (scale == _scale && opacity == _opacity) return; // unverändert – nichts neu berechnen
+        _scale = scale;
+        _opacity = opacity;
         scale = Math.Clamp(scale, 0.6, 2.5);
         _border.LayoutTransform = Math.Abs(scale - 1) < 0.01 ? Transform.Identity : new ScaleTransform(scale, scale);
         Opacity = Math.Clamp(opacity, 0.2, 1);

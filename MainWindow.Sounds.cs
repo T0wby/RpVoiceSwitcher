@@ -96,16 +96,17 @@ public partial class MainWindow
     }
 
     /// <summary>
-    /// Abspielen – oder, bei wiederholten Sounds (Loop / n-mal), stoppen, wenn er gerade läuft.
+    /// Abspielen – oder stoppen, wenn der Sound gerade läuft (einmal, n-mal oder Loop).
     /// Gilt für Klick und Shortcut gleichermaßen: dieselbe Taste nochmal = aus.
     /// </summary>
     private void PlaySound(SoundItem item)
     {
         string path = item.File.FullPath;
-        if (item.Repeats && _soundEngine.IsPlaying(path))
+        if (_soundEngine.IsPlaying(path))
         {
             _soundEngine.Stop(path);
             item.IsPlaying = false;
+            UpdateSoundPlayingState();
             return;
         }
         if (!File.Exists(path)) { LoadSounds(); return; }
@@ -117,15 +118,34 @@ public partial class MainWindow
         if (SoundError.Visibility == Visibility.Visible && _soundEngine.Error == null) ShowSoundError(null);
         item.IsPlaying = true;
         _soundStateTimer.Start();
+        UpdateSoundPlayingState();
     }
 
-    /// <summary>Hält "Abspielen/Stoppen" an den Karten aktuell, solange etwas läuft.</summary>
-    private readonly DispatcherTimer _soundStateTimer = new() { Interval = TimeSpan.FromMilliseconds(250) };
+    /// <summary>Hält Abspielen/Stoppen, Fortschrittsbalken und Zeit aktuell – an den Karten und in der Status-Anzeige.</summary>
+    private readonly DispatcherTimer _soundStateTimer = new() { Interval = TimeSpan.FromMilliseconds(200) };
+    private List<StatusOverlayWindow.SoundLine> _overlaySounds = new();
 
     private void UpdateSoundPlayingState()
     {
-        foreach (var s in _sounds) s.IsPlaying = _soundEngine.IsPlaying(s.File.FullPath);
-        if (!_soundEngine.AnyPlaying) _soundStateTimer.Stop();
+        var progress = _soundEngine.GetProgress();
+        var byPath = progress.ToDictionary(p => p.Path, StringComparer.OrdinalIgnoreCase);
+        var lines = new List<StatusOverlayWindow.SoundLine>();
+        foreach (var s in _sounds)
+        {
+            if (byPath.TryGetValue(s.File.FullPath, out var p))
+            {
+                s.IsPlaying = true;
+                s.Progress = p.Fraction;
+                s.TimeText = SoundItem.FormatProgress(p);
+                lines.Add(new StatusOverlayWindow.SoundLine(s.Name, p.Fraction, s.TimeText));
+            }
+            else s.IsPlaying = false;
+        }
+
+        bool overlayChanged = lines.Count != _overlaySounds.Count || lines.Count > 0;
+        _overlaySounds = lines;
+        if (overlayChanged) UpdateStatusOverlay();
+        if (progress.Count == 0) _soundStateTimer.Stop();
     }
 
     private void SoundRepeat_Changed(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
@@ -133,7 +153,6 @@ public partial class MainWindow
         if ((sender as FrameworkElement)?.DataContext is not SoundItem item || e.AddedItems.Count == 0) return;
         if (e.AddedItems[0] is not SoundItem.RepeatChoice choice) return;
         if (choice.Value == _settings.SoundRepeat.GetValueOrDefault(item.FileName, 1)) return; // nur Anzeige aufgebaut
-        if (item.IsPlaying && choice.Value == 1) { _soundEngine.Stop(item.File.FullPath); item.IsPlaying = false; } // Loop sonst nicht mehr stoppbar
         item.Repeat = choice.Value;
         if (choice.Value == 1) _settings.SoundRepeat.Remove(item.FileName);
         else _settings.SoundRepeat[item.FileName] = choice.Value;

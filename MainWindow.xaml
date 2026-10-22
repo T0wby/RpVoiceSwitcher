@@ -190,7 +190,9 @@
                                 <Button Content="Position zurücksetzen" Click="ResetStatusPosition_Click" Padding="10,3" Margin="0,0,0,6"/>
                             </WrapPanel>
                             <CheckBox x:Name="StatusHideNormalCheck" Content="Nur zeigen, wenn eine Effekt-Stimme aktiv ist (bei „Normal“ ausblenden)"
-                                      Click="StatusHideNormal_Changed" Margin="0,2,0,8"/>
+                                      Click="StatusHideNormal_Changed" Margin="0,2,0,4"/>
+                            <CheckBox x:Name="StatusSoundsCheck" Content="Laufende Sounds mit Fortschritt und Zeit anzeigen"
+                                      Click="StatusSounds_Changed" Margin="0,2,0,8"/>
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
@@ -451,12 +453,19 @@
                                             </DockPanel>
                                             <Button Content="{Binding PlayText}" ToolTip="{Binding PlayTooltip}" Click="PlaySound_Click" Margin="0,0,0,6"
                                                     AutomationProperties.Name="{Binding PlayText}"/>
+                                            <DockPanel Visibility="{Binding ProgressVisibility}" Margin="0,0,0,6">
+                                                <TextBlock DockPanel.Dock="Right" Text="{Binding TimeText}" Foreground="{StaticResource FgDim}" FontSize="11"
+                                                           Margin="8,0,0,0" VerticalAlignment="Center" AutomationProperties.AutomationId="SoundTime"/>
+                                                <ProgressBar Value="{Binding Progress, Mode=OneWay}" Minimum="0" Maximum="1" Height="4" VerticalAlignment="Center"
+                                                             Background="{StaticResource Line}" Foreground="{StaticResource Accent}" BorderThickness="0"
+                                                             AutomationProperties.Name="Fortschritt"/>
+                                            </DockPanel>
                                             <DockPanel Margin="0,0,0,6">
                                                 <TextBlock Text="Wiederholen" Foreground="{StaticResource FgDim}" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                                 <ComboBox ItemsSource="{x:Static local:SoundItem.RepeatChoices}" DisplayMemberPath="Label" SelectedValuePath="Value"
                                                           SelectedValue="{Binding Repeat, Mode=TwoWay}" SelectionChanged="SoundRepeat_Changed"
                                                           AutomationProperties.Name="Wiederholen"
-                                                          ToolTip="Einmal, mehrmals hintereinander oder endlos. Bei Wiederholung stoppt derselbe Shortcut (oder ein zweiter Klick) den Sound."/>
+                                                          ToolTip="Einmal, mehrmals hintereinander oder endlos. Läuft der Sound, stoppt ihn derselbe Shortcut (oder ein zweiter Klick)."/>
                                             </DockPanel>
                                             <CheckBox Content="Durch Stimmeffekt" IsChecked="{Binding ThroughEffect, Mode=TwoWay}" Click="SoundEffect_Click"
                                                       Margin="0,0,0,6" ToolTip="An: Der Sound bekommt denselben Effekt wie deine Stimme. Aus: Die anderen hören ihn unverändert."/>

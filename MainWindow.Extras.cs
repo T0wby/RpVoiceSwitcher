@@ -19,6 +19,7 @@ public partial class MainWindow
     private void InitExtras()
     {
         StatusHideNormalCheck.IsChecked = _settings.StatusOverlayHideNormal;
+        StatusSoundsCheck.IsChecked = _settings.StatusOverlayShowSounds;
         StatusScaleSlider.Value = Math.Clamp(_settings.StatusOverlayScale, StatusScaleSlider.Minimum, StatusScaleSlider.Maximum);
         StatusOpacitySlider.Value = Math.Clamp(_settings.StatusOverlayOpacity, StatusOpacitySlider.Minimum, StatusOpacitySlider.Maximum);
         UpdateStatusLookTexts();

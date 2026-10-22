@@ -27,8 +27,20 @@ public sealed class SoundEngine : IDisposable
     {
         private readonly ISampleProvider _source;
         private IDisposable? _owner;
-        public AutoDisposeProvider(ISampleProvider source, IDisposable owner, string key) { _source = source; _owner = owner; Key = key; }
+        public AutoDisposeProvider(ISampleProvider source, IDisposable owner, string key, TimeSpan fileDuration, int repeat, bool primary)
+        {
+            _source = source; _owner = owner; Key = key;
+            FileDuration = fileDuration; Repeat = repeat; IsPrimary = primary;
+        }
         public string Key { get; }
+        public TimeSpan FileDuration { get; }
+        public int Repeat { get; }
+        /// <summary>Der Ausgang ins Kabel – nur dessen Fortschritt wird angezeigt (Mithören läuft parallel).</summary>
+        public bool IsPrimary { get; }
+        private long _samplesRead;
+        /// <summary>Wie lange der Sound schon läuft (an den tatsächlich gelieferten Samples gemessen, ohne die Datei anzufassen).</summary>
+        public TimeSpan Elapsed => TimeSpan.FromSeconds((double)System.Threading.Interlocked.Read(ref _samplesRead)
+                                                         / Math.Max(1, _source.WaveFormat.SampleRate * _source.WaveFormat.Channels));
         public WaveFormat WaveFormat => _source.WaveFormat;
         public int Read(float[] buffer, int offset, int count)
         {
@@ -36,6 +48,7 @@ public sealed class SoundEngine : IDisposable
             // Stopp wird hier auf dem Audio-Thread umgesetzt – so wird die Datei nie mitten im Lesen geschlossen.
             if (StopRequested) { Close(); return 0; }
             int n = _source.Read(buffer, offset, count);
+            System.Threading.Interlocked.Add(ref _samplesRead, n);
             if (n == 0) Close();
             return n;
         }
@@ -153,8 +166,8 @@ public sealed class SoundEngine : IDisposable
         if (_remote == null) return false;
         try
         {
-            AddTo(_remote, path, repeat, sp => new MidSideProvider(sp, bypassEffect));
-            if (_monitor != null) AddTo(_monitor, path, repeat, null);
+            AddTo(_remote, path, repeat, sp => new MidSideProvider(sp, bypassEffect), primary: true);
+            if (_monitor != null) AddTo(_monitor, path, repeat, null, primary: false);
             return true;
         }
         catch (Exception ex)
@@ -164,7 +177,7 @@ public sealed class SoundEngine : IDisposable
         }
     }
 
-    private void AddTo(Output output, string path, int repeat, Func<ISampleProvider, ISampleProvider>? transform)
+    private void AddTo(Output output, string path, int repeat, Func<ISampleProvider, ISampleProvider>? transform, bool primary)
     {
         var reader = new AudioFileReader(path);
         ISampleProvider sp = repeat == 1 ? reader : new LoopProvider(reader, repeat);
@@ -181,13 +194,42 @@ public sealed class SoundEngine : IDisposable
             sp = new WdlResamplingSampleProvider(sp, output.Mixer.WaveFormat.SampleRate);
         if (transform != null) sp = transform(sp);
 
-        var tracked = new AutoDisposeProvider(sp, reader, path);
+        var tracked = new AutoDisposeProvider(sp, reader, path, reader.TotalTime, repeat, primary);
         lock (_lock)
         {
             _playing.RemoveAll(p => p.IsDone); // fertige Sounds aus der Liste nehmen
             _playing.Add(tracked);
         }
         output.Mixer.AddMixerInput(tracked);
+    }
+
+    /// <summary>Fortschritt eines laufenden Sounds.</summary>
+    public sealed record Progress(string Path, TimeSpan Elapsed, TimeSpan FileDuration, int Repeat)
+    {
+        /// <summary>Durchgang (1, 2, …) bei Wiederholung.</summary>
+        public int Pass => FileDuration > TimeSpan.Zero ? (int)(Elapsed.Ticks / FileDuration.Ticks) + 1 : 1;
+
+        /// <summary>Position im aktuellen Durchgang.</summary>
+        public TimeSpan InPass => FileDuration > TimeSpan.Zero ? TimeSpan.FromTicks(Elapsed.Ticks % FileDuration.Ticks) : Elapsed;
+
+        /// <summary>0 … 1 über alle Durchgänge; bei Endlos der aktuelle Durchgang.</summary>
+        public double Fraction => FileDuration <= TimeSpan.Zero ? 0
+            : Repeat == 0 ? InPass / FileDuration
+            : Math.Clamp(Elapsed / (FileDuration * Repeat), 0, 1);
+    }
+
+    /// <summary>Alle gerade laufenden Sounds mit Fortschritt (ein Eintrag je Datei).</summary>
+    public List<Progress> GetProgress()
+    {
+        lock (_lock)
+        {
+            _playing.RemoveAll(p => p.IsDone);
+            return _playing.Where(p => p.IsPrimary && !p.StopRequested)
+                           .GroupBy(p => p.Key, StringComparer.OrdinalIgnoreCase)
+                           .Select(g => g.OrderBy(p => p.Elapsed).First())
+                           .Select(p => new Progress(p.Key, p.Elapsed, p.FileDuration, p.Repeat))
+                           .ToList();
+        }
     }
 
     /// <summary>Läuft diese Datei gerade (auf irgendeinem Ausgang)?</summary>

@@ -202,9 +202,11 @@ public partial class MainWindow
         if (_settings.Profiles.Count > 1) text = _settings.Current.Name + " · " + text;
         _status.SetVoice(text, isNormal);
         _status.SetLook(_settings.StatusOverlayScale, _settings.StatusOverlayOpacity);
+        var sounds = _settings.StatusOverlayShowSounds ? _overlaySounds : new List<StatusOverlayWindow.SoundLine>();
+        _status.SetSounds(sounds);
 
-        // Optional nur zeigen, wenn ein Effekt aktiv ist – beim Verschieben aber immer.
-        if (_settings.StatusOverlayHideNormal && isNormal && !_statusEditing)
+        // Optional nur zeigen, wenn ein Effekt aktiv ist (oder ein Sound läuft) – beim Verschieben aber immer.
+        if (_settings.StatusOverlayHideNormal && isNormal && !_statusEditing && sounds.Count == 0)
         {
             _status.Hide();
             return;
@@ -227,6 +229,13 @@ public partial class MainWindow
     {
         StatusScaleText.Text = $"{StatusScaleSlider.Value * 100:0} %";
         StatusOpacityText.Text = $"{StatusOpacitySlider.Value * 100:0} %";
+    }
+
+    private void StatusSounds_Changed(object sender, RoutedEventArgs e)
+    {
+        _settings.StatusOverlayShowSounds = StatusSoundsCheck.IsChecked == true;
+        _settings.Save();
+        UpdateStatusOverlay();
     }
 
     private void StatusHideNormal_Changed(object sender, RoutedEventArgs e)
