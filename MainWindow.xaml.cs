@@ -25,7 +25,7 @@ public partial class MainWindow : Window
     private readonly HotkeyManager _hotkeys;
     private readonly HoldKeyHook _holdHook;
     private readonly WinForms.NotifyIcon _tray;
-    private readonly VoiceStore? _store;
+    private VoiceStore? _store;
     private bool _initializing = true;
     private bool _exiting;
     private bool _trayHintShown;
@@ -59,7 +59,8 @@ public partial class MainWindow : Window
         Deactivated += (_, _) => CancelCapture();
         Activated += (_, _) => { if (Tabs.SelectedIndex == SetupTabIndex) RunSetupCheck(); };
 
-        _store = VoiceStore.TryCreate();
+        SoundLibrary.Folder = string.IsNullOrWhiteSpace(_settings.SoundFolder) ? SoundLibrary.DefaultFolder : _settings.SoundFolder;
+        _store = VoiceStore.TryCreate(_settings.VoicesFolder);
         if (_store != null)
         {
             try
@@ -76,11 +77,19 @@ public partial class MainWindow : Window
             StatusText.Text = "Equalizer APO wurde nicht gefunden – siehe Tab „Einrichtung“.";
         }
 
+        _reloadDebounce.Tick += (_, _) =>
+        {
+            _reloadDebounce.Stop();
+            if (_capture != null) { _reloadDebounce.Start(); return; } // nicht mitten in der Tastenaufnahme neu laden
+            LoadVoices();
+        };
+
         RefreshProfileChips();
         LoadVoices();
         EnsureActiveVoiceInProfile();
         WatchVoicesFolder();
         InitSoundboard();
+        RefreshFolderTexts();
         RunSetupCheck();
         _initializing = false;
     }
@@ -92,7 +101,10 @@ public partial class MainWindow : Window
 
     private void Tabs_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (!ReferenceEquals(e.Source, Tabs) || _initializing) return;
+        if (!ReferenceEquals(e.Source, Tabs)) return;
+        // Einrichtung und Einstellungen gelten für alle Charaktere – dort die Charakter-Leiste ausblenden.
+        ProfileBar.Visibility = Tabs.SelectedIndex <= 1 ? Visibility.Visible : Visibility.Collapsed;
+        if (_initializing) return;
         CancelCapture();
         if (Tabs.SelectedIndex == SetupTabIndex) RunSetupCheck();
     }
@@ -122,7 +134,9 @@ public partial class MainWindow : Window
 
     private void OpenFolder_Click(object sender, RoutedEventArgs e)
     {
-        if (_store != null) Process.Start("explorer.exe", _store.VoicesDir);
+        if (_store == null) return;
+        Directory.CreateDirectory(_store.VoicesDir);
+        Process.Start("explorer.exe", $"\"{_store.VoicesDir}\"");
     }
 
     private void OpenEditor_Click(object sender, RoutedEventArgs e)

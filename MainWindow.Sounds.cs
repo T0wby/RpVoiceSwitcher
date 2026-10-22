@@ -18,18 +18,35 @@ public partial class MainWindow
 
     private void InitSoundboard()
     {
-        try { SoundLibrary.EnsureStarterSounds(); }
-        catch (Exception ex) { ShowSoundError("Start-Sounds konnten nicht angelegt werden: " + ex.Message); }
-
-        LoadSounds();
-        RestartSoundEngine();
-
         _soundReloadDebounce.Tick += (_, _) =>
         {
             _soundReloadDebounce.Stop();
             if (_capture != null) { _soundReloadDebounce.Start(); return; }
             LoadSounds();
         };
+
+        PrepareSoundFolder();
+        RestartSoundEngine();
+    }
+
+    /// <summary>Ordner anlegen/übernehmen, Start-Sounds erzeugen, laden und beobachten.</summary>
+    private void PrepareSoundFolder()
+    {
+        try
+        {
+            SoundLibrary.MigrateLegacyFolder();
+            SoundLibrary.EnsureStarterSounds();
+        }
+        catch (Exception ex) { ShowSoundError("Sound-Ordner konnte nicht vorbereitet werden: " + ex.Message); }
+
+        LoadSounds();
+        WatchSoundFolder();
+    }
+
+    private void WatchSoundFolder()
+    {
+        _soundWatcher?.Dispose();
+        _soundWatcher = null;
         try
         {
             _soundWatcher = new FileSystemWatcher(SoundLibrary.Folder) { EnableRaisingEvents = true };
@@ -50,7 +67,11 @@ public partial class MainWindow
         _sounds.Clear();
         try
         {
-            foreach (var file in SoundLibrary.Load()) _sounds.Add(new SoundItem(file));
+            foreach (var file in SoundLibrary.Load())
+                _sounds.Add(new SoundItem(file)
+                {
+                    ThroughEffect = _settings.SoundsWithEffect.Contains(file.FileName, StringComparer.OrdinalIgnoreCase),
+                });
         }
         catch (Exception ex) { ShowSoundError("Sound-Ordner konnte nicht gelesen werden: " + ex.Message); }
         RegisterAllBindings();
@@ -71,13 +92,21 @@ public partial class MainWindow
     private void PlaySound(SoundItem item)
     {
         if (!File.Exists(item.File.FullPath)) { LoadSounds(); return; }
-        if (!_soundEngine.Play(item.File.FullPath)) ShowSoundError(_soundEngine.Error);
+        if (!_soundEngine.Play(item.File.FullPath, bypassEffect: !item.ThroughEffect)) ShowSoundError(_soundEngine.Error);
         else if (SoundError.Visibility == Visibility.Visible && _soundEngine.Error == null) ShowSoundError(null);
     }
 
     private void PlaySound_Click(object sender, RoutedEventArgs e)
     {
         if ((sender as FrameworkElement)?.DataContext is SoundItem item) PlaySound(item);
+    }
+
+    private void SoundEffect_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.DataContext is not SoundItem item) return;
+        _settings.SoundsWithEffect.RemoveAll(f => f.Equals(item.FileName, StringComparison.OrdinalIgnoreCase));
+        if (item.ThroughEffect) _settings.SoundsWithEffect.Add(item.FileName);
+        _settings.Save();
     }
 
     private void StopSounds_Click(object sender, RoutedEventArgs e) => _soundEngine.StopAll();
@@ -110,7 +139,7 @@ public partial class MainWindow
     private void OpenSoundFolder_Click(object sender, RoutedEventArgs e)
     {
         Directory.CreateDirectory(SoundLibrary.Folder);
-        Process.Start("explorer.exe", SoundLibrary.Folder);
+        Process.Start("explorer.exe", $"\"{SoundLibrary.Folder}\"");
     }
 
     private void Sounds_DragOver(object sender, DragEventArgs e)

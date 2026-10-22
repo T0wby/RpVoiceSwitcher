@@ -27,11 +27,27 @@ public sealed class VoiceStore
     private const string IncludePrefix = "Include: " + VoicesFolderName + "\\";
 
     public string ConfigDir { get; }
-    public string VoicesDir => Path.Combine(ConfigDir, VoicesFolderName);
+    public string VoicesDir { get; }
+    public string DefaultVoicesDir => Path.Combine(ConfigDir, VoicesFolderName);
+    public bool UsesDefaultVoicesDir => string.Equals(Path.GetFullPath(VoicesDir), Path.GetFullPath(DefaultVoicesDir), StringComparison.OrdinalIgnoreCase);
     public string ActiveFile => Path.Combine(ConfigDir, "voice.txt");
     public string MainConfigFile => Path.Combine(ConfigDir, "config.txt");
 
-    private VoiceStore(string configDir) => ConfigDir = configDir;
+    /// <summary>
+    /// Bereinigte Kopie der aktiven Stimme. Liegt im Config-Ordner, damit Equalizer APO (läuft als LOCAL SERVICE)
+    /// sie immer lesen kann – egal, in welchem Ordner die Stimmen selbst liegen.
+    /// </summary>
+    public string ActiveCopyFile => Path.Combine(ConfigDir, "voice-active.cfg");
+
+    /// <summary>Virtueller Kanal für Sounds, die am Stimmeffekt vorbei sollen.</summary>
+    private const string DryChannel = "RPS";
+    private const string ActiveMarker = "# Datei: ";
+
+    private VoiceStore(string configDir, string? voicesDir)
+    {
+        ConfigDir = configDir;
+        VoicesDir = string.IsNullOrWhiteSpace(voicesDir) ? Path.Combine(configDir, VoicesFolderName) : voicesDir;
+    }
 
     /// <summary>Die "Normal"-Stimme (00-…) gehört immer zu jedem Profil.</summary>
     public static bool IsNormalFile(string fileName) =>
@@ -44,7 +60,7 @@ public sealed class VoiceStore
                    .Any(l => l.Trim().Equals("Include: voice.txt", StringComparison.OrdinalIgnoreCase));
     }
 
-    public static VoiceStore? TryCreate()
+    public static VoiceStore? TryCreate(string? voicesDir = null)
     {
         string? dir = null;
         try
@@ -56,7 +72,7 @@ public sealed class VoiceStore
         catch { /* Fallback unten */ }
 
         dir ??= Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "EqualizerAPO", "config");
-        return Directory.Exists(dir) ? new VoiceStore(dir) : null;
+        return Directory.Exists(dir) ? new VoiceStore(dir, voicesDir) : null;
     }
 
     /// <summary>Kopiert mitgelieferte Stimmen (ohne vorhandene zu überschreiben) und hängt voice.txt in config.txt ein.</summary>
@@ -125,22 +141,61 @@ public sealed class VoiceStore
         return true;
     }
 
+    /// <summary>
+    /// Schaltet eine Stimme aktiv. Aufbau von voice.txt:
+    /// 1. Mitte/Seite trennen: Die Stimme (Mono-Mikro) liegt identisch auf L und R = "Mitte".
+    ///    Sounds "ohne Stimmeffekt" spielt das Soundboard gegenphasig (L = +x, R = -x) = "Seite".
+    /// 2. Die Seite wird in einem virtuellen Kanal geparkt, die Stimme wirkt nur auf L und R.
+    /// 3. Danach wird die Seite unverändert wieder dazugemischt.
+    /// Die Stimme selbst wird als bereinigte Kopie eingebunden ("Channel: all" → "Channel: L R"),
+    /// sonst würden Filter nach "Channel: all" auch den geparkten Sound treffen.
+    /// </summary>
     public void Activate(VoicePreset preset, string targetDevice)
     {
+        var copy = new StringBuilder();
+        copy.AppendLine("# Automatisch erzeugt aus: " + preset.FullPath);
+        copy.AppendLine("# Bitte nicht hier bearbeiten, sondern die Original-Stimme.");
+        foreach (var line in File.Exists(preset.FullPath) ? File.ReadAllLines(preset.FullPath) : Array.Empty<string>())
+            copy.AppendLine(SanitizeLine(line));
+
         var sb = new StringBuilder();
         sb.AppendLine("# Wird von RP Voice Switcher verwaltet - Aenderungen hier werden ueberschrieben.");
         sb.AppendLine("# Aktiv: " + preset.Name);
+        sb.AppendLine(ActiveMarker + preset.FileName);
         if (!string.IsNullOrWhiteSpace(targetDevice))
             sb.AppendLine("Device: " + targetDevice.Trim());
-        sb.AppendLine(IncludePrefix + preset.FileName);
+        sb.AppendLine($"Copy: {DryChannel}=0.5*L+-0.5*R");
+        sb.AppendLine("Copy: L=0.5*L+0.5*R R=0.5*L+0.5*R");
+        sb.AppendLine("Channel: L R");
+        sb.AppendLine("Include: " + Path.GetFileName(ActiveCopyFile));
+        sb.AppendLine("Channel: all");
+        sb.AppendLine($"Copy: L=L+{DryChannel} R=R+{DryChannel}");
         sb.AppendLine("Device: all");
 
-        // Equalizer APO liest die Datei bei Änderungen sofort neu ein; kurz wiederholen, falls sie gerade gesperrt ist.
+        WriteWithRetry(ActiveCopyFile, copy.ToString());
+        WriteWithRetry(ActiveFile, sb.ToString());
+    }
+
+    /// <summary>Hält die Stimme auf L/R und verhindert, dass sie den Gerätebereich von voice.txt verlässt.</summary>
+    private static string SanitizeLine(string line)
+    {
+        var t = line.Trim();
+        if (t.StartsWith("Channel:", StringComparison.OrdinalIgnoreCase) &&
+            t["Channel:".Length..].Trim().Equals("all", StringComparison.OrdinalIgnoreCase))
+            return "Channel: L R";
+        if (t.StartsWith("Device:", StringComparison.OrdinalIgnoreCase))
+            return "# (entfernt) " + t;
+        return line;
+    }
+
+    private static void WriteWithRetry(string path, string content)
+    {
+        // Equalizer APO liest die Dateien bei Änderungen sofort neu ein; kurz wiederholen, falls sie gerade gesperrt sind.
         for (int attempt = 0; ; attempt++)
         {
             try
             {
-                File.WriteAllText(ActiveFile, sb.ToString(), Utf8NoBom);
+                File.WriteAllText(path, content, Utf8NoBom);
                 return;
             }
             catch (IOException) when (attempt < 5)
@@ -154,6 +209,22 @@ public sealed class VoiceStore
 
     private static readonly UTF8Encoding Utf8NoBom = new(false);
     private static readonly string[] HeaderKeys = ["Name", "Beschreibung", "Graillon"];
+
+    /// <summary>Kopiert alle Stimmen in einen anderen Ordner (vorhandene Dateien bleiben unberührt).</summary>
+    public static int CopyVoicesTo(string fromDir, string toDir)
+    {
+        Directory.CreateDirectory(toDir);
+        int n = 0;
+        if (!Directory.Exists(fromDir)) return 0;
+        foreach (var src in Directory.GetFiles(fromDir, "*.txt"))
+        {
+            var dst = Path.Combine(toDir, Path.GetFileName(src));
+            if (File.Exists(dst)) continue;
+            File.Copy(src, dst);
+            n++;
+        }
+        return n;
+    }
 
     /// <summary>Merkt sich gelöschte mitgelieferte Stimmen (ohne .txt-Endung, damit sie nicht als Stimme gilt).</summary>
     private string DeletedListFile => Path.Combine(VoicesDir, ".geloeschte-stimmen");
@@ -271,8 +342,12 @@ public sealed class VoiceStore
     public string? GetActiveFileName()
     {
         if (!File.Exists(ActiveFile)) return null;
-        var line = File.ReadLines(ActiveFile)
-                       .FirstOrDefault(l => l.Trim().StartsWith(IncludePrefix, StringComparison.OrdinalIgnoreCase));
-        return line?.Trim()[IncludePrefix.Length..];
+        foreach (var raw in File.ReadLines(ActiveFile))
+        {
+            var line = raw.Trim();
+            if (line.StartsWith(ActiveMarker, StringComparison.OrdinalIgnoreCase)) return line[ActiveMarker.Length..].Trim();
+            if (line.StartsWith(IncludePrefix, StringComparison.OrdinalIgnoreCase)) return line[IncludePrefix.Length..]; // ältere Version
+        }
+        return null;
     }
 }

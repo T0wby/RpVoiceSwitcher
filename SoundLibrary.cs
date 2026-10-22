@@ -12,8 +12,39 @@ public static class SoundLibrary
 {
     public static readonly string[] Extensions = [".wav", ".mp3", ".m4a", ".aac", ".wma", ".flac", ".aiff"];
 
-    public static string Folder => Path.Combine(
+    /// <summary>Standard: in den Dokumenten, damit man den Ordner leicht findet.</summary>
+    public static string DefaultFolder => Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "RP Voice Switcher", "Sounds");
+
+    /// <summary>Ort der ersten Version (versteckt in AppData).</summary>
+    private static string LegacyFolder => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RpVoiceSwitcher", "Sounds");
+
+    public static string Folder { get; set; } = DefaultFolder;
+
+    /// <summary>Sounds aus dem alten AppData-Ordner einmalig in den neuen Standardordner übernehmen.</summary>
+    public static void MigrateLegacyFolder()
+    {
+        if (!string.Equals(Folder, DefaultFolder, StringComparison.OrdinalIgnoreCase)) return;
+        if (Directory.Exists(DefaultFolder) || !Directory.Exists(LegacyFolder)) return;
+        CopyAll(LegacyFolder, DefaultFolder);
+    }
+
+    /// <summary>Kopiert Sounds (und die Start-Sound-Markierung) in einen anderen Ordner, ohne etwas zu überschreiben.</summary>
+    public static int CopyAll(string fromDir, string toDir)
+    {
+        Directory.CreateDirectory(toDir);
+        int n = 0;
+        if (!Directory.Exists(fromDir)) return 0;
+        foreach (var src in Directory.GetFiles(fromDir).Where(p => IsSupported(p) || Path.GetFileName(p) == ".starter-sounds"))
+        {
+            var dst = Path.Combine(toDir, Path.GetFileName(src));
+            if (File.Exists(dst)) continue;
+            File.Copy(src, dst);
+            if (IsSupported(src)) n++;
+        }
+        return n;
+    }
 
     public static bool IsSupported(string path) =>
         Extensions.Contains(Path.GetExtension(path), StringComparer.OrdinalIgnoreCase);

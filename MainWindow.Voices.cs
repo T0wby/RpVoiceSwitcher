@@ -37,14 +37,24 @@ public partial class MainWindow
         _allVoices.Clear();
         if (_store != null)
         {
-            string? active = _store.GetActiveFileName();
+            string? activeFile = _store.GetActiveFileName();
             foreach (var preset in _store.LoadVoices())
                 _allVoices.Add(new VoiceItem(preset)
                 {
-                    IsActive = string.Equals(preset.FileName, active, StringComparison.OrdinalIgnoreCase),
+                    IsActive = string.Equals(preset.FileName, activeFile, StringComparison.OrdinalIgnoreCase),
                 });
         }
         _baseVoice = CurrentVoice();
+
+        // Aktive Stimme neu schreiben: übernimmt Änderungen an ihrer Datei (z. B. aus dem EAPO-Editor) sofort
+        // und hält voice.txt im aktuellen Format.
+        var active = CurrentVoice();
+        if (active != null && _store != null)
+        {
+            try { _store.Activate(active.Preset, _settings.TargetDevice); }
+            catch { /* wird beim nächsten Umschalten erneut versucht */ }
+        }
+
         RefreshVoiceList();
         RegisterAllBindings();
         UpdateStatus();
@@ -65,14 +75,9 @@ public partial class MainWindow
 
     private void WatchVoicesFolder()
     {
+        _watcher?.Dispose();
+        _watcher = null;
         if (_store == null || !Directory.Exists(_store.VoicesDir)) return;
-
-        _reloadDebounce.Tick += (_, _) =>
-        {
-            _reloadDebounce.Stop();
-            if (_capture != null) { _reloadDebounce.Start(); return; } // nicht mitten in der Tastenaufnahme neu laden
-            LoadVoices();
-        };
 
         _watcher = new FileSystemWatcher(_store.VoicesDir, "*.txt")
         {

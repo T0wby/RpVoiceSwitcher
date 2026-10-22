@@ -16,7 +16,7 @@
             </DockPanel>
             <TextBlock x:Name="StatusText" Foreground="{StaticResource FgDim}" Margin="0,4,0,10" TextWrapping="Wrap"/>
 
-            <DockPanel>
+            <DockPanel x:Name="ProfileBar">
                 <TextBlock Text="Charakter:" Foreground="{StaticResource FgDim}" VerticalAlignment="Top" Margin="0,6,10,0"/>
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top">
                     <Button Content="+ Neu" Click="NewProfile_Click" Padding="10,5" Margin="0,0,6,0" ToolTip="Neuen Charakter anlegen"/>
@@ -139,7 +139,7 @@
                                 <Button Content="Ordner" Click="OpenSoundFolder_Click" Padding="10,4" Margin="0,0,0,8" ToolTip="Sound-Ordner öffnen"/>
                             </WrapPanel>
                             <TextBlock x:Name="SoundHint" Foreground="{StaticResource FgDim}" TextWrapping="Wrap"
-                                       Text="Audiodateien (wav, mp3, m4a, flac …) einfach hierher ziehen. Sounds laufen über deinen aktiven Stimmeffekt – unter der Maske klingen sie also auch gedämpft."/>
+                                       Text="Audiodateien (wav, mp3, m4a, flac …) einfach hierher ziehen. Mit „Durch Stimmeffekt“ klingt ein Sound wie deine Stimme – unter der Maske also auch gedämpft. Ohne Haken hören die anderen ihn unverändert."/>
                             <TextBlock x:Name="SoundError" Foreground="#E5807A" TextWrapping="Wrap" Margin="0,6,0,0" Visibility="Collapsed"/>
                         </StackPanel>
                     </Border>
@@ -155,6 +155,8 @@
                                             <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Margin="0,0,0,8"
                                                        ToolTip="{Binding FileName}"/>
                                             <Button Content="▶  Abspielen" Click="PlaySound_Click" Margin="0,0,0,6"/>
+                                            <CheckBox Content="Durch Stimmeffekt" IsChecked="{Binding ThroughEffect, Mode=TwoWay}" Click="SoundEffect_Click"
+                                                      Margin="0,0,0,6" ToolTip="An: Der Sound bekommt denselben Effekt wie deine Stimme. Aus: Die anderen hören ihn unverändert."/>
                                             <DockPanel>
                                                 <Button DockPanel.Dock="Right" Content="✕" Click="ClearSoundHotkey_Click" Padding="8,4" Margin="4,0,0,0" ToolTip="Shortcut entfernen"/>
                                                 <Button Content="{Binding HotkeyText}" Click="SoundHotkey_Click" Padding="8,4"
@@ -247,6 +249,43 @@
                         </Grid>
                         <TextBlock Foreground="{StaticResource FgDim}" TextWrapping="Wrap" Margin="0,10,0,0" FontSize="12"
                                    Text="Ein Teil des Gerätenamens reicht. Ob alles zusammenpasst, zeigt der Tab „Einrichtung“."/>
+
+                        <TextBlock Text="Ordner" FontSize="15" FontWeight="SemiBold" Margin="0,16,0,8"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition/>
+                                <RowDefinition/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Text="Stimmen:" Foreground="{StaticResource FgDim}" VerticalAlignment="Top" Margin="0,4,10,10"/>
+                            <StackPanel Grid.Column="1" Margin="0,0,10,10">
+                                <TextBlock x:Name="VoicesFolderText" TextWrapping="Wrap"/>
+                                <TextBlock x:Name="VoicesFolderHint" Foreground="{StaticResource FgDim}" FontSize="12"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top" Margin="0,0,0,10">
+                                <Button Content="Ändern …" Click="ChangeVoicesFolder_Click" Padding="10,3" Margin="0,0,6,0"/>
+                                <Button Content="Öffnen" Click="OpenFolder_Click" Padding="10,3" Margin="0,0,6,0"/>
+                                <Button Content="Standard" Click="ResetVoicesFolder_Click" Padding="10,3" ToolTip="Zurück zum Equalizer-APO-Ordner"/>
+                            </StackPanel>
+
+                            <TextBlock Grid.Row="1" Text="Sounds:" Foreground="{StaticResource FgDim}" VerticalAlignment="Top" Margin="0,4,10,0"/>
+                            <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,10,0">
+                                <TextBlock x:Name="SoundFolderText" TextWrapping="Wrap"/>
+                                <TextBlock x:Name="SoundFolderHint" Foreground="{StaticResource FgDim}" FontSize="12"/>
+                            </StackPanel>
+                            <StackPanel Grid.Row="1" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top">
+                                <Button Content="Ändern …" Click="ChangeSoundFolder_Click" Padding="10,3" Margin="0,0,6,0"/>
+                                <Button Content="Öffnen" Click="OpenSoundFolder_Click" Padding="10,3" Margin="0,0,6,0"/>
+                                <Button Content="Standard" Click="ResetSoundFolder_Click" Padding="10,3" ToolTip="Zurück zu Dokumente\RP Voice Switcher\Sounds"/>
+                            </StackPanel>
+                        </Grid>
+                        <TextBlock Foreground="{StaticResource FgDim}" TextWrapping="Wrap" Margin="0,10,0,0" FontSize="12"
+                                   Text="Beim Wechsel kannst du deine Dateien mitnehmen. Einstellungen, Einrichtung und Ordner gelten für alle Charaktere."/>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>

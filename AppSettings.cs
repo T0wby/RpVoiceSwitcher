@@ -68,6 +68,15 @@ public sealed class AppSettings
     public bool SoundMonitor { get; set; } = true;
     public double SoundMonitorVolume { get; set; } = 0.5;
 
+    /// <summary>Sounds, die durch den aktiven Stimmeffekt laufen sollen (Standard: ohne Effekt).</summary>
+    public List<string> SoundsWithEffect { get; set; } = new();
+
+    /// <summary>Eigener Ordner für Stimmen; null = Equalizer-APO-Ordner\rp-voices.</summary>
+    public string? VoicesFolder { get; set; }
+
+    /// <summary>Eigener Ordner für Sounds; null = Dokumente\RP Voice Switcher\Sounds.</summary>
+    public string? SoundFolder { get; set; }
+
     /// <summary>Alte Version (vor Profilen) – wird beim Laden ins Profil "Standard" übernommen.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public Dictionary<string, string>? Hotkeys { get; set; }

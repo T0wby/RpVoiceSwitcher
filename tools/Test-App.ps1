@@ -1,4 +1,4 @@
-# Rauchtest fuer RP Voice Switcher: Umschalten, Halten, Profile, Soundboard, Einrichtungs-Check + Screenshots.
+﻿# Rauchtest fuer RP Voice Switcher: Umschalten, Halten, Profile, Soundboard, Einrichtungs-Check + Screenshots.
 # Sichert settings.json vorher und stellt sie am Ende wieder her.
 param([string]$OutDir = "$env:TEMP\rpvs-test")
 
@@ -46,6 +46,7 @@ try {
     $p = Start-App; Stop-Process -Id $p.Id; Start-Sleep -m 500      # Migration ins Profil-Format
     $j = Get-Content $settings -Raw | ConvertFrom-Json
     $std = $j.Profiles[0]
+    $std.IncludeAllVoices = $true   # Test braucht alle Stimmen im Standard-Profil
     $std.HoldHotkeys | Add-Member '11-herr-mondgesicht.txt' 'None|NumPad8' -Force
     $std.SoundHotkeys | Add-Member 'Messingglocke.wav' 'Control, Alt|F11' -Force
     $jinpei = [pscustomobject]@{

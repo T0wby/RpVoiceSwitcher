@@ -67,6 +67,10 @@ public sealed class SoundItem : ViewModel
 
     private string _hotkeyText = "Kein Shortcut";
     public string HotkeyText { get => _hotkeyText; set => Set(ref _hotkeyText, value); }
+
+    /// <summary>true = Sound läuft durch den aktiven Stimmeffekt (z. B. gedämpft unter der Maske).</summary>
+    private bool _throughEffect;
+    public bool ThroughEffect { get => _throughEffect; set => Set(ref _throughEffect, value); }
 }
 
 public sealed class ProfileChip : ViewModel

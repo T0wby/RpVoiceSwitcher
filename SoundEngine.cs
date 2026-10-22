@@ -98,13 +98,33 @@ public sealed class SoundEngine : IDisposable
         if (_monitor != null) _monitor.Master.Volume = (float)monitorVolume;
     }
 
-    public bool Play(string path)
+    /// <summary>
+    /// Für die anderen wird der Sound mono gemacht: mit Stimmeffekt gleichphasig auf L/R ("Mitte" – läuft durch den Effekt),
+    /// ohne Stimmeffekt gegenphasig (L = +x, R = -x, "Seite" – voice.txt leitet sie am Effekt vorbei).
+    /// </summary>
+    private sealed class MidSideProvider(ISampleProvider source, bool bypassEffect) : ISampleProvider
+    {
+        public WaveFormat WaveFormat => source.WaveFormat;
+        public int Read(float[] buffer, int offset, int count)
+        {
+            int n = source.Read(buffer, offset, count);
+            for (int i = offset; i + 1 < offset + n; i += 2)
+            {
+                float m = 0.5f * (buffer[i] + buffer[i + 1]);
+                buffer[i] = m;
+                buffer[i + 1] = bypassEffect ? -m : m;
+            }
+            return n;
+        }
+    }
+
+    public bool Play(string path, bool bypassEffect)
     {
         if (_remote == null) return false;
         try
         {
-            AddTo(_remote, path);
-            if (_monitor != null) AddTo(_monitor, path);
+            AddTo(_remote, path, sp => new MidSideProvider(sp, bypassEffect));
+            if (_monitor != null) AddTo(_monitor, path, null);
             return true;
         }
         catch (Exception ex)
@@ -114,7 +134,7 @@ public sealed class SoundEngine : IDisposable
         }
     }
 
-    private void AddTo(Output output, string path)
+    private void AddTo(Output output, string path, Func<ISampleProvider, ISampleProvider>? transform)
     {
         var reader = new AudioFileReader(path);
         ISampleProvider sp = reader;
@@ -129,6 +149,7 @@ public sealed class SoundEngine : IDisposable
         }
         if (sp.WaveFormat.SampleRate != output.Mixer.WaveFormat.SampleRate)
             sp = new WdlResamplingSampleProvider(sp, output.Mixer.WaveFormat.SampleRate);
+        if (transform != null) sp = transform(sp);
 
         var tracked = new AutoDisposeProvider(sp, reader);
         lock (_lock)
