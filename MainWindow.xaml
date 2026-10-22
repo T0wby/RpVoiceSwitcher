@@ -1,87 +1,244 @@
 <Window x:Class="RpVoiceSwitcher.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="RP Voice Switcher" Width="680" Height="760" MinWidth="520" MinHeight="420"
+        Title="RP Voice Switcher" Width="780" Height="820" MinWidth="600" MinHeight="480"
         WindowStartupLocation="CenterScreen"
         Background="{StaticResource Bg}" Foreground="{StaticResource Fg}"
         FontFamily="Segoe UI" FontSize="13"
         PreviewKeyDown="Window_PreviewKeyDown">
     <DockPanel>
-        <!-- Kopf -->
-        <StackPanel DockPanel.Dock="Top" Margin="20,18,20,8">
-            <TextBlock Text="RP Voice Switcher" FontSize="22" FontWeight="SemiBold"/>
-            <TextBlock x:Name="StatusText" Foreground="{StaticResource FgDim}" Margin="0,4,0,0" TextWrapping="Wrap"/>
+        <!-- ===== Kopf: Titel, Status, Charakter-Profile ===== -->
+        <StackPanel DockPanel.Dock="Top" Margin="20,16,20,6">
+            <DockPanel>
+                <Button x:Name="SetupWarningButton" DockPanel.Dock="Right" Click="SetupWarning_Click" Visibility="Collapsed"
+                        Background="#4A2222" Padding="10,4" VerticalAlignment="Center"/>
+                <TextBlock Text="RP Voice Switcher" FontSize="22" FontWeight="SemiBold"/>
+            </DockPanel>
+            <TextBlock x:Name="StatusText" Foreground="{StaticResource FgDim}" Margin="0,4,0,10" TextWrapping="Wrap"/>
+
+            <DockPanel>
+                <TextBlock Text="Charakter:" Foreground="{StaticResource FgDim}" VerticalAlignment="Top" Margin="0,6,10,0"/>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top">
+                    <Button Content="+ Neu" Click="NewProfile_Click" Padding="10,5" Margin="0,0,6,0" ToolTip="Neuen Charakter anlegen"/>
+                    <Button x:Name="RenameProfileButton" Content="Umbenennen" Click="RenameProfile_Click" Padding="10,5" Margin="0,0,6,0"/>
+                    <Button x:Name="DeleteProfileButton" Content="Löschen" Click="DeleteProfile_Click" Padding="10,5"/>
+                </StackPanel>
+                <ItemsControl x:Name="ProfileList">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Button Style="{StaticResource ChipButton}" Content="{Binding Name}" Click="ProfileChip_Click"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </DockPanel>
         </StackPanel>
 
-        <!-- Fuß: Optionen -->
-        <Border DockPanel.Dock="Bottom" Background="#222227" Padding="20,12" BorderBrush="#33333A" BorderThickness="0,1,0,0">
-            <StackPanel>
-                <WrapPanel>
-                    <CheckBox x:Name="SoundCheck" Content="Ton beim Umschalten" Click="Option_Changed"/>
-                    <CheckBox x:Name="OverlayCheck" Content="Einblendung beim Wechsel" Click="Option_Changed"/>
-                    <CheckBox x:Name="TrayCheck" Content="Schließen = in den Tray" Click="Option_Changed"/>
-                    <CheckBox x:Name="AutostartCheck" Content="Mit Windows starten" Click="Autostart_Changed"/>
-                    <Button Content="Shortcuts zurücksetzen" Click="ResetHotkeys_Click" Padding="10,3" Margin="0,0,0,6"
-                            ToolTip="Alle Shortcuts löschen oder die Standardbelegung Strg+Alt+0–9 wiederherstellen"/>
-                </WrapPanel>
-                <WrapPanel Margin="0,4,0,0">
-                    <CheckBox x:Name="StatusCheck" Content="Status-Anzeige auf dem Bildschirm" Click="StatusOverlay_Changed"
-                              VerticalAlignment="Center"
-                              ToolTip="Zeigt dauerhaft an, welche Stimme gerade aktiv ist"/>
-                    <Button x:Name="MoveStatusButton" Content="Position anpassen" Click="MoveStatus_Click" Padding="10,3" Margin="0,0,8,6"
-                            ToolTip="Anzeige mit der Maus verschieben. Doppelklick auf die Anzeige oder 'Fertig' zum Speichern."/>
-                    <Button Content="Position zurücksetzen" Click="ResetStatusPosition_Click" Padding="10,3" Margin="0,0,0,6"/>
-                </WrapPanel>
-                <DockPanel Margin="0,8,0,0">
-                    <TextBlock Text="Zielgerät:" VerticalAlignment="Center" Foreground="{StaticResource FgDim}" Margin="0,0,8,0"/>
-                    <Button DockPanel.Dock="Right" Content="EAPO-Editor" Click="OpenEditor_Click" Margin="8,0,0,0"
-                            ToolTip="Equalizer-APO-Editor öffnen, z. B. um Graillon in eine Stimme einzubauen"/>
-                    <Button DockPanel.Dock="Right" Content="Neu laden" Click="Reload_Click" Margin="8,0,0,0"/>
-                    <Button DockPanel.Dock="Right" Content="Stimmen-Ordner" Click="OpenFolder_Click" Margin="8,0,0,0"/>
-                    <TextBox x:Name="DeviceBox" Background="#2C2C33" Foreground="{StaticResource Fg}" BorderBrush="#44444C"
-                             Padding="6,4" VerticalContentAlignment="Center" LostFocus="DeviceBox_LostFocus"
-                             ToolTip="Gerät, auf das die Stimmen wirken (wie in Windows angezeigt), z. B. CABLE Output"/>
+        <TabControl x:Name="Tabs" SelectionChanged="Tabs_SelectionChanged">
+            <!-- ===== Stimmen ===== -->
+            <TabItem Header="Stimmen">
+                <DockPanel>
+                    <Border DockPanel.Dock="Top" Padding="20,12,20,6">
+                        <StackPanel>
+                            <WrapPanel>
+                                <Button x:Name="SelectVoicesButton" Content="Stimmen auswählen" Click="SelectVoices_Click" Padding="10,4" Margin="0,0,6,6"
+                                        ToolTip="Festlegen, welche Stimmen zu diesem Charakter gehören"/>
+                                <Button Content="Shortcuts zurücksetzen" Click="ResetHotkeys_Click" Padding="10,4" Margin="0,0,6,6"/>
+                                <Button Content="Stimmen-Ordner" Click="OpenFolder_Click" Padding="10,4" Margin="0,0,6,6"/>
+                                <Button Content="EAPO-Editor" Click="OpenEditor_Click" Padding="10,4" Margin="0,0,6,6"
+                                        ToolTip="Equalizer-APO-Editor öffnen, z. B. um Graillon in eine Stimme einzubauen"/>
+                            </WrapPanel>
+                            <TextBlock x:Name="VoiceHint" Foreground="{StaticResource FgDim}" TextWrapping="Wrap" Margin="0,2,0,0"
+                                       Text="Umschalten = einmal drücken. Halten = nur solange die Taste gedrückt ist."/>
+                        </StackPanel>
+                    </Border>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20,4,20,12">
+                        <ItemsControl x:Name="VoiceList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border x:Name="Card" Background="{StaticResource Card}" CornerRadius="8" Padding="14,10"
+                                            Margin="0,0,0,8" BorderThickness="2" BorderBrush="Transparent">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <CheckBox Visibility="{Binding SelectorVisibility}" IsChecked="{Binding InProfile, Mode=TwoWay}"
+                                                      IsEnabled="{Binding CanToggleProfile}" Click="ProfileVoice_Click"
+                                                      VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,12,0">
+                                                <TextBlock Text="{Binding Name}" FontSize="15" FontWeight="SemiBold"/>
+                                                <TextBlock Text="{Binding Description}" Foreground="{StaticResource FgDim}" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                                                <TextBlock Text="{Binding GraillonHint}" Visibility="{Binding GraillonVisibility}"
+                                                           Foreground="#C9A46A" FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap"/>
+                                            </StackPanel>
+                                            <Grid Grid.Column="2" Visibility="{Binding ControlsVisibility}" VerticalAlignment="Center" Margin="0,0,8,0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition/>
+                                                    <RowDefinition/>
+                                                </Grid.RowDefinitions>
+                                                <TextBlock Text="Umschalten" Foreground="{StaticResource FgDim}" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,4"/>
+                                                <Button Grid.Column="1" Content="{Binding HotkeyText}" Click="Hotkey_Click" MinWidth="150" Padding="10,4" Margin="0,0,4,4"
+                                                        ToolTip="Klicken und Tastenkombination drücken. Entf = löschen, Esc = abbrechen."/>
+                                                <Button Grid.Column="2" Content="✕" Click="ClearHotkey_Click" Padding="8,4" Margin="0,0,0,4" ToolTip="Shortcut entfernen"/>
+                                                <TextBlock Grid.Row="1" Text="Halten" Foreground="{StaticResource FgDim}" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                                <Button Grid.Row="1" Grid.Column="1" Content="{Binding HoldText}" Click="HoldKey_Click" MinWidth="150" Padding="10,4" Margin="0,0,4,0"
+                                                        ToolTip="Solange diese Taste gedrückt ist, ist die Stimme aktiv – beim Loslassen geht es zurück. Ideal: Ziffernblock oder F-Tasten."/>
+                                                <Button Grid.Row="1" Grid.Column="2" Content="✕" Click="ClearHold_Click" Padding="8,4" ToolTip="Halte-Taste entfernen"/>
+                                            </Grid>
+                                            <Button Grid.Column="3" Content="Aktivieren" Click="Activate_Click" VerticalAlignment="Center"
+                                                    Visibility="{Binding ControlsVisibility}"/>
+                                        </Grid>
+                                    </Border>
+                                    <DataTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                            <Setter TargetName="Card" Property="Background" Value="{StaticResource CardActive}"/>
+                                            <Setter TargetName="Card" Property="BorderBrush" Value="{StaticResource Accent}"/>
+                                        </DataTrigger>
+                                    </DataTemplate.Triggers>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
                 </DockPanel>
-            </StackPanel>
-        </Border>
+            </TabItem>
 
-        <!-- Stimmenliste -->
-        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20,4,20,12">
-            <ItemsControl x:Name="VoiceList">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Border x:Name="Card" Background="{StaticResource Card}" CornerRadius="8" Padding="14,10"
-                                Margin="0,0,0,8" BorderThickness="2" BorderBrush="Transparent">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                <StackPanel VerticalAlignment="Center" Margin="0,0,12,0">
-                                    <TextBlock Text="{Binding Name}" FontSize="15" FontWeight="SemiBold"/>
-                                    <TextBlock Text="{Binding Description}" Foreground="{StaticResource FgDim}" TextWrapping="Wrap" Margin="0,2,0,0"/>
-                                    <TextBlock Text="{Binding GraillonHint}" Visibility="{Binding GraillonVisibility}"
-                                               Foreground="#C9A46A" FontSize="12" Margin="0,3,0,0"/>
-                                </StackPanel>
-                                <Button Grid.Column="1" Content="{Binding HotkeyText}" Click="Hotkey_Click" MinWidth="150"
-                                        Margin="0,0,4,0" VerticalAlignment="Center"
-                                        ToolTip="Klicken und neue Tastenkombination drücken. Entf = löschen, Esc = abbrechen."/>
-                                <Button Grid.Column="2" Content="✕" Click="ClearHotkey_Click" Padding="9,6"
-                                        Margin="0,0,8,0" VerticalAlignment="Center" ToolTip="Shortcut entfernen"/>
-                                <Button Grid.Column="3" Content="Aktivieren" Click="Activate_Click" VerticalAlignment="Center"/>
-                            </Grid>
-                        </Border>
-                        <DataTemplate.Triggers>
-                            <DataTrigger Binding="{Binding IsActive}" Value="True">
-                                <Setter TargetName="Card" Property="Background" Value="{StaticResource CardActive}"/>
-                                <Setter TargetName="Card" Property="BorderBrush" Value="{StaticResource Accent}"/>
-                            </DataTrigger>
-                        </DataTemplate.Triggers>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </ScrollViewer>
+            <!-- ===== Soundboard ===== -->
+            <TabItem Header="Soundboard">
+                <DockPanel AllowDrop="True" Drop="Sounds_Drop" DragOver="Sounds_DragOver" Background="Transparent">
+                    <Border DockPanel.Dock="Top" Padding="20,12,20,6">
+                        <StackPanel>
+                            <WrapPanel>
+                                <Button Content="■  Alle stoppen" Click="StopSounds_Click" Padding="12,5" Margin="0,0,16,8"/>
+                                <TextBlock Text="Lautstärke für andere" Foreground="{StaticResource FgDim}" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                <Slider x:Name="SoundVolumeSlider" Width="130" Minimum="0" Maximum="1" VerticalAlignment="Center" Margin="0,0,16,8"
+                                        ValueChanged="SoundVolume_Changed"/>
+                                <CheckBox x:Name="SoundMonitorCheck" Content="Selbst mithören" Click="SoundMonitor_Click" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                <Slider x:Name="SoundMonitorSlider" Width="110" Minimum="0" Maximum="1" VerticalAlignment="Center" Margin="0,0,16,8"
+                                        ValueChanged="SoundVolume_Changed"/>
+                                <Button Content="Ordner" Click="OpenSoundFolder_Click" Padding="10,4" Margin="0,0,0,8" ToolTip="Sound-Ordner öffnen"/>
+                            </WrapPanel>
+                            <TextBlock x:Name="SoundHint" Foreground="{StaticResource FgDim}" TextWrapping="Wrap"
+                                       Text="Audiodateien (wav, mp3, m4a, flac …) einfach hierher ziehen. Sounds laufen über deinen aktiven Stimmeffekt – unter der Maske klingen sie also auch gedämpft."/>
+                            <TextBlock x:Name="SoundError" Foreground="#E5807A" TextWrapping="Wrap" Margin="0,6,0,0" Visibility="Collapsed"/>
+                        </StackPanel>
+                    </Border>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20,4,20,12">
+                        <ItemsControl x:Name="SoundList">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{StaticResource Card}" CornerRadius="8" Padding="12,10" Margin="0,0,8,8" Width="220">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Margin="0,0,0,8"
+                                                       ToolTip="{Binding FileName}"/>
+                                            <Button Content="▶  Abspielen" Click="PlaySound_Click" Margin="0,0,0,6"/>
+                                            <DockPanel>
+                                                <Button DockPanel.Dock="Right" Content="✕" Click="ClearSoundHotkey_Click" Padding="8,4" Margin="4,0,0,0" ToolTip="Shortcut entfernen"/>
+                                                <Button Content="{Binding HotkeyText}" Click="SoundHotkey_Click" Padding="8,4"
+                                                        ToolTip="Klicken und Tastenkombination drücken. Entf = löschen, Esc = abbrechen."/>
+                                            </DockPanel>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </DockPanel>
+            </TabItem>
+
+            <!-- ===== Einrichtung ===== -->
+            <TabItem Header="Einrichtung">
+                <DockPanel>
+                    <Border DockPanel.Dock="Top" Padding="20,12,20,6">
+                        <DockPanel>
+                            <Button DockPanel.Dock="Right" Content="Erneut prüfen" Click="RunSetupCheck_Click" Padding="12,5"/>
+                            <TextBlock x:Name="SetupSummary" TextWrapping="Wrap" VerticalAlignment="Center" Foreground="{StaticResource FgDim}"
+                                       Text="Prüft, ob die ganze Kette Mikrofon → Kabel → Equalizer APO → Spiel richtig eingerichtet ist."/>
+                        </DockPanel>
+                    </Border>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20,4,20,12">
+                        <ItemsControl x:Name="CheckList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{StaticResource Card}" CornerRadius="8" Padding="14,10" Margin="0,0,0,8">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="{Binding Icon}" FontFamily="Segoe MDL2 Assets" FontSize="18" Foreground="{Binding IconBrush}"
+                                                       VerticalAlignment="Center" Margin="0,0,14,0"/>
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Title}" FontSize="14" FontWeight="SemiBold"/>
+                                                <TextBlock Text="{Binding Detail}" Foreground="{StaticResource FgDim}" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                                            </StackPanel>
+                                            <Button Grid.Column="2" Content="{Binding FixLabel}" Visibility="{Binding FixVisibility}" Click="Fix_Click"
+                                                    VerticalAlignment="Center" Margin="12,0,0,0"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </DockPanel>
+            </TabItem>
+
+            <!-- ===== Einstellungen ===== -->
+            <TabItem Header="Einstellungen">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20,14,20,12">
+                    <StackPanel>
+                        <TextBlock Text="Allgemein" FontSize="15" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                        <WrapPanel>
+                            <CheckBox x:Name="SoundCheck" Content="Ton beim Umschalten" Click="Option_Changed"/>
+                            <CheckBox x:Name="OverlayCheck" Content="Einblendung beim Wechsel" Click="Option_Changed"/>
+                            <CheckBox x:Name="TrayCheck" Content="Schließen = in den Tray" Click="Option_Changed"/>
+                            <CheckBox x:Name="AutostartCheck" Content="Mit Windows starten" Click="Autostart_Changed"/>
+                        </WrapPanel>
+
+                        <TextBlock Text="Status-Anzeige" FontSize="15" FontWeight="SemiBold" Margin="0,16,0,8"/>
+                        <WrapPanel>
+                            <CheckBox x:Name="StatusCheck" Content="Auf dem Bildschirm anzeigen" Click="StatusOverlay_Changed" VerticalAlignment="Center"
+                                      ToolTip="Zeigt dauerhaft an, welcher Charakter und welche Stimme aktiv ist"/>
+                            <Button x:Name="MoveStatusButton" Content="Position anpassen" Click="MoveStatus_Click" Padding="10,3" Margin="0,0,8,6"
+                                    ToolTip="Anzeige mit der Maus verschieben. Doppelklick auf die Anzeige oder 'Fertig' zum Speichern."/>
+                            <Button Content="Position zurücksetzen" Click="ResetStatusPosition_Click" Padding="10,3" Margin="0,0,0,6"/>
+                        </WrapPanel>
+
+                        <TextBlock Text="Geräte" FontSize="15" FontWeight="SemiBold" Margin="0,16,0,8"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition/>
+                                <RowDefinition/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="Stimmen wirken auf:" Foreground="{StaticResource FgDim}" VerticalAlignment="Center" Margin="0,0,10,8"/>
+                            <TextBox x:Name="DeviceBox" Grid.Column="1" Margin="0,0,0,8" LostFocus="DeviceBox_LostFocus"
+                                     ToolTip="Aufnahmegerät, auf das die Stimmen wirken (wie in Windows angezeigt), z. B. CABLE Output"/>
+                            <TextBlock Grid.Row="1" Text="Soundboard spielt auf:" Foreground="{StaticResource FgDim}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <TextBox x:Name="SoundDeviceBox" Grid.Row="1" Grid.Column="1" LostFocus="SoundDeviceBox_LostFocus"
+                                     ToolTip="Wiedergabegerät, das ins Mikrofon der anderen geht, z. B. CABLE Input"/>
+                        </Grid>
+                        <TextBlock Foreground="{StaticResource FgDim}" TextWrapping="Wrap" Margin="0,10,0,0" FontSize="12"
+                                   Text="Ein Teil des Gerätenamens reicht. Ob alles zusammenpasst, zeigt der Tab „Einrichtung“."/>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
     </DockPanel>
 </Window>

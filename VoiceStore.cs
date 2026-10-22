@@ -33,6 +33,17 @@ public sealed class VoiceStore
 
     private VoiceStore(string configDir) => ConfigDir = configDir;
 
+    /// <summary>Die "Normal"-Stimme (00-…) gehört immer zu jedem Profil.</summary>
+    public static bool IsNormalFile(string fileName) =>
+        fileName.StartsWith("00-", StringComparison.OrdinalIgnoreCase);
+
+    public bool IsMainConfigIncludingVoice()
+    {
+        if (!File.Exists(MainConfigFile)) return false;
+        return File.ReadLines(MainConfigFile)
+                   .Any(l => l.Trim().Equals("Include: voice.txt", StringComparison.OrdinalIgnoreCase));
+    }
+
     public static VoiceStore? TryCreate()
     {
         string? dir = null;

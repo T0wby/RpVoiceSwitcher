@@ -1,0 +1,241 @@
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Threading;
+
+namespace RpVoiceSwitcher;
+
+// Stimmen laden/anzeigen, Umschalten, Halten, Status-Anzeige
+public partial class MainWindow
+{
+    private readonly List<VoiceItem> _allVoices = new();
+    private readonly ObservableCollection<VoiceItem> _items = new();
+    private FileSystemWatcher? _watcher;
+    private readonly DispatcherTimer _reloadDebounce = new() { Interval = TimeSpan.FromMilliseconds(400) };
+    private OverlayWindow? _overlay;
+    private StatusOverlayWindow? _status;
+    private bool _statusEditing;
+
+    /// <summary>Zuletzt bewusst gewählte Stimme – dahin geht es nach dem Loslassen einer Halte-Taste zurück.</summary>
+    private VoiceItem? _baseVoice;
+
+    /// <summary>Stimme, deren Halte-Taste gerade gedrückt ist.</summary>
+    private VoiceItem? _holdVoice;
+
+    private IEnumerable<VoiceItem> ProfileVoices() => _allVoices.Where(v => _settings.Current.ContainsVoice(v.FileName));
+    private VoiceItem? CurrentVoice() => _allVoices.FirstOrDefault(v => v.IsActive);
+    private VoiceItem? NormalVoice() => _allVoices.FirstOrDefault(v => v.IsNormal);
+
+    private void LoadVoices()
+    {
+        _holdHook.ReleaseHeld();
+        _holdVoice = null;
+        _allVoices.Clear();
+        if (_store != null)
+        {
+            string? active = _store.GetActiveFileName();
+            foreach (var preset in _store.LoadVoices())
+                _allVoices.Add(new VoiceItem(preset)
+                {
+                    IsActive = string.Equals(preset.FileName, active, StringComparison.OrdinalIgnoreCase),
+                });
+        }
+        _baseVoice = CurrentVoice();
+        RefreshVoiceList();
+        RegisterAllBindings();
+        UpdateStatus();
+    }
+
+    /// <summary>Zeigt die Stimmen des aktuellen Charakters – im Auswahlmodus alle mit Häkchen.</summary>
+    private void RefreshVoiceList()
+    {
+        _items.Clear();
+        var profile = _settings.Current;
+        foreach (var v in _allVoices)
+        {
+            v.Selecting = _selectingVoices;
+            v.InProfile = profile.ContainsVoice(v.FileName);
+            if (_selectingVoices || v.InProfile) _items.Add(v);
+        }
+    }
+
+    private void WatchVoicesFolder()
+    {
+        if (_store == null || !Directory.Exists(_store.VoicesDir)) return;
+
+        _reloadDebounce.Tick += (_, _) =>
+        {
+            _reloadDebounce.Stop();
+            if (_capture != null) { _reloadDebounce.Start(); return; } // nicht mitten in der Tastenaufnahme neu laden
+            LoadVoices();
+        };
+
+        _watcher = new FileSystemWatcher(_store.VoicesDir, "*.txt")
+        {
+            NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite | NotifyFilters.Size,
+            EnableRaisingEvents = true,
+        };
+        FileSystemEventHandler changed = (_, _) => Dispatcher.InvokeAsync(() =>
+        {
+            _reloadDebounce.Stop();
+            _reloadDebounce.Start();
+        });
+        _watcher.Created += changed;
+        _watcher.Changed += changed;
+        _watcher.Deleted += changed;
+        _watcher.Renamed += (s, e) => changed(s, e);
+    }
+
+    // ---------- Umschalten ----------
+
+    /// <summary>Bewusster Wechsel (Shortcut, Klick, Tray). Beendet ein laufendes Halten.</summary>
+    private void ActivateVoice(VoiceItem item)
+    {
+        _holdVoice = null;
+        _baseVoice = item;
+        ApplyVoice(item, quiet: false);
+    }
+
+    private void BeginHold(VoiceItem item)
+    {
+        if (_holdVoice == null) _baseVoice = CurrentVoice() ?? NormalVoice();
+        _holdVoice = item;
+        ApplyVoice(item, quiet: true); // kein Ton/keine Einblendung – sonst stört es beim Sprechen
+    }
+
+    private void EndHold(VoiceItem item)
+    {
+        if (!ReferenceEquals(_holdVoice, item)) return; // wurde inzwischen bewusst umgeschaltet
+        _holdVoice = null;
+        var back = _baseVoice ?? NormalVoice();
+        if (back != null) ApplyVoice(back, quiet: true);
+    }
+
+    private void ApplyVoice(VoiceItem item, bool quiet)
+    {
+        if (_store == null) return;
+        try
+        {
+            _store.Activate(item.Preset, _settings.TargetDevice);
+        }
+        catch (Exception ex)
+        {
+            StatusText.Text = "Umschalten fehlgeschlagen: " + ex.Message;
+            return;
+        }
+
+        foreach (var v in _allVoices) v.IsActive = ReferenceEquals(v, item);
+        UpdateStatus();
+        if (quiet) return;
+
+        if (_settings.ShowOverlay)
+        {
+            _overlay ??= new OverlayWindow();
+            _overlay.Flash("Stimme: " + item.Name);
+        }
+        Beep(item.IsNormal ? 520 : 880);
+    }
+
+    private void Beep(int freq)
+    {
+        if (!_settings.PlaySound) return;
+        Task.Run(() => { try { Console.Beep(freq, 90); } catch { /* kein Ton verfügbar */ } });
+    }
+
+    private void Activate_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.DataContext is VoiceItem item) ActivateVoice(item);
+    }
+
+    private void UpdateStatus()
+    {
+        var active = CurrentVoice();
+        string voice = active?.Name ?? "keine";
+        string profile = _settings.Profiles.Count > 1 ? $"Charakter: {_settings.Current.Name}   ·   " : "";
+        if (_store != null)
+            StatusText.Text = $"{profile}Aktive Stimme: {voice}{(_holdVoice != null ? " (gehalten)" : "")}   ·   Wirkt auf: {_settings.TargetDevice}";
+        _tray.Text = Truncate((_settings.Profiles.Count > 1 ? _settings.Current.Name + ": " : "RP-Stimme: ") + voice, 63);
+        UpdateStatusOverlay();
+    }
+
+    private static string Truncate(string s, int max) => s.Length <= max ? s : s[..max];
+
+    // ---------- Status-Anzeige ----------
+
+    private void UpdateStatusOverlay()
+    {
+        if (!_settings.ShowStatusOverlay)
+        {
+            if (_status != null)
+            {
+                SetStatusEditMode(false);
+                _status.Hide();
+            }
+            return;
+        }
+
+        if (_status == null)
+        {
+            _status = new StatusOverlayWindow();
+            _status.PositionChanged += (left, top) =>
+            {
+                _settings.StatusOverlayLeft = left;
+                _settings.StatusOverlayTop = top;
+                _settings.Save();
+            };
+            _status.EditFinished += () => SetStatusEditMode(false);
+        }
+
+        var active = CurrentVoice();
+        string text = active?.Name ?? "Keine Stimme";
+        if (_settings.Profiles.Count > 1) text = _settings.Current.Name + " · " + text;
+        _status.SetVoice(text, active == null || active.IsNormal);
+
+        if (!_status.IsVisible)
+            _status.ShowAt(_settings.StatusOverlayLeft, _settings.StatusOverlayTop);
+    }
+
+    private void SetStatusEditMode(bool on)
+    {
+        if (on && !_settings.ShowStatusOverlay)
+        {
+            _settings.ShowStatusOverlay = true;
+            StatusCheck.IsChecked = true;
+            _settings.Save();
+            UpdateStatusOverlay();
+        }
+
+        _statusEditing = on && _status != null;
+        _status?.SetEditMode(_statusEditing);
+        MoveStatusButton.Content = _statusEditing ? "Fertig" : "Position anpassen";
+    }
+
+    private void StatusOverlay_Changed(object sender, RoutedEventArgs e)
+    {
+        _settings.ShowStatusOverlay = StatusCheck.IsChecked == true;
+        _settings.Save();
+        UpdateStatusOverlay();
+    }
+
+    private void MoveStatus_Click(object sender, RoutedEventArgs e) => SetStatusEditMode(!_statusEditing);
+
+    private void ResetStatusPosition_Click(object sender, RoutedEventArgs e)
+    {
+        _settings.StatusOverlayLeft = null;
+        _settings.StatusOverlayTop = null;
+        _settings.Save();
+        _status?.MoveTo(null, null);
+    }
+
+    private void ToggleStatusOverlay()
+    {
+        _settings.ShowStatusOverlay = !_settings.ShowStatusOverlay;
+        StatusCheck.IsChecked = _settings.ShowStatusOverlay;
+        _settings.Save();
+        UpdateStatusOverlay();
+    }
+}
