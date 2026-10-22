@@ -75,10 +75,12 @@ public sealed class HoldKeyHook : IDisposable
 
     private IntPtr HookProc(int nCode, IntPtr wParam, IntPtr lParam)
     {
-        if (nCode >= 0 && !Suspended)
+        var info = nCode >= 0 ? Marshal.PtrToStructure<KBDLLHOOKSTRUCT>(lParam) : default;
+        // Eigene Sprachtasten-Eingaben (Push-to-Talk fürs Soundboard) nicht als Halte-Taste werten
+        if (nCode >= 0 && !Suspended && info.extra != PushToTalk.InjectedMarker)
         {
             int msg = wParam.ToInt32();
-            int vk = Marshal.PtrToStructure<KBDLLHOOKSTRUCT>(lParam).vkCode;
+            int vk = info.vkCode;
 
             if (msg is WM_KEYDOWN or WM_SYSKEYDOWN)
             {

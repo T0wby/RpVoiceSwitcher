@@ -19,6 +19,7 @@ Updates findet die App selbst (abschaltbar) – oder *Hilfe → Nach Updates suc
 
 - *Extras → Einrichtung* prüft die ganze Kette und behebt vieles per Klick.
 - Kein Effekt im Spiel, obwohl die Stimme aktiv ist? Meist hat das Spiel das Mikrofon „exklusiv“ geöffnet – die Einrichtung schaltet den Exklusivmodus an „CABLE Output“ ab.
+- Sounds kommen im Sprachchat nicht an? Lautstärke für andere hochdrehen (bis 200 %) – und bei Spielen mit Push-to-Talk (z. B. nanos world) im Soundboard „Sprachtaste des Spiels drücken“ einschalten.
 - Sonst: *Hilfe → Problem melden* kopiert eine Diagnose und öffnet ein [GitHub-Issue](https://github.com/T0wby/RpVoiceSwitcher/issues/new?template=problem.yml) zum Einfügen.
 
 ## Funktionen
@@ -26,7 +27,7 @@ Updates findet die App selbst (abschaltbar) – oder *Hilfe → Nach Updates suc
 - **Stimmen** umschalten oder nur solange eine Taste gehalten wird; Shortcuts funktionieren global, auch im Spiel
 - **Charaktere** mit eigener Stimmenauswahl und eigenen Shortcuts
 - **Notfall-Taste** (Standard: Pause): sofort normale Stimme, alle Sounds aus
-- **Soundboard** – Sounds wahlweise durch den Stimmeffekt oder unverändert; einmal, n-mal oder als Endlos-Loop, den derselbe Shortcut wieder stoppt
+- **Soundboard** – Sounds wahlweise durch den Stimmeffekt oder unverändert; einmal, n-mal oder als Endlos-Loop, den derselbe Shortcut wieder stoppt; gleicht die Lautstärke automatisch an (Regler bis 200 % mit Begrenzer) und drückt auf Wunsch die Push-to-Talk-Taste des Spiels, solange ein Sound läuft (Taste oder Maus 4/5)
 - **Probehören**: kurz sprechen, normal und mit Effekt vergleichen; misst den Lautstärke-Unterschied und gleicht ihn auf Wunsch aus
 - **Lautstärke-Ausgleich** pro Stimme
 - Stimmen anlegen, bearbeiten, kopieren, **exportieren/importieren** (.txt oder ZIP)

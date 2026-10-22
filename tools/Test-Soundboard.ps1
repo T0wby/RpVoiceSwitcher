@@ -47,7 +47,8 @@ try {
     # ---------- Standard-Ordner ----------
     Set-Content (Join-Path $voices '99-teststumm.txt') $stumm -NoNewline
     $p = Start-App; Stop-Process -Id $p.Id; Start-Sleep -m 400     # Migration/Start-Sounds
-    Set-TestSettings @{ VoicesFolder = $null; SoundFolder = $null }
+    # Eigener Sound-Ordner mit frischen Start-Sounds – unabhaengig davon, was im echten Ordner liegt
+    Set-TestSettings @{ VoicesFolder = $null; SoundFolder = (Join-Path $tmp 'StdSounds') }
     $p = Start-App
 
     "=== Stimme Normal ==="

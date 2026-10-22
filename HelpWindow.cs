@@ -46,6 +46,7 @@ public sealed class HelpWindow : Window
             "„Wiederholen“: einmal, mehrmals hintereinander oder endlos (Loop, z. B. für Hintergrundgeräusche).",
             "Läuft ein Sound, stoppt ihn derselbe Shortcut oder ein Klick auf „■ Stoppen“. Fortschritt und Zeit siehst du an der Karte und in der Status-Anzeige.",
             "Alle Sounds stoppen: Strg+. oder der Button im Soundboard. Die Notfall-Taste stoppt auch Loops.",
+            "Kommen Sounds im Spiel nicht an? 1) „Lautstärke für andere“ hochdrehen (bis 200 %, ein Begrenzer verhindert Übersteuern) und „Lautstärke angleichen“ anlassen. 2) Nutzt das Spiel Push-to-Talk (Sprechen nur mit gedrückter Taste, z. B. nanos world), „Sprachtaste des Spiels drücken“ einschalten und dieselbe Taste wählen – auch Maus 4/5 geht. 3) Im Spiel muss CABLE Output als Mikrofon eingestellt sein; Rauschunterdrückung dort möglichst aus.",
         ]),
         ("Tipps",
         [

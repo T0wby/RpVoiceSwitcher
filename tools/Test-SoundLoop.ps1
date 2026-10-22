@@ -8,6 +8,7 @@ $probe = Join-Path $repo 'tools\AudioProbe\bin\out\AudioProbe.exe'
 $realSettings = "$env:APPDATA\RpVoiceSwitcher\settings.json"
 $settings = Join-Path $env:TEMP "rpvs-test-settings-$PID.json"
 $log = Join-Path $env:TEMP "rpvs-loop-$PID.txt"
+$soundDir = Join-Path $env:TEMP "rpvs-loop-sounds-$PID"   # frische Start-Sounds, unabhaengig vom echten Ordner
 $realHash = (Get-FileHash $realSettings).Hash
 $cfg = 'C:\Program Files\EqualizerAPO\config'
 Copy-Item (Join-Path $cfg 'voice.txt') "$env:TEMP\voice.loopbackup" -Force
@@ -31,7 +32,7 @@ function Write-TestSettings([int]$repeat) {
     $p0.Hotkeys = [pscustomobject]@{ '00-normal.txt' = 'Control, Alt|F9'; '99-teststumm.txt' = 'Control, Alt|F8' }; $p0.HoldHotkeys = [pscustomobject]@{}
     $p0.SoundHotkeys = [pscustomobject]@{ 'Messingglocke.wav' = 'Control, Alt|F11' }
     $j.Profiles = @($p0); $j.ActiveProfile = $p0.Name
-    $extra = @{ SoundMonitor = $false; SoundVolume = 0.8; ShowOverlay = $false; PlaySound = $false; CheckForUpdates = $false
+    $extra = @{ SoundMonitor = $false; SoundVolume = 0.8; SoundFolder = $soundDir; ShowOverlay = $false; PlaySound = $false; CheckForUpdates = $false
                 ShowStatusOverlay = $true; StatusOverlayHideNormal = $true; StatusOverlayShowSounds = $true
                 SetupWizardDone = $true; SoundsWithEffect = @(); SoundRepeat = $(if ($repeat -eq 1) { [pscustomobject]@{} } else { [pscustomobject]@{ 'Messingglocke.wav' = $repeat } }) }
     foreach ($k in $extra.Keys) { $j | Add-Member $k $extra[$k] -Force }
@@ -136,6 +137,7 @@ finally {
     Get-Process RpVoiceSwitcher -EA SilentlyContinue | Stop-Process
     Start-Sleep -m 500
     Remove-Item $settings, $log, $mute -ErrorAction SilentlyContinue
+    Remove-Item $soundDir -Recurse -Force -ErrorAction SilentlyContinue
     Copy-Item "$env:TEMP\voice.loopbackup" (Join-Path $cfg 'voice.txt') -Force
     Copy-Item "$env:TEMP\voice-active.loopbackup" (Join-Path $cfg 'voice-active.cfg') -Force
     if ((Get-FileHash $realSettings).Hash -ne $realHash) { "!! FEHLER: Die echte settings.json wurde veraendert!" } else { "Echte Einstellungen unveraendert                                     OK" }

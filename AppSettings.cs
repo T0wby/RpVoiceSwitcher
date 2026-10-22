@@ -100,6 +100,14 @@ public sealed class AppSettings
     public bool SoundMonitor { get; set; } = true;
     public double SoundMonitorVolume { get; set; } = 0.5;
 
+    /// <summary>Jeden Sound automatisch auf dieselbe (volle) Lautstärke bringen.</summary>
+    public bool SoundNormalize { get; set; } = true;
+
+    /// <summary>Sprachtaste (Push-to-Talk) des Spiels drücken, solange ein Sound läuft.</summary>
+    public bool PushToTalkEnabled { get; set; }
+    /// <summary>z. B. "Key|V" oder "Mouse|1" (Maus 4).</summary>
+    public string? PushToTalkKey { get; set; }
+
     /// <summary>Sounds, die durch den aktiven Stimmeffekt laufen sollen (Standard: ohne Effekt).</summary>
     public List<string> SoundsWithEffect { get; set; } = new();
 

@@ -9,7 +9,7 @@ namespace RpVoiceSwitcher;
 // Tastenbelegung: Umschalten, Halten und Sounds – jeweils pro Charakter
 public partial class MainWindow
 {
-    private enum BindingKind { Toggle, Hold, Sound, Panic }
+    private enum BindingKind { Toggle, Hold, Sound, Panic, PushToTalk }
 
     private sealed record Capture(BindingKind Kind, string FileName, Action<string> SetText);
 
@@ -108,6 +108,23 @@ public partial class MainWindow
         e.Handled = true;
 
         Key key = e.Key == Key.System ? e.SystemKey : e.Key;
+
+        // Sprachtaste des Spiels: eine einzelne Taste, auch Buchstaben oder Strg/Alt/Umschalt allein
+        if (_capture.Kind == BindingKind.PushToTalk)
+        {
+            if (key == Key.Escape) { CancelCapture(); return; }
+            if (key is Key.Delete or Key.Back)
+            {
+                _settings.PushToTalkKey = null;
+                FinishCapture();
+                UpdatePushToTalkUi();
+                return;
+            }
+            if (key is Key.ImeProcessed or Key.DeadCharProcessed or Key.None or Key.LWin or Key.RWin) return;
+            CapturePushToTalk(new PushToTalk.Binding(false, key, 0));
+            return;
+        }
+
         if (key is Key.LeftCtrl or Key.RightCtrl or Key.LeftAlt or Key.RightAlt or Key.LeftShift
             or Key.RightShift or Key.LWin or Key.RWin or Key.ImeProcessed or Key.DeadCharProcessed)
             return; // auf die eigentliche Taste warten
@@ -177,6 +194,7 @@ public partial class MainWindow
     private void Panic()
     {
         _soundEngine.StopAll();
+        ReleasePttNow();
         _holdVoice = null;
         var normal = NormalVoice();
         if (normal != null)
@@ -214,10 +232,12 @@ public partial class MainWindow
     private void CancelCapture()
     {
         if (_capture == null) return;
+        bool ptt = _capture.Kind == BindingKind.PushToTalk;
         MarkCaptureEnded();
         _capture = null;
         _holdHook.Suspended = false;
         RegisterAllBindings();
+        if (ptt) UpdatePushToTalkUi();
     }
 
     // ---------- Entfernen / Zurücksetzen ----------

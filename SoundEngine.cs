@@ -106,9 +106,29 @@ public sealed class SoundEngine : IDisposable
         var mixer = new MixingSampleProvider(WaveFormat.CreateIeeeFloatWaveFormat(rate, 2)) { ReadFully = true };
         var master = new VolumeSampleProvider(mixer) { Volume = (float)volume };
         var output = new WasapiOut(device, AudioClientShareMode.Shared, true, 60);
-        output.Init(master);
+        output.Init(new SoftLimiter(master)); // Lautstärke über 100 % ohne hartes Übersteuern
         output.Play();
         return new Output { Device = output, Mixer = mixer, Master = master, DeviceId = device.ID };
+    }
+
+    /// <summary>
+    /// Weicher Begrenzer: unter 0,8 unverändert, darüber sanft gegen 1,0 gedrückt statt hart abgeschnitten.
+    /// Symmetrisch – die Gegenphase für Sounds ohne Stimmeffekt (L = +x, R = -x) bleibt erhalten.
+    /// </summary>
+    private sealed class SoftLimiter(ISampleProvider source) : ISampleProvider
+    {
+        private const float Knee = 0.8f, Room = 1f - Knee;
+        public WaveFormat WaveFormat => source.WaveFormat;
+        public int Read(float[] buffer, int offset, int count)
+        {
+            int n = source.Read(buffer, offset, count);
+            for (int i = offset; i < offset + n; i++)
+            {
+                float x = buffer[i], a = Math.Abs(x);
+                if (a > Knee) buffer[i] = Math.Sign(x) * (Knee + Room * MathF.Tanh((a - Knee) / Room));
+            }
+            return n;
+        }
     }
 
     public void SetVolume(double volume, double monitorVolume)
@@ -161,13 +181,14 @@ public sealed class SoundEngine : IDisposable
         }
     }
 
-    public bool Play(string path, bool bypassEffect, int repeat = 1)
+    /// <param name="gain">Lautstärke-Faktor nur für diesen Sound (z. B. aus dem automatischen Angleichen).</param>
+    public bool Play(string path, bool bypassEffect, int repeat = 1, float gain = 1f)
     {
         if (_remote == null) return false;
         try
         {
-            AddTo(_remote, path, repeat, sp => new MidSideProvider(sp, bypassEffect), primary: true);
-            if (_monitor != null) AddTo(_monitor, path, repeat, null, primary: false);
+            AddTo(_remote, path, repeat, sp => new MidSideProvider(Gain(sp, gain), bypassEffect), primary: true);
+            if (_monitor != null) AddTo(_monitor, path, repeat, sp => Gain(sp, gain), primary: false);
             return true;
         }
         catch (Exception ex)
@@ -175,6 +196,26 @@ public sealed class SoundEngine : IDisposable
             Error = $"\"{System.IO.Path.GetFileName(path)}\" konnte nicht abgespielt werden: {ex.Message}";
             return false;
         }
+    }
+
+    private static ISampleProvider Gain(ISampleProvider sp, float gain) =>
+        Math.Abs(gain - 1f) < 0.01f ? sp : new VolumeSampleProvider(sp) { Volume = gain };
+
+    /// <summary>Lautester Wert einer Datei (0 … 1+), für das automatische Angleichen. Liest höchstens 10 Minuten.</summary>
+    public static float MeasurePeak(string path)
+    {
+        using var reader = new AudioFileReader(path);
+        var buffer = new float[reader.WaveFormat.SampleRate * reader.WaveFormat.Channels];
+        long max = (long)reader.WaveFormat.SampleRate * reader.WaveFormat.Channels * 600;
+        long done = 0;
+        float peak = 0;
+        int n;
+        while (done < max && (n = reader.Read(buffer, 0, buffer.Length)) > 0)
+        {
+            for (int i = 0; i < n; i++) peak = Math.Max(peak, Math.Abs(buffer[i]));
+            done += n;
+        }
+        return peak;
     }
 
     private void AddTo(Output output, string path, int repeat, Func<ISampleProvider, ISampleProvider>? transform, bool primary)

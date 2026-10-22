@@ -56,6 +56,7 @@ public partial class MainWindow : Window
         SoundVolumeSlider.Value = _settings.SoundVolume;
         SoundMonitorSlider.Value = _settings.SoundMonitorVolume;
         SoundMonitorCheck.IsChecked = _settings.SoundMonitor;
+        SoundNormalizeCheck.IsChecked = _settings.SoundNormalize;
 
         _tray = CreateTrayIcon();
         Deactivated += (_, _) => CancelCapture();
@@ -88,6 +89,7 @@ public partial class MainWindow : Window
         EnsureActiveVoiceInProfile();
         WatchVoicesFolder();
         InitSoundboard();
+        InitPushToTalk();
         RefreshFolderTexts();
         RunSetupCheck();
         WatchDevices();
@@ -286,6 +288,7 @@ public partial class MainWindow : Window
         _deviceWatcher?.Dispose();
         _holdHook.Dispose();
         _hotkeys.Dispose();
+        ReleasePttNow();
         _soundEngine.Dispose();
         _tray.Visible = false;
         _tray.Dispose();

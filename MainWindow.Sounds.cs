@@ -78,6 +78,8 @@ public partial class MainWindow
                 });
         }
         catch (Exception ex) { ShowSoundError("Sound-Ordner konnte nicht gelesen werden: " + ex.Message); }
+        // Lautstärke im Hintergrund vormessen, damit schon der erste Druck angeglichen klingt
+        if (_settings.SoundNormalize) SoundLevels.Prepare(_sounds.Select(s => s.File.FullPath));
         RegisterAllBindings();
         UpdateSoundStatus();
     }
@@ -102,7 +104,7 @@ public partial class MainWindow
     private void PlaySound(SoundItem item)
     {
         string path = item.File.FullPath;
-        if (_soundEngine.IsPlaying(path))
+        if (_soundEngine.IsPlaying(path) || CancelPendingSound(path))
         {
             _soundEngine.Stop(path);
             item.IsPlaying = false;
@@ -110,9 +112,13 @@ public partial class MainWindow
             return;
         }
         if (!File.Exists(path)) { LoadSounds(); return; }
-        if (!_soundEngine.Play(path, bypassEffect: !item.ThroughEffect, repeat: item.Repeat))
+        bool throughEffect = item.ThroughEffect;
+        int repeat = item.Repeat;
+        float gain = _settings.SoundNormalize ? SoundLevels.GainFor(path) : 1f;
+        if (!StartSoundWithPtt(path, () => _soundEngine.Play(path, bypassEffect: !throughEffect, repeat: repeat, gain: gain)))
         {
             ShowSoundError(_soundEngine.Error);
+            SchedulePttRelease();
             return;
         }
         if (SoundError.Visibility == Visibility.Visible && _soundEngine.Error == null) ShowSoundError(null);
@@ -139,13 +145,17 @@ public partial class MainWindow
                 s.TimeText = SoundItem.FormatProgress(p);
                 lines.Add(new StatusOverlayWindow.SoundLine(s.Name, p.Fraction, s.TimeText));
             }
-            else s.IsPlaying = false;
+            else s.IsPlaying = _pttPending.Contains(s.File.FullPath); // Vorlauf der Sprachtaste zählt schon als "läuft"
         }
 
         bool overlayChanged = lines.Count != _overlaySounds.Count || lines.Count > 0;
         _overlaySounds = lines;
         if (overlayChanged) UpdateStatusOverlay();
-        if (progress.Count == 0) _soundStateTimer.Stop();
+        if (progress.Count == 0 && _pttPending.Count == 0)
+        {
+            _soundStateTimer.Stop();
+            SchedulePttRelease();
+        }
     }
 
     private void SoundRepeat_Changed(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
@@ -172,7 +182,21 @@ public partial class MainWindow
         _settings.Save();
     }
 
-    private void StopSounds_Click(object sender, RoutedEventArgs e) => _soundEngine.StopAll();
+    private void StopSounds_Click(object sender, RoutedEventArgs e) => StopAllSounds();
+
+    private void StopAllSounds()
+    {
+        _soundEngine.StopAll();
+        ReleasePttNow();
+        UpdateSoundPlayingState();
+    }
+
+    private void SoundNormalize_Click(object sender, RoutedEventArgs e)
+    {
+        _settings.SoundNormalize = SoundNormalizeCheck.IsChecked == true;
+        _settings.Save();
+        if (_settings.SoundNormalize) SoundLevels.Prepare(_sounds.Select(s => s.File.FullPath));
+    }
 
     // ---------- Umbenennen / Löschen ----------
 

@@ -6,7 +6,7 @@
         WindowStartupLocation="CenterScreen" Language="de-DE"
         Background="{StaticResource Bg}" Foreground="{StaticResource Fg}"
         FontFamily="Segoe UI" FontSize="13"
-        PreviewKeyDown="Window_PreviewKeyDown" PreviewKeyUp="Window_PreviewKeyUp">
+        PreviewKeyDown="Window_PreviewKeyDown" PreviewKeyUp="Window_PreviewKeyUp" PreviewMouseDown="Window_PreviewMouseDown">
     <DockPanel>
         <!-- ===== Menüleiste (Alt oder F10 öffnet sie) ===== -->
         <Menu DockPanel.Dock="Top">
@@ -418,8 +418,9 @@
                             </WrapPanel>
                             <WrapPanel>
                                 <TextBlock Text="Lautstärke für andere" Foreground="{StaticResource FgDim}" VerticalAlignment="Center" Margin="0,0,8,8"/>
-                                <Slider x:Name="SoundVolumeSlider" Width="140" Minimum="0" Maximum="1" VerticalAlignment="Center" Margin="0,0,6,8"
-                                        ValueChanged="SoundVolume_Changed" AutomationProperties.Name="Lautstärke für andere"/>
+                                <Slider x:Name="SoundVolumeSlider" Width="180" Minimum="0" Maximum="2" VerticalAlignment="Center" Margin="0,0,6,8"
+                                        ValueChanged="SoundVolume_Changed" AutomationProperties.Name="Lautstärke für andere"
+                                        ToolTip="Bis 200 %: über 100 % wird verstärkt – ein Begrenzer verhindert, dass es übersteuert. Kommt im Sprachchat nichts an, hier hochdrehen."/>
                                 <TextBlock Text="{Binding Value, ElementName=SoundVolumeSlider, StringFormat={}{0:P0}}" Width="42" VerticalAlignment="Center" Margin="0,0,18,8"/>
                                 <CheckBox x:Name="SoundMonitorCheck" Content="Selbst mithören" Click="SoundMonitor_Click" VerticalAlignment="Center" Margin="0,0,8,8"/>
                                 <Slider x:Name="SoundMonitorSlider" Width="120" Minimum="0" Maximum="1" VerticalAlignment="Center" Margin="0,0,6,8"
@@ -427,6 +428,17 @@
                                         IsEnabled="{Binding IsChecked, ElementName=SoundMonitorCheck}"/>
                                 <TextBlock Text="{Binding Value, ElementName=SoundMonitorSlider, StringFormat={}{0:P0}}" Width="42" VerticalAlignment="Center" Margin="0,0,0,8"/>
                             </WrapPanel>
+                            <WrapPanel>
+                                <CheckBox x:Name="SoundNormalizeCheck" Content="Lautstärke angleichen" Click="SoundNormalize_Click" VerticalAlignment="Center" Margin="0,0,18,8"
+                                          ToolTip="Bringt jeden Sound automatisch auf volle Lautstärke – leise Dateien gehen im Sprachchat sonst unter."/>
+                                <CheckBox x:Name="PttCheck" Content="Sprachtaste des Spiels drücken, solange ein Sound läuft:" Click="PttCheck_Click" VerticalAlignment="Center" Margin="0,0,8,8"
+                                          ToolTip="Für Spiele mit Push-to-Talk (z. B. nanos world): Ohne gedrückte Sprachtaste überträgt der Sprachchat nichts – auch keine Sounds."/>
+                                <Button x:Name="PttKeyButton" Content="Taste wählen …" Click="PttKey_Click" Padding="10,4" MinWidth="120" VerticalAlignment="Center" Margin="0,0,0,8"
+                                        AutomationProperties.AutomationId="PttKeyButton"
+                                        ToolTip="Klicken und dann die Sprachtaste aus dem Spiel drücken (Taste oder Maus 4/5). Entf = keine, Esc = abbrechen."/>
+                            </WrapPanel>
+                            <TextBlock x:Name="PttHint" Foreground="#E5C07A" TextWrapping="Wrap" Margin="0,0,0,6" Visibility="Collapsed"
+                                       Text="Noch keine Sprachtaste gewählt – auf den Knopf klicken und dieselbe Taste drücken, die du im Spiel zum Sprechen nutzt."/>
                             <TextBlock x:Name="SoundHint" Foreground="{StaticResource FgDim}" TextWrapping="Wrap"
                                        Text="Audiodateien (wav, mp3, m4a, flac …) einfach hierher ziehen. Mit „Durch Stimmeffekt“ klingt ein Sound wie deine Stimme – unter der Maske also auch gedämpft. Ohne Haken hören die anderen ihn unverändert."/>
                             <TextBlock x:Name="SoundError" Foreground="#E5807A" TextWrapping="Wrap" Margin="0,6,0,0" Visibility="Collapsed"/>

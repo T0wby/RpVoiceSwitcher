@@ -10,8 +10,14 @@ $sounds = Join-Path $tmp 'Sounds'
 $settings = Join-Path $tmp 'settings.json'
 New-Item -ItemType Directory -Force $sounds | Out-Null
 Set-Content (Join-Path $sounds '.starter-sounds') 'Test'   # keine Start-Sounds erzeugen
-$realSoundDir = Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'RP Voice Switcher\Sounds'
-Copy-Item (Join-Path $realSoundDir 'Messingglocke.wav') (Join-Path $sounds 'Testglocke.wav')
+# Kurzer Testton (0,5 s) – unabhaengig davon, welche Sounds im echten Ordner liegen
+$rate = 44100; $n = [int](0.5 * $rate)
+$ms = New-Object IO.MemoryStream; $w = New-Object IO.BinaryWriter($ms)
+$w.Write([Text.Encoding]::ASCII.GetBytes('RIFF')); $w.Write([int](36 + 2 * $n)); $w.Write([Text.Encoding]::ASCII.GetBytes('WAVEfmt '))
+$w.Write([int]16); $w.Write([int16]1); $w.Write([int16]1); $w.Write([int]$rate); $w.Write([int](2 * $rate)); $w.Write([int16]2); $w.Write([int16]16)
+$w.Write([Text.Encoding]::ASCII.GetBytes('data')); $w.Write([int](2 * $n))
+for ($i = 0; $i -lt $n; $i++) { $w.Write([int16]([Math]::Sin(2 * [Math]::PI * 880 * $i / $rate) * 0.3 * 32767)) }
+$w.Flush(); [IO.File]::WriteAllBytes((Join-Path $sounds 'Testglocke.wav'), $ms.ToArray())
 
 $j = Get-Content $realSettings -Raw | ConvertFrom-Json
 $p0 = $j.Profiles[0]; $p0.SoundHotkeys = [pscustomobject]@{ 'Testglocke.wav' = 'Control, Alt|F11' }

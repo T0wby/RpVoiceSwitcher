@@ -58,6 +58,8 @@ try {
         SoundHotkeys = [pscustomobject]@{}
     }
     $j.Profiles = @($std, $jinpei); $j.ActiveProfile = 'Standard'
+    # Eigener Sound-Ordner: die App legt dort die Start-Sounds (Messingglocke ...) frisch an
+    $j | Add-Member SoundFolder (Join-Path $OutDir "sounds-$PID") -Force
     $j | ConvertTo-Json -Depth 6 | Set-Content $settings
 
     "=== Profil Standard ==="
