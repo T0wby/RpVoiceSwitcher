@@ -26,7 +26,7 @@ Updates findet die App selbst (abschaltbar) – oder *Hilfe → Nach Updates suc
 - **Stimmen** umschalten oder nur solange eine Taste gehalten wird; Shortcuts funktionieren global, auch im Spiel
 - **Charaktere** mit eigener Stimmenauswahl und eigenen Shortcuts
 - **Notfall-Taste** (Standard: Pause): sofort normale Stimme, alle Sounds aus
-- **Soundboard** – Sounds wahlweise durch den Stimmeffekt oder unverändert
+- **Soundboard** – Sounds wahlweise durch den Stimmeffekt oder unverändert; einmal, n-mal oder als Endlos-Loop, den derselbe Shortcut wieder stoppt
 - **Probehören**: kurz sprechen, normal und mit Effekt vergleichen; misst den Lautstärke-Unterschied und gleicht ihn auf Wunsch aus
 - **Lautstärke-Ausgleich** pro Stimme
 - Stimmen anlegen, bearbeiten, kopieren, **exportieren/importieren** (.txt oder ZIP)

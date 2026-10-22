@@ -27,15 +27,21 @@ public sealed class SoundEngine : IDisposable
     {
         private readonly ISampleProvider _source;
         private IDisposable? _owner;
-        public AutoDisposeProvider(ISampleProvider source, IDisposable owner) { _source = source; _owner = owner; }
+        public AutoDisposeProvider(ISampleProvider source, IDisposable owner, string key) { _source = source; _owner = owner; Key = key; }
+        public string Key { get; }
         public WaveFormat WaveFormat => _source.WaveFormat;
         public int Read(float[] buffer, int offset, int count)
         {
             if (_owner == null) return 0;
+            // Stopp wird hier auf dem Audio-Thread umgesetzt – so wird die Datei nie mitten im Lesen geschlossen.
+            if (StopRequested) { Close(); return 0; }
             int n = _source.Read(buffer, offset, count);
             if (n == 0) Close();
             return n;
         }
+        private volatile bool _stopRequested;
+        public bool StopRequested => _stopRequested;
+        public void RequestStop() => _stopRequested = true;
         public bool IsDone => System.Threading.Volatile.Read(ref _owner) == null;
         public void Close() => System.Threading.Interlocked.Exchange(ref _owner, null)?.Dispose();
     }
@@ -118,13 +124,37 @@ public sealed class SoundEngine : IDisposable
         }
     }
 
-    public bool Play(string path, bool bypassEffect)
+    /// <summary>
+    /// Spielt eine Datei <paramref name="repeat"/>-mal hintereinander (0 = endlos, bis <see cref="Stop"/>).
+    /// Wiederholt wird direkt an der Datei, deshalb ohne Lücke.
+    /// </summary>
+    private sealed class LoopProvider(AudioFileReader reader, int repeat) : ISampleProvider
+    {
+        private int _played = 1;
+        public WaveFormat WaveFormat => reader.WaveFormat;
+        public int Read(float[] buffer, int offset, int count)
+        {
+            int total = 0, emptyRewinds = 0;
+            while (total < count)
+            {
+                int n = reader.Read(buffer, offset + total, count - total);
+                if (n > 0) { total += n; emptyRewinds = 0; continue; }
+                if (repeat > 0 && _played >= repeat) break;      // genug Durchläufe
+                if (reader.Length == 0 || ++emptyRewinds > 1) break; // leere/kaputte Datei: nicht endlos drehen
+                reader.Position = 0;
+                _played++;
+            }
+            return total;
+        }
+    }
+
+    public bool Play(string path, bool bypassEffect, int repeat = 1)
     {
         if (_remote == null) return false;
         try
         {
-            AddTo(_remote, path, sp => new MidSideProvider(sp, bypassEffect));
-            if (_monitor != null) AddTo(_monitor, path, null);
+            AddTo(_remote, path, repeat, sp => new MidSideProvider(sp, bypassEffect));
+            if (_monitor != null) AddTo(_monitor, path, repeat, null);
             return true;
         }
         catch (Exception ex)
@@ -134,10 +164,10 @@ public sealed class SoundEngine : IDisposable
         }
     }
 
-    private void AddTo(Output output, string path, Func<ISampleProvider, ISampleProvider>? transform)
+    private void AddTo(Output output, string path, int repeat, Func<ISampleProvider, ISampleProvider>? transform)
     {
         var reader = new AudioFileReader(path);
-        ISampleProvider sp = reader;
+        ISampleProvider sp = repeat == 1 ? reader : new LoopProvider(reader, repeat);
         if (sp.WaveFormat.Channels == 1)
             sp = new MonoToStereoSampleProvider(sp);
         else if (sp.WaveFormat.Channels > 2)
@@ -151,13 +181,36 @@ public sealed class SoundEngine : IDisposable
             sp = new WdlResamplingSampleProvider(sp, output.Mixer.WaveFormat.SampleRate);
         if (transform != null) sp = transform(sp);
 
-        var tracked = new AutoDisposeProvider(sp, reader);
+        var tracked = new AutoDisposeProvider(sp, reader, path);
         lock (_lock)
         {
             _playing.RemoveAll(p => p.IsDone); // fertige Sounds aus der Liste nehmen
             _playing.Add(tracked);
         }
         output.Mixer.AddMixerInput(tracked);
+    }
+
+    /// <summary>Läuft diese Datei gerade (auf irgendeinem Ausgang)?</summary>
+    public bool IsPlaying(string path)
+    {
+        lock (_lock)
+        {
+            _playing.RemoveAll(p => p.IsDone);
+            return _playing.Any(p => !p.StopRequested && p.Key.Equals(path, StringComparison.OrdinalIgnoreCase));
+        }
+    }
+
+    public bool AnyPlaying
+    {
+        get { lock (_lock) { _playing.RemoveAll(p => p.IsDone); return _playing.Any(p => !p.StopRequested); } }
+    }
+
+    /// <summary>Stoppt nur diesen Sound (alle laufenden Durchgänge davon).</summary>
+    public void Stop(string path)
+    {
+        lock (_lock)
+            foreach (var p in _playing.Where(p => p.Key.Equals(path, StringComparison.OrdinalIgnoreCase)))
+                p.RequestStop(); // liefert beim nächsten Lesen nichts mehr – der Mixer wirft ihn dann selbst raus
     }
 
     public void StopAll()

@@ -76,6 +76,41 @@ public sealed class SoundItem : ViewModel
     /// <summary>true = Sound läuft durch den aktiven Stimmeffekt (z. B. gedämpft unter der Maske).</summary>
     private bool _throughEffect;
     public bool ThroughEffect { get => _throughEffect; set => Set(ref _throughEffect, value); }
+
+    public sealed record RepeatChoice(int Value, string Label)
+    {
+        public override string ToString() => Label;
+    }
+
+    /// <summary>Auswahl "Wiederholen": 1 = einmal, n = n-mal hintereinander, 0 = endlos.</summary>
+    public static RepeatChoice[] RepeatChoices { get; } =
+    [
+        new(1, "Einmal"), new(2, "2×"), new(3, "3×"), new(5, "5×"), new(10, "10×"), new(0, "Endlos (Loop)"),
+    ];
+
+    private int _repeat = 1;
+    /// <summary>1 = einmal, n = n-mal, 0 = endlos.</summary>
+    public int Repeat
+    {
+        get => _repeat;
+        set { Set(ref _repeat, value); Raise(nameof(PlayText)); Raise(nameof(PlayTooltip)); }
+    }
+
+    public bool Repeats => Repeat != 1;
+
+    private bool _isPlaying;
+    /// <summary>Nur für wiederholte Sounds relevant: dann stoppt erneutes Drücken.</summary>
+    public bool IsPlaying
+    {
+        get => _isPlaying;
+        set { Set(ref _isPlaying, value); Raise(nameof(PlayText)); Raise(nameof(PlayTooltip)); }
+    }
+
+    public string PlayText => IsPlaying && Repeats ? "■  Stoppen" : Repeat == 0 ? "▶  Loop starten" : "▶  Abspielen";
+
+    public string PlayTooltip => Repeats
+        ? "Läuft der Sound, stoppt ihn ein zweiter Klick bzw. derselbe Shortcut."
+        : "Abspielen";
 }
 
 public sealed class ProfileChip : ViewModel

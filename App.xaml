@@ -261,5 +261,80 @@
             <Setter Property="Foreground" Value="{StaticResource FgDim}"/>
             <Setter Property="Padding" Value="4,3"/>
         </Style>
+
+        <!-- ===== Auswahlliste (ComboBox) im dunklen Stil ===== -->
+        <Style x:Key="ComboToggle" TargetType="ToggleButton">
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="Bd" Background="{StaticResource Hover}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="5">
+                            <TextBlock Text="&#xE70D;" FontFamily="Segoe MDL2 Assets" FontSize="10" Foreground="{StaticResource FgDim}"
+                                       HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource FgDim}"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource Accent}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style TargetType="ComboBoxItem">
+            <Setter Property="Foreground" Value="{StaticResource Fg}"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBoxItem">
+                        <Border x:Name="Bd" Background="Transparent" Padding="{TemplateBinding Padding}" CornerRadius="3">
+                            <ContentPresenter/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource Hover}"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Foreground" Value="{StaticResource Accent}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style TargetType="ComboBox">
+            <Setter Property="Foreground" Value="{StaticResource Fg}"/>
+            <Setter Property="FocusVisualStyle" Value="{StaticResource DarkFocusVisual}"/>
+            <Setter Property="MinHeight" Value="26"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <ToggleButton Style="{StaticResource ComboToggle}" ClickMode="Press"
+                                          IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"/>
+                            <ContentPresenter Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                              ContentStringFormat="{TemplateBinding SelectionBoxItemStringFormat}"
+                                              Margin="8,3,26,3" VerticalAlignment="Center" HorizontalAlignment="Left" IsHitTestVisible="False"/>
+                            <Popup IsOpen="{TemplateBinding IsDropDownOpen}" Placement="Bottom" AllowsTransparency="True" Focusable="False" PopupAnimation="None">
+                                <Border Background="{StaticResource Card}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="5" Padding="3"
+                                        MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}" MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                        <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained"/>
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Foreground" Value="{StaticResource FgDisabled}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Application.Resources>
 </Application>

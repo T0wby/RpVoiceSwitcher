@@ -43,7 +43,8 @@ public sealed class HelpWindow : Window
         [
             "Sounds hören die anderen über dein Mikrofon. „Selbst mithören“ spielt sie zusätzlich auf deinen Kopfhörern.",
             "„Durch Stimmeffekt“: an = der Sound klingt wie deine Stimme (z. B. gedämpft unter der Maske), aus = die anderen hören ihn unverändert.",
-            "Alle Sounds stoppen: Strg+. oder der Button im Soundboard.",
+            "„Wiederholen“: einmal, mehrmals hintereinander oder endlos (Loop, z. B. für Hintergrundgeräusche). Bei Wiederholung stoppt derselbe Shortcut – oder ein zweiter Klick – den Sound wieder.",
+            "Alle Sounds stoppen: Strg+. oder der Button im Soundboard. Die Notfall-Taste stoppt auch Loops.",
         ]),
         ("Tipps",
         [

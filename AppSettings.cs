@@ -100,6 +100,9 @@ public sealed class AppSettings
     /// <summary>Sounds, die durch den aktiven Stimmeffekt laufen sollen (Standard: ohne Effekt).</summary>
     public List<string> SoundsWithEffect { get; set; } = new();
 
+    /// <summary>Sound-Datei → wie oft hintereinander (0 = endlos, fehlt = einmal).</summary>
+    public Dictionary<string, int> SoundRepeat { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+
     /// <summary>Eigener Ordner für Stimmen; null = Equalizer-APO-Ordner\rp-voices.</summary>
     public string? VoicesFolder { get; set; }
 
@@ -158,6 +161,8 @@ public sealed class AppSettings
         s.Hotkeys = null;
 
         foreach (var p in s.Profiles) p.Normalize();
+        s.SoundRepeat = new(s.SoundRepeat ?? new(), StringComparer.OrdinalIgnoreCase);
+        s.SoundsWithEffect ??= new();
         if (!s.Profiles.Any(p => p.Name.Equals(s.ActiveProfile, StringComparison.OrdinalIgnoreCase)))
             s.ActiveProfile = s.Profiles[0].Name;
 

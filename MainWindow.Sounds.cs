@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
@@ -18,6 +19,7 @@ public partial class MainWindow
 
     private void InitSoundboard()
     {
+        _soundStateTimer.Tick += (_, _) => UpdateSoundPlayingState();
         _soundReloadDebounce.Tick += (_, _) =>
         {
             _soundReloadDebounce.Stop();
@@ -71,6 +73,8 @@ public partial class MainWindow
                 _sounds.Add(new SoundItem(file)
                 {
                     ThroughEffect = _settings.SoundsWithEffect.Contains(file.FileName, StringComparer.OrdinalIgnoreCase),
+                    Repeat = Math.Max(0, _settings.SoundRepeat.GetValueOrDefault(file.FileName, 1)),
+                    IsPlaying = _soundEngine.IsPlaying(file.FullPath),
                 });
         }
         catch (Exception ex) { ShowSoundError("Sound-Ordner konnte nicht gelesen werden: " + ex.Message); }
@@ -91,11 +95,49 @@ public partial class MainWindow
         UpdateSoundStatus();
     }
 
+    /// <summary>
+    /// Abspielen – oder, bei wiederholten Sounds (Loop / n-mal), stoppen, wenn er gerade läuft.
+    /// Gilt für Klick und Shortcut gleichermaßen: dieselbe Taste nochmal = aus.
+    /// </summary>
     private void PlaySound(SoundItem item)
     {
-        if (!File.Exists(item.File.FullPath)) { LoadSounds(); return; }
-        if (!_soundEngine.Play(item.File.FullPath, bypassEffect: !item.ThroughEffect)) ShowSoundError(_soundEngine.Error);
-        else if (SoundError.Visibility == Visibility.Visible && _soundEngine.Error == null) ShowSoundError(null);
+        string path = item.File.FullPath;
+        if (item.Repeats && _soundEngine.IsPlaying(path))
+        {
+            _soundEngine.Stop(path);
+            item.IsPlaying = false;
+            return;
+        }
+        if (!File.Exists(path)) { LoadSounds(); return; }
+        if (!_soundEngine.Play(path, bypassEffect: !item.ThroughEffect, repeat: item.Repeat))
+        {
+            ShowSoundError(_soundEngine.Error);
+            return;
+        }
+        if (SoundError.Visibility == Visibility.Visible && _soundEngine.Error == null) ShowSoundError(null);
+        item.IsPlaying = true;
+        _soundStateTimer.Start();
+    }
+
+    /// <summary>Hält "Abspielen/Stoppen" an den Karten aktuell, solange etwas läuft.</summary>
+    private readonly DispatcherTimer _soundStateTimer = new() { Interval = TimeSpan.FromMilliseconds(250) };
+
+    private void UpdateSoundPlayingState()
+    {
+        foreach (var s in _sounds) s.IsPlaying = _soundEngine.IsPlaying(s.File.FullPath);
+        if (!_soundEngine.AnyPlaying) _soundStateTimer.Stop();
+    }
+
+    private void SoundRepeat_Changed(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.DataContext is not SoundItem item || e.AddedItems.Count == 0) return;
+        if (e.AddedItems[0] is not SoundItem.RepeatChoice choice) return;
+        if (choice.Value == _settings.SoundRepeat.GetValueOrDefault(item.FileName, 1)) return; // nur Anzeige aufgebaut
+        if (item.IsPlaying && choice.Value == 1) { _soundEngine.Stop(item.File.FullPath); item.IsPlaying = false; } // Loop sonst nicht mehr stoppbar
+        item.Repeat = choice.Value;
+        if (choice.Value == 1) _settings.SoundRepeat.Remove(item.FileName);
+        else _settings.SoundRepeat[item.FileName] = choice.Value;
+        _settings.Save();
     }
 
     private void PlaySound_Click(object sender, RoutedEventArgs e)
@@ -132,6 +174,7 @@ public partial class MainWindow
                 if (p.SoundHotkeys.Remove(item.FileName, out var hk)) p.SoundHotkeys[newFile] = hk;
             if (_settings.SoundsWithEffect.RemoveAll(f => f.Equals(item.FileName, StringComparison.OrdinalIgnoreCase)) > 0)
                 _settings.SoundsWithEffect.Add(newFile);
+            if (_settings.SoundRepeat.Remove(item.FileName, out int repeat)) _settings.SoundRepeat[newFile] = repeat;
             _settings.Save();
             LoadSounds();
         }
@@ -156,6 +199,7 @@ public partial class MainWindow
             SoundLibrary.DeleteToRecycleBin(item.File);
             foreach (var p in _settings.Profiles) p.SoundHotkeys.Remove(item.FileName);
             _settings.SoundsWithEffect.RemoveAll(f => f.Equals(item.FileName, StringComparison.OrdinalIgnoreCase));
+            _settings.SoundRepeat.Remove(item.FileName);
             _settings.Save();
             LoadSounds();
             ShowStatusMessage($"„{item.Name}“ in den Papierkorb verschoben.");

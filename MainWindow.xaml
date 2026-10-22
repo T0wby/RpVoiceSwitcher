@@ -449,7 +449,15 @@
                                                 <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
                                                            VerticalAlignment="Center" ToolTip="{Binding FileName}"/>
                                             </DockPanel>
-                                            <Button Content="▶  Abspielen" Click="PlaySound_Click" Margin="0,0,0,6"/>
+                                            <Button Content="{Binding PlayText}" ToolTip="{Binding PlayTooltip}" Click="PlaySound_Click" Margin="0,0,0,6"
+                                                    AutomationProperties.Name="{Binding PlayText}"/>
+                                            <DockPanel Margin="0,0,0,6">
+                                                <TextBlock Text="Wiederholen" Foreground="{StaticResource FgDim}" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                                <ComboBox ItemsSource="{x:Static local:SoundItem.RepeatChoices}" DisplayMemberPath="Label" SelectedValuePath="Value"
+                                                          SelectedValue="{Binding Repeat, Mode=TwoWay}" SelectionChanged="SoundRepeat_Changed"
+                                                          AutomationProperties.Name="Wiederholen"
+                                                          ToolTip="Einmal, mehrmals hintereinander oder endlos. Bei Wiederholung stoppt derselbe Shortcut (oder ein zweiter Klick) den Sound."/>
+                                            </DockPanel>
                                             <CheckBox Content="Durch Stimmeffekt" IsChecked="{Binding ThroughEffect, Mode=TwoWay}" Click="SoundEffect_Click"
                                                       Margin="0,0,0,6" ToolTip="An: Der Sound bekommt denselben Effekt wie deine Stimme. Aus: Die anderen hören ihn unverändert."/>
                                             <DockPanel>
