@@ -35,6 +35,11 @@ dotnet publish RpVoiceSwitcher.csproj -c Release -o .\publish     # App
 
 Tests (UI-Automation und Messungen im Kabel, arbeiten mit einer Kopie der Einstellungen): `tools\Test-*.ps1`, Logik-Tests: `tools\FeatureProbe`.
 
+## Lizenz
+
+[MIT](LICENSE) – frei nutzbar, veränderbar und weitergebbar, solange der Lizenzhinweis erhalten bleibt.
+Equalizer APO, VB-CABLE und Graillon sind eigenständige Programme ihrer jeweiligen Hersteller und werden nicht mitgeliefert.
+
 ## Wie es funktioniert
 
 Das Mikrofon wird per Windows-„Abhören“ nach *CABLE Input* geleitet. Equalizer APO hängt an *CABLE Output* und bindet `voice.txt` ein, die die App beim Umschalten neu schreibt. Sounds ohne Effekt spielt das Soundboard gegenphasig ein; `voice.txt` trennt Mitte (Stimme) und Seite (Sound), damit nur die Stimme den Effekt bekommt.
