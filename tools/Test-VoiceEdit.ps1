@@ -53,7 +53,7 @@ try {
     Check 'Neue Stimme: gelber Graillon-Hinweis' ((Names $win) -contains 'Mit Graillon: Pitch +5, Formant +4')
 
     # --- Bearbeiten (letzte Stimme = Testkobold) ---
-    Click (BtnsByHelp $win 'Name, Beschreibung und Graillon-Hinweis bearbeiten')[-1]
+    Click (BtnsByHelp $win 'Name, Beschreibung, Graillon-Hinweis und Lautst*rke bearbeiten')[-1]
     $dlg = Win $p.Id 'Stimme bearbeiten'
     Fill $dlg @('Testkobold', 'Geaenderte Beschreibung', 'Pitch +6')
     Click (Btn $dlg 'Speichern'); Start-Sleep -m 600

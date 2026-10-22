@@ -62,6 +62,30 @@ public sealed class AppSettings
     public double? StatusOverlayLeft { get; set; }
     public double? StatusOverlayTop { get; set; }
 
+    /// <summary>Größe der Status-Anzeige (1 = 100 %).</summary>
+    public double StatusOverlayScale { get; set; } = 1.0;
+
+    /// <summary>Deckkraft der Status-Anzeige (0,3 … 1).</summary>
+    public double StatusOverlayOpacity { get; set; } = 1.0;
+
+    /// <summary>Status-Anzeige nur zeigen, wenn eine Effekt-Stimme aktiv ist.</summary>
+    public bool StatusOverlayHideNormal { get; set; }
+
+    /// <summary>
+    /// Notfall-Taste: gilt in jedem Charakter, schaltet sofort auf "Normal" und stoppt alle Sounds.
+    /// null = keine. Standard: Pause-Taste (stört in Spielen praktisch nie).
+    /// </summary>
+    public string? PanicHotkey { get; set; } = "None|Pause";
+
+    // Stream (OBS): aktive Stimme in eine Textdatei schreiben
+    public bool ObsFileEnabled { get; set; }
+    public string? ObsFilePath { get; set; }
+    public string ObsTemplate { get; set; } = "{stimme}";
+
+    // Updates
+    public bool CheckForUpdates { get; set; } = true;
+    public string? SkippedUpdateVersion { get; set; }
+
     // Soundboard
     public string SoundOutputDevice { get; set; } = "CABLE Input";
     public double SoundVolume { get; set; } = 0.8;

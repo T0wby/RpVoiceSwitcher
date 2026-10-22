@@ -30,6 +30,8 @@ public sealed class VoiceItem : ViewModel
     public bool IsNormal => VoiceStore.IsNormalFile(Preset.FileName);
     public string GraillonHint => string.IsNullOrEmpty(Preset.GraillonHint) ? "" : "Mit Graillon: " + Preset.GraillonHint;
     public Visibility GraillonVisibility => string.IsNullOrEmpty(Preset.GraillonHint) ? Visibility.Collapsed : Visibility.Visible;
+    public string GainText => "Lautstärke " + VoiceStore.FormatGain(Preset.GainDb);
+    public Visibility GainVisibility => System.Math.Abs(Preset.GainDb) >= 0.05 ? Visibility.Visible : Visibility.Collapsed;
 
     private bool _isActive;
     public bool IsActive { get => _isActive; set => Set(ref _isActive, value); }
@@ -55,6 +57,9 @@ public sealed class VoiceItem : ViewModel
     public Visibility DeleteVisibility => IsNormal ? Visibility.Collapsed : Visibility.Visible;
     public Visibility SelectorVisibility => Selecting ? Visibility.Visible : Visibility.Collapsed;
     public Visibility ControlsVisibility => Selecting ? Visibility.Collapsed : Visibility.Visible;
+
+    /// <summary>Für Auswahllisten und Screenreader.</summary>
+    public override string ToString() => Name;
 }
 
 public sealed class SoundItem : ViewModel

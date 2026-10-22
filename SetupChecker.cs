@@ -60,6 +60,18 @@ public static class SetupChecker
         {
             results.Add(new CheckResult { Title = "Equalizer APO", State = CheckState.Ok, Detail = "Installiert: " + store.ConfigDir });
 
+            // Ohne Schreibrechte im Config-Ordner kann die App nicht umschalten (Equalizer APO liegt unter "Programme").
+            if (!CanWrite(store.ConfigDir))
+                results.Add(new CheckResult
+                {
+                    Title = "Schreibrechte im Equalizer-APO-Ordner",
+                    State = CheckState.Error,
+                    Detail = "Die App darf die Stimmen-Dateien nicht schreiben – Umschalten wirkt dann nicht. " +
+                             "Einmalig mit Administratorrechten freigeben (Windows fragt nach).",
+                    FixLabel = "Rechte freigeben …",
+                    Fix = () => GrantWriteAccess(store.ConfigDir),
+                });
+
             bool included = store.IsMainConfigIncludingVoice();
             results.Add(new CheckResult
             {
@@ -203,6 +215,55 @@ public static class SetupChecker
 
     private static bool Contains(string? haystack, string guid) =>
         haystack != null && haystack.Contains(guid, StringComparison.OrdinalIgnoreCase);
+
+    private static bool CanWrite(string dir)
+    {
+        try
+        {
+            // Vorhandene voice.txt nur zum Schreiben öffnen (ohne etwas zu ändern) – eine neue Datei würde
+            // Equalizer APO unnötig neu laden lassen.
+            string voice = Path.Combine(dir, "voice.txt");
+            if (File.Exists(voice))
+            {
+                using (new FileStream(voice, FileMode.Open, FileAccess.Write, FileShare.ReadWrite)) { }
+                return true;
+            }
+            string probe = Path.Combine(dir, ".rpvs-schreibtest");
+            using (new FileStream(probe, FileMode.Create, FileAccess.Write, FileShare.None, 1, FileOptions.DeleteOnClose)) { }
+            return true;
+        }
+        catch { return false; }
+    }
+
+    /// <summary>Gibt der Gruppe "Benutzer" Änderungsrechte am Config-Ordner (einmalige UAC-Abfrage).</summary>
+    private static void GrantWriteAccess(string dir)
+    {
+        var p = Process.Start(new ProcessStartInfo("icacls.exe", $"\"{dir}\" /grant *S-1-5-32-545:(OI)(CI)M")
+        {
+            UseShellExecute = true,
+            Verb = "runas",
+            WindowStyle = ProcessWindowStyle.Hidden,
+        });
+        p?.WaitForExit(15000);
+    }
+
+    /// <summary>
+    /// Das echte Mikrofon: das Aufnahmegerät, das per "Abhören" ins Kabel weitergeleitet wird.
+    /// Liefert die Geräte-ID für NAudio (oder null).
+    /// </summary>
+    public static string? FindMicrophoneId()
+    {
+        try
+        {
+            using var root = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64);
+            var capture = ReadEndpoints(root, "Capture");
+            var cableIn = ReadEndpoints(root, "Render").FirstOrDefault(e => e.Active && e.Name.Contains("CABLE Input", StringComparison.OrdinalIgnoreCase));
+            var mic = capture.FirstOrDefault(e => e.Active && !e.Name.Contains("CABLE", StringComparison.OrdinalIgnoreCase)
+                                                  && e.ListenEnabled && (cableIn == null || Contains(e.ListenTarget, cableIn.Guid)));
+            return mic == null ? null : "{0.0.1.00000000}." + mic.Guid;
+        }
+        catch { return null; }
+    }
 
     private static List<Endpoint> ReadEndpoints(RegistryKey root, string flow)
     {

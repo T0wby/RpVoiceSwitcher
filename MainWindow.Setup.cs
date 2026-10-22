@@ -19,7 +19,12 @@ public partial class MainWindow
         DetachedPanels.Children.Remove(SettingsPanel);
         _setupWindow = new PanelWindow(this, "Einrichtung – RP Voice Switcher", SetupPanel, 720, 720);
         _setupWindow.Activated += (_, _) => RunSetupCheck(); // z. B. nach Änderungen in den Windows-Soundeinstellungen
-        _settingsWindow = new PanelWindow(this, "Einstellungen – RP Voice Switcher", SettingsPanel, 720, 640);
+        _settingsWindow = new PanelWindow(this, "Einstellungen – RP Voice Switcher", SettingsPanel, 720, 720);
+        // Die Notfall-Taste wird hier aufgenommen – Tasten an dieselbe Aufnahme-Logik wie im Hauptfenster geben.
+        _settingsWindow.PreviewKeyDown += Window_PreviewKeyDown;
+        _settingsWindow.PreviewKeyUp += Window_PreviewKeyUp;
+        _settingsWindow.Deactivated += (_, _) => CancelCapture();
+        _settingsWindow.IsVisibleChanged += (_, _) => { if (!_settingsWindow.IsVisible) { CancelCapture(); SetStatusEditMode(false); } };
     }
 
     private void ShowSetupWindow()

@@ -82,6 +82,7 @@ public partial class MainWindow : Window
         };
 
         InitShell();
+        InitExtras();
         RefreshProfileChips();
         LoadVoices();
         EnsureActiveVoiceInProfile();
@@ -205,6 +206,13 @@ public partial class MainWindow : Window
             menu.Items.Add(entry);
         }
         menu.Items.Add(new WinForms.ToolStripSeparator());
+        var panic = new WinForms.ToolStripMenuItem("Notfall: normale Stimme, Sounds aus")
+        {
+            ShortcutKeyDisplayString = Hotkey.Parse(_settings.PanicHotkey)?.ToString() ?? "",
+        };
+        panic.Click += (_, _) => Panic();
+        menu.Items.Add(panic);
+        menu.Items.Add("Probehören …", null, (_, _) => ShowVoiceTest());
         var statusEntry = new WinForms.ToolStripMenuItem("Status-Anzeige") { Checked = _settings.ShowStatusOverlay };
         statusEntry.Click += (_, _) => ToggleStatusOverlay();
         menu.Items.Add(statusEntry);
@@ -280,6 +288,7 @@ public partial class MainWindow : Window
         _tray.Dispose();
         _overlay?.Close();
         _status?.Close();
+        _voiceTest?.Close();
         _setupWindow?.CloseForReal();
         _settingsWindow?.CloseForReal();
         Application.Current?.Shutdown();

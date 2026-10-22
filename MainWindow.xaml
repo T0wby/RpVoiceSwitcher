@@ -13,6 +13,7 @@
             <MenuItem Header="_Datei">
                 <MenuItem Command="{x:Static local:AppCommands.NewVoice}"/>
                 <MenuItem Command="{x:Static local:AppCommands.ImportVoice}"/>
+                <MenuItem Command="{x:Static local:AppCommands.ExportVoices}"/>
                 <MenuItem Command="{x:Static local:AppCommands.AddSounds}"/>
                 <Separator/>
                 <MenuItem Header="Stimmen-_Ordner öffnen" Click="OpenFolder_Click"/>
@@ -41,10 +42,12 @@
                 <Separator/>
                 <MenuItem Command="{x:Static local:AppCommands.Refresh}"/>
             </MenuItem>
-            <MenuItem Header="E_xtras">
+            <MenuItem x:Name="ExtrasMenu" Header="E_xtras">
                 <MenuItem Command="{x:Static local:AppCommands.ShowSetup}"/>
                 <MenuItem Command="{x:Static local:AppCommands.ShowSettings}"/>
                 <Separator/>
+                <MenuItem Command="{x:Static local:AppCommands.VoiceTest}"/>
+                <MenuItem x:Name="PanicMenuItem" Command="{x:Static local:AppCommands.Panic}"/>
                 <MenuItem Command="{x:Static local:AppCommands.StopSounds}"/>
                 <Separator/>
                 <MenuItem Command="{x:Static local:AppCommands.OpenEditor}"/>
@@ -56,6 +59,7 @@
             <MenuItem Header="_Hilfe">
                 <MenuItem Command="{x:Static local:AppCommands.Help}"/>
                 <Separator/>
+                <MenuItem Command="{x:Static local:AppCommands.CheckUpdates}"/>
                 <MenuItem Command="{x:Static local:AppCommands.About}"/>
             </MenuItem>
         </Menu>
@@ -70,6 +74,14 @@
                 </TextBlock>
             </StatusBarItem>
             <Separator DockPanel.Dock="Right"/>
+            <StatusBarItem x:Name="UpdateStatusItem" DockPanel.Dock="Right" Visibility="Collapsed">
+                <TextBlock>
+                    <Hyperlink x:Name="UpdateStatusLink" Click="UpdateLink_Click" Foreground="{StaticResource Accent}">
+                        <Run x:Name="UpdateStatusText" Text="Update verfügbar"/>
+                    </Hyperlink>
+                </TextBlock>
+            </StatusBarItem>
+            <Separator x:Name="UpdateStatusSeparator" DockPanel.Dock="Right" Visibility="Collapsed"/>
             <StatusBarItem DockPanel.Dock="Right">
                 <TextBlock x:Name="SoundStatusText" ToolTip="Zustand des Soundboards"/>
             </StatusBarItem>
@@ -149,7 +161,17 @@
                                 <CheckBox x:Name="TrayCheck" Content="Schließen = in den Tray" Click="Option_Changed"/>
                                 <CheckBox x:Name="AutostartCheck" Content="Mit Windows starten" Click="Autostart_Changed"/>
                             </WrapPanel>
-    
+
+                            <TextBlock Text="Notfall-Taste" FontSize="15" FontWeight="SemiBold" Margin="0,16,0,8"/>
+                            <StackPanel Orientation="Horizontal">
+                                <Button x:Name="PanicButton" Content="Keine Taste" Click="PanicKey_Click" MinWidth="170" Padding="10,4" Margin="0,0,4,0"
+                                        AutomationProperties.Name="Notfall-Taste"
+                                        ToolTip="Klicken und Taste drücken. Entf = keine Notfall-Taste, Esc = abbrechen."/>
+                                <Button Content="✕" Click="ClearPanicKey_Click" Padding="8,4" ToolTip="Notfall-Taste entfernen" AutomationProperties.Name="Notfall-Taste entfernen"/>
+                            </StackPanel>
+                            <TextBlock Foreground="{StaticResource FgDim}" TextWrapping="Wrap" Margin="0,6,0,0" FontSize="12"
+                                       Text="Gilt in jedem Charakter: schaltet sofort auf „Normal“, stoppt alle Sounds und beendet eine gehaltene Stimme. Ideal: Pause, Rollen oder eine F-Taste."/>
+
                             <TextBlock Text="Status-Anzeige" FontSize="15" FontWeight="SemiBold" Margin="0,16,0,8"/>
                             <WrapPanel>
                                 <CheckBox x:Name="StatusCheck" Content="Auf dem Bildschirm anzeigen" Click="StatusOverlay_Changed" VerticalAlignment="Center"
@@ -158,6 +180,29 @@
                                         ToolTip="Anzeige mit der Maus verschieben. Doppelklick auf die Anzeige oder 'Fertig' zum Speichern."/>
                                 <Button Content="Position zurücksetzen" Click="ResetStatusPosition_Click" Padding="10,3" Margin="0,0,0,6"/>
                             </WrapPanel>
+                            <CheckBox x:Name="StatusHideNormalCheck" Content="Nur zeigen, wenn eine Effekt-Stimme aktiv ist (bei „Normal“ ausblenden)"
+                                      Click="StatusHideNormal_Changed" Margin="0,2,0,8"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*" MaxWidth="320"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition/>
+                                    <RowDefinition/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Text="Größe:" Foreground="{StaticResource FgDim}" VerticalAlignment="Center" Margin="0,0,10,6"/>
+                                <Slider x:Name="StatusScaleSlider" Grid.Column="1" Minimum="0.7" Maximum="2" SmallChange="0.05" LargeChange="0.1"
+                                        TickFrequency="0.05" IsSnapToTickEnabled="True" Value="1" VerticalAlignment="Center" Margin="0,0,0,6"
+                                        AutomationProperties.Name="Größe der Status-Anzeige" ValueChanged="StatusLook_Changed"/>
+                                <TextBlock x:Name="StatusScaleText" Grid.Column="2" Text="100 %" MinWidth="48" TextAlignment="Right" VerticalAlignment="Center" Margin="10,0,0,6"/>
+                                <TextBlock Grid.Row="1" Text="Deckkraft:" Foreground="{StaticResource FgDim}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                <Slider x:Name="StatusOpacitySlider" Grid.Row="1" Grid.Column="1" Minimum="0.3" Maximum="1" SmallChange="0.05" LargeChange="0.1"
+                                        TickFrequency="0.05" IsSnapToTickEnabled="True" Value="1" VerticalAlignment="Center"
+                                        AutomationProperties.Name="Deckkraft der Status-Anzeige" ValueChanged="StatusLook_Changed"/>
+                                <TextBlock x:Name="StatusOpacityText" Grid.Row="1" Grid.Column="2" Text="100 %" MinWidth="48" TextAlignment="Right" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                            </Grid>
     
                             <TextBlock Text="Geräte" FontSize="15" FontWeight="SemiBold" Margin="0,16,0,8"/>
                             <Grid>
@@ -215,6 +260,40 @@
                             </Grid>
                             <TextBlock Foreground="{StaticResource FgDim}" TextWrapping="Wrap" Margin="0,10,0,0" FontSize="12"
                                        Text="Beim Wechsel kannst du deine Dateien mitnehmen. Einstellungen, Einrichtung und Ordner gelten für alle Charaktere."/>
+
+                            <TextBlock Text="Stream (OBS)" FontSize="15" FontWeight="SemiBold" Margin="0,16,0,8"/>
+                            <CheckBox x:Name="ObsCheck" Content="Aktive Stimme in eine Textdatei schreiben" Click="Obs_Changed" Margin="0,0,0,8"
+                                      ToolTip="In OBS: Quelle „Text (GDI+)“ → „Aus Datei lesen“ → diese Datei wählen"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition/>
+                                    <RowDefinition/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Text="Datei:" Foreground="{StaticResource FgDim}" VerticalAlignment="Center" Margin="0,0,10,8"/>
+                                <TextBlock x:Name="ObsFileText" Grid.Column="1" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,10,8"/>
+                                <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="0,0,0,8">
+                                    <Button Content="Ändern …" Click="ChangeObsFile_Click" Padding="10,3" Margin="0,0,6,0"/>
+                                    <Button Content="Ordner öffnen" Click="OpenObsFolder_Click" Padding="10,3"/>
+                                </StackPanel>
+                                <TextBlock Grid.Row="1" Text="Text:" Foreground="{StaticResource FgDim}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                <TextBox x:Name="ObsTemplateBox" Grid.Row="1" Grid.Column="1" LostFocus="ObsTemplate_LostFocus" Margin="0,0,10,0"
+                                         AutomationProperties.Name="Text für OBS"/>
+                                <TextBlock x:Name="ObsPreviewText" Grid.Row="1" Grid.Column="2" Foreground="{StaticResource FgDim}" VerticalAlignment="Center" MaxWidth="200" TextTrimming="CharacterEllipsis"/>
+                            </Grid>
+                            <TextBlock Foreground="{StaticResource FgDim}" TextWrapping="Wrap" Margin="0,8,0,0" FontSize="12"
+                                       Text="Platzhalter: {stimme}, {charakter} und {effekt} (wie {stimme}, aber leer bei „Normal“). In OBS: Quelle „Text (GDI+)“ → „Aus Datei lesen“."/>
+
+                            <TextBlock Text="Updates" FontSize="15" FontWeight="SemiBold" Margin="0,16,0,8"/>
+                            <WrapPanel>
+                                <CheckBox x:Name="UpdateCheck" Content="Beim Start nach Updates suchen" Click="UpdateCheck_Changed" VerticalAlignment="Center"/>
+                                <Button Content="Jetzt suchen" Command="{x:Static local:AppCommands.CheckUpdates}" Padding="10,3" Margin="0,0,0,6"/>
+                            </WrapPanel>
+                            <TextBlock x:Name="VersionText" Foreground="{StaticResource FgDim}" FontSize="12" Margin="0,4,0,0"/>
                         </StackPanel>
                     </ScrollViewer>
         </Grid>
@@ -230,8 +309,9 @@
                                         ToolTip="Leere Stimme anlegen (Strg+N). Stimmen-Dateien (.txt) kannst du auch einfach hierher ziehen."/>
                                 <Button x:Name="SelectVoicesButton" Content="Stimmen auswählen" Command="{x:Static local:AppCommands.SelectVoices}" Padding="10,4" Margin="0,0,6,6"
                                         ToolTip="Festlegen, welche Stimmen zu diesem Charakter gehören"/>
+                                <Button Content="Probehören" Command="{x:Static local:AppCommands.VoiceTest}" Padding="10,4" Margin="0,0,6,6"
+                                        ToolTip="Kurz sprechen und normal mit Effekt vergleichen (Strg+P)"/>
                                 <Button Content="Shortcuts zurücksetzen" Command="{x:Static local:AppCommands.ResetHotkeys}" Padding="10,4" Margin="0,0,6,6"/>
-                                <Button Content="Stimmen-Ordner" Click="OpenFolder_Click" Padding="10,4" Margin="0,0,6,6"/>
                                 <Button Content="EAPO-Editor" Click="OpenEditor_Click" Padding="10,4" Margin="0,0,6,6"
                                         ToolTip="Equalizer-APO-Editor öffnen, z. B. um Graillon in eine Stimme einzubauen"/>
                             </WrapPanel>
@@ -260,6 +340,8 @@
                                                 <TextBlock Text="{Binding Description}" Foreground="{StaticResource FgDim}" TextWrapping="Wrap" Margin="0,2,0,0"/>
                                                 <TextBlock Text="{Binding GraillonHint}" Visibility="{Binding GraillonVisibility}"
                                                            Foreground="#C9A46A" FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap"/>
+                                                <TextBlock Text="{Binding GainText}" Visibility="{Binding GainVisibility}"
+                                                           Foreground="{StaticResource FgDim}" FontSize="12" Margin="0,3,0,0"/>
                                             </StackPanel>
                                             <Grid Grid.Column="2" Visibility="{Binding ControlsVisibility}" VerticalAlignment="Center" Margin="0,0,8,0">
                                                 <Grid.ColumnDefinitions>
@@ -284,9 +366,14 @@
                                                 <Button Content="Aktivieren" Click="Activate_Click" Margin="0,0,0,4"/>
                                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                                     <Button Content="&#xE70F;" FontFamily="Segoe MDL2 Assets" Click="EditVoice_Click" Padding="7,4" Margin="0,0,3,0"
-                                                            ToolTip="Name, Beschreibung und Graillon-Hinweis bearbeiten"/>
+                                                            AutomationProperties.Name="Stimme bearbeiten"
+                                                            ToolTip="Name, Beschreibung, Graillon-Hinweis und Lautstärke bearbeiten"/>
                                                     <Button Content="&#xE8C8;" FontFamily="Segoe MDL2 Assets" Click="CopyVoice_Click" Padding="7,4" Margin="0,0,3,0"
+                                                            AutomationProperties.Name="Stimme kopieren"
                                                             ToolTip="Kopieren – als Vorlage für eine neue Stimme"/>
+                                                    <Button Content="&#xE74E;" FontFamily="Segoe MDL2 Assets" Click="ExportVoice_Click" Padding="7,4" Margin="0,0,3,0"
+                                                            AutomationProperties.Name="Stimme exportieren"
+                                                            ToolTip="Exportieren – als Datei speichern, z. B. zum Weitergeben"/>
                                                     <Button Content="&#xE74D;" FontFamily="Segoe MDL2 Assets" Click="DeleteVoice_Click" Padding="7,4"
                                                             Visibility="{Binding DeleteVisibility}" ToolTip="Stimme löschen"/>
                                                 </StackPanel>

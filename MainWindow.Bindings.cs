@@ -9,7 +9,7 @@ namespace RpVoiceSwitcher;
 // Tastenbelegung: Umschalten, Halten und Sounds – jeweils pro Charakter
 public partial class MainWindow
 {
-    private enum BindingKind { Toggle, Hold, Sound }
+    private enum BindingKind { Toggle, Hold, Sound, Panic }
 
     private sealed record Capture(BindingKind Kind, string FileName, Action<string> SetText);
 
@@ -27,6 +27,12 @@ public partial class MainWindow
         _hotkeys.UnregisterAll();
         _holdHook.Clear();
         var profile = _settings.Current;
+
+        // Notfall-Taste zuerst – sie gilt in jedem Charakter und soll nie von etwas anderem verdrängt werden.
+        var panic = Hotkey.Parse(_settings.PanicHotkey);
+        PanicButton.Content = panic is Hotkey ph ? RegisterToggle(ph, Panic) : "Keine Taste";
+        // Im Menü als Hinweis (die Taste ist global, nicht nur im Fenster)
+        PanicMenuItem.InputGestureText = panic?.ToString() ?? "";
 
         foreach (var item in ProfileVoices())
         {
@@ -62,7 +68,9 @@ public partial class MainWindow
         // Zahlen gelten für beide Tastenreihen: Strg+Alt+1 oben = Strg+Alt+Num 1 (NumLock muss an sein).
         bool aliasOk = hk.NumberAlias is Hotkey alias && _hotkeys.Register(alias, action);
         if (!ok && !aliasOk) return hk + " (belegt!)";
-        return hk + (aliasOk ? " (auch Num)" : "");
+        // Hinweis auf die jeweils andere Zahlenreihe
+        bool onNumpad = hk.Key is >= Key.NumPad0 and <= Key.NumPad9;
+        return hk + (aliasOk ? (onNumpad ? $" (auch {(int)(hk.Key - Key.NumPad0)})" : " (auch Num)") : "");
     }
 
     // ---------- Aufnahme einer neuen Taste ----------
@@ -108,7 +116,8 @@ public partial class MainWindow
         if (key == Key.Escape) { CancelCapture(); return; }
         if (key is Key.Delete or Key.Back)
         {
-            BindingsFor(capture.Kind).Remove(capture.FileName);
+            if (capture.Kind == BindingKind.Panic) _settings.PanicHotkey = null;
+            else BindingsFor(capture.Kind).Remove(capture.FileName);
             FinishCapture();
             return;
         }
@@ -120,15 +129,77 @@ public partial class MainWindow
             return;
         }
 
-        // Eine Taste gibt es pro Charakter nur einmal – egal ob Umschalten, Halten oder Sound.
         string serialized = hk.Serialize();
         string? aliasSerialized = hk.NumberAlias?.Serialize();
+        bool Same(string? value) => value != null && (value == serialized || value == aliasSerialized);
+
+        if (capture.Kind == BindingKind.Panic)
+        {
+            // Die Notfall-Taste gilt überall – deshalb aus allen Charakteren entfernen.
+            foreach (var profile in _settings.Profiles)
+                foreach (var map in profile.AllBindings())
+                    foreach (var other in map.Where(kv => Same(kv.Value)).Select(kv => kv.Key).ToList())
+                        map.Remove(other);
+            _settings.PanicHotkey = serialized;
+            FinishCapture();
+            return;
+        }
+
+        if (Same(_settings.PanicHotkey) || Hotkey.Parse(_settings.PanicHotkey)?.NumberAlias?.Serialize() == serialized)
+        {
+            capture.SetText("Ist schon die Notfall-Taste");
+            return;
+        }
+
+        // Eine Taste gibt es pro Charakter nur einmal – egal ob Umschalten, Halten oder Sound.
         foreach (var map in _settings.Current.AllBindings())
-            foreach (var other in map.Where(kv => kv.Value == serialized || kv.Value == aliasSerialized).Select(kv => kv.Key).ToList())
+            foreach (var other in map.Where(kv => Same(kv.Value)).Select(kv => kv.Key).ToList())
                 map.Remove(other);
 
         BindingsFor(capture.Kind)[capture.FileName] = serialized;
         FinishCapture();
+    }
+
+    // ---------- Notfall-Taste ----------
+
+    private void PanicKey_Click(object sender, RoutedEventArgs e) =>
+        StartCapture(BindingKind.Panic, "", t => PanicButton.Content = t);
+
+    private void ClearPanicKey_Click(object sender, RoutedEventArgs e)
+    {
+        CancelCapture();
+        _settings.PanicHotkey = null;
+        _settings.Save();
+        RegisterAllBindings();
+    }
+
+    /// <summary>Sofort normale Stimme, alle Sounds aus, Halten beendet – egal in welchem Charakter.</summary>
+    private void Panic()
+    {
+        _soundEngine.StopAll();
+        _holdVoice = null;
+        var normal = NormalVoice();
+        if (normal != null)
+        {
+            _baseVoice = normal;
+            ApplyVoice(normal, quiet: true);
+        }
+        else
+        {
+            try { _store?.Deactivate(); } catch { /* nichts mehr zu tun */ }
+            foreach (var v in _allVoices) v.IsActive = false;
+            _baseVoice = null;
+            UpdateStatus();
+        }
+        _holdHook.ReleaseHeld(); // EndHold greift nicht mehr, weil _holdVoice schon null ist
+
+        if (_settings.ShowOverlay)
+        {
+            _overlay ??= new OverlayWindow();
+            _overlay.Flash("Notfall: normale Stimme · Sounds aus");
+        }
+        Beep(440);
+        ShowStatusMessage("Notfall-Taste: normale Stimme, alle Sounds gestoppt.");
     }
 
     private void FinishCapture()

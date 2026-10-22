@@ -163,6 +163,8 @@ public partial class MainWindow
         UpdateStatusBar();
         _tray.Text = Truncate((_settings.Profiles.Count > 1 ? _settings.Current.Name + ": " : "RP-Stimme: ") + voice, 63);
         UpdateStatusOverlay();
+        WriteObsFile();
+        _voiceTest?.RefreshVoices();
     }
 
     private static string Truncate(string s, int max) => s.Length <= max ? s : s[..max];
@@ -194,12 +196,43 @@ public partial class MainWindow
         }
 
         var active = CurrentVoice();
+        bool isNormal = active == null || active.IsNormal;
         string text = active?.Name ?? "Keine Stimme";
         if (_settings.Profiles.Count > 1) text = _settings.Current.Name + " · " + text;
-        _status.SetVoice(text, active == null || active.IsNormal);
+        _status.SetVoice(text, isNormal);
+        _status.SetLook(_settings.StatusOverlayScale, _settings.StatusOverlayOpacity);
 
+        // Optional nur zeigen, wenn ein Effekt aktiv ist – beim Verschieben aber immer.
+        if (_settings.StatusOverlayHideNormal && isNormal && !_statusEditing)
+        {
+            _status.Hide();
+            return;
+        }
         if (!_status.IsVisible)
             _status.ShowAt(_settings.StatusOverlayLeft, _settings.StatusOverlayTop);
+    }
+
+    private void StatusLook_Changed(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (_initializing) return;
+        _settings.StatusOverlayScale = Math.Round(StatusScaleSlider.Value, 2);
+        _settings.StatusOverlayOpacity = Math.Round(StatusOpacitySlider.Value, 2);
+        UpdateStatusLookTexts();
+        _settings.Save();
+        UpdateStatusOverlay();
+    }
+
+    private void UpdateStatusLookTexts()
+    {
+        StatusScaleText.Text = $"{StatusScaleSlider.Value * 100:0} %";
+        StatusOpacityText.Text = $"{StatusOpacitySlider.Value * 100:0} %";
+    }
+
+    private void StatusHideNormal_Changed(object sender, RoutedEventArgs e)
+    {
+        _settings.StatusOverlayHideNormal = StatusHideNormalCheck.IsChecked == true;
+        _settings.Save();
+        UpdateStatusOverlay();
     }
 
     private void SetStatusEditMode(bool on)
@@ -214,6 +247,7 @@ public partial class MainWindow
 
         _statusEditing = on && _status != null;
         _status?.SetEditMode(_statusEditing);
+        if (_settings.ShowStatusOverlay) UpdateStatusOverlay(); // bei "nur mit Effekt" zum Verschieben einblenden bzw. danach wieder aus
         MoveStatusButton.Content = _statusEditing ? "Fertig" : "Position anpassen";
     }
 

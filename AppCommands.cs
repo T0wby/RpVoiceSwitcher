@@ -19,6 +19,7 @@ public static class AppCommands
     // Datei
     public static readonly RoutedUICommand NewVoice = C("_Neue Stimme …", nameof(NewVoice), K(Key.N, Ctrl, "Strg+N"));
     public static readonly RoutedUICommand ImportVoice = C("Stimme _importieren …", nameof(ImportVoice), K(Key.O, Ctrl, "Strg+O"));
+    public static readonly RoutedUICommand ExportVoices = C("Stimmen e_xportieren …", nameof(ExportVoices), K(Key.E, Ctrl, "Strg+E"));
     public static readonly RoutedUICommand AddSounds = C("_Sounds hinzufügen …", nameof(AddSounds), K(Key.O, Ctrl | Shift, "Strg+Umschalt+O"));
     public static readonly RoutedUICommand CloseWindow = C("Fenster _schließen", nameof(CloseWindow), K(Key.W, Ctrl, "Strg+W"));
     public static readonly RoutedUICommand Exit = C("_Beenden", nameof(Exit), K(Key.Q, Ctrl, "Strg+Q"));
@@ -38,6 +39,8 @@ public static class AppCommands
     // Extras
     public static readonly RoutedUICommand ShowSetup = C("_Einrichtung …", nameof(ShowSetup), K(Key.E, Ctrl | Shift, "Strg+Umschalt+E"));
     public static readonly RoutedUICommand ShowSettings = C("Ein_stellungen …", nameof(ShowSettings), K(Key.OemComma, Ctrl, "Strg+,"));
+    public static readonly RoutedUICommand VoiceTest = C("_Probehören …", nameof(VoiceTest), K(Key.P, Ctrl, "Strg+P"));
+    public static readonly RoutedUICommand Panic = C("_Notfall: normale Stimme, Sounds aus", nameof(Panic));
     public static readonly RoutedUICommand StopSounds = C("Alle Sounds _stoppen", nameof(StopSounds), K(Key.OemPeriod, Ctrl, "Strg+."));
     public static readonly RoutedUICommand OpenEditor = C("Equalizer-APO-_Editor", nameof(OpenEditor));
     public static readonly RoutedUICommand OpenDeviceSelector = C("Equalizer-APO-_Device-Selector", nameof(OpenDeviceSelector));
@@ -46,5 +49,6 @@ public static class AppCommands
 
     // Hilfe
     public static readonly RoutedUICommand Help = C("_Kurzanleitung", nameof(Help), K(Key.F1, None, "F1"));
+    public static readonly RoutedUICommand CheckUpdates = C("Nach _Updates suchen …", nameof(CheckUpdates));
     public static readonly RoutedUICommand About = C("_Info über RP Voice Switcher", nameof(About));
 }

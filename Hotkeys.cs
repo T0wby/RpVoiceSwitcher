@@ -30,7 +30,7 @@ public readonly record struct Hotkey(ModifierKeys Modifiers, Key Key)
 
     /// <summary>Ohne Modifier sind nur F-Tasten und der Ziffernblock erlaubt, sonst wäre z. B. "W" systemweit blockiert.</summary>
     public bool IsSafeWithoutModifier =>
-        Key is >= Key.F1 and <= Key.F24 or >= Key.NumPad0 and <= Key.Divide;
+        Key is >= Key.F1 and <= Key.F24 or >= Key.NumPad0 and <= Key.Divide or Key.Pause or Key.Scroll;
 
     public override string ToString()
     {
@@ -52,6 +52,15 @@ public readonly record struct Hotkey(ModifierKeys Modifiers, Key Key)
         Key.Multiply => "Num *",
         Key.Divide => "Num /",
         Key.Decimal => "Num ,",
+        Key.Pause => "Pause",
+        Key.Scroll => "Rollen",
+        Key.Escape => "Esc",
+        Key.Back => "Rücktaste",
+        Key.Home => "Pos1",
+        Key.End => "Ende",
+        Key.Insert => "Einfg",
+        Key.PageUp => "Bild auf",
+        Key.PageDown => "Bild ab",
         _ => key.ToString(),
     };
 }

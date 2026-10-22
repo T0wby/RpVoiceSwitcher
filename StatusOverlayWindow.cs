@@ -113,6 +113,16 @@ public sealed class StatusOverlayWindow : Window
         _dot.Fill = isNormal ? IdleBrush : AccentBrush;
     }
 
+    /// <summary>Größe (1 = 100 %) und Deckkraft (0,3 … 1) der Anzeige.</summary>
+    public void SetLook(double scale, double opacity)
+    {
+        scale = Math.Clamp(scale, 0.6, 2.5);
+        _border.LayoutTransform = Math.Abs(scale - 1) < 0.01 ? Transform.Identity : new ScaleTransform(scale, scale);
+        Opacity = Math.Clamp(opacity, 0.2, 1);
+        UpdateLayout();
+        if (IsVisible) ClampToScreen();
+    }
+
     /// <summary>Zeigt die Anzeige an der gespeicherten Position (oder oben links, falls keine gespeichert ist).</summary>
     public void ShowAt(double? left, double? top)
     {

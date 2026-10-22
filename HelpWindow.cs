@@ -24,7 +24,14 @@ public sealed class HelpWindow : Window
             "Umschalten: Shortcut einmal drücken – die Stimme bleibt an, bis du eine andere wählst.",
             "Halten: Solange die Taste gedrückt ist, ist die Stimme aktiv. Beim Loslassen geht es zur vorherigen zurück. Ideal für schnelle Wechsel mitten im Satz.",
             "Shortcut ändern: auf das Feld klicken und die Tasten drücken. Entf löscht, Esc bricht ab. Ziffern gelten für beide Zahlenreihen (NumLock an).",
-            "Neue Stimme (Strg+N), bearbeiten, kopieren und löschen geht direkt an der Stimme. Für die Tonhöhe Graillon im EAPO-Editor einbauen.",
+            "Neue Stimme (Strg+N), bearbeiten, kopieren, exportieren und löschen geht direkt an der Stimme. Für die Tonhöhe Graillon im EAPO-Editor einbauen.",
+            "Lautstärke: Ist eine Stimme leiser oder lauter als deine normale, gleicht der Regler beim Bearbeiten (✎) das aus. Extras → Probehören (Strg+P) misst den Unterschied und stellt ihn auf Wunsch direkt ein.",
+            "Weitergeben: Datei → Stimmen exportieren (Strg+E) packt die Stimmen des Charakters in eine ZIP. Importieren (Strg+O) nimmt .txt und .zip.",
+        ]),
+        ("Notfall-Taste",
+        [
+            "Standard: Pause. Gilt in jedem Charakter – sofort normale Stimme, alle Sounds aus, eine gehaltene Stimme wird beendet.",
+            "Ändern unter Extras → Einstellungen. Auch im Tray-Menü und unter Extras zu finden.",
         ]),
         ("Charaktere",
         [
@@ -39,7 +46,9 @@ public sealed class HelpWindow : Window
         ]),
         ("Tipps",
         [
-            "Status-Anzeige und Einblendung sind im Fenster- oder Randlos-Modus von Spielen sichtbar, nicht im exklusiven Vollbild.",
+            "Status-Anzeige und Einblendung sind im Fenster- oder Randlos-Modus von Spielen sichtbar, nicht im exklusiven Vollbild. Größe, Deckkraft und „nur mit Effekt zeigen“ stellst du in den Einstellungen ein.",
+            "Streamer: In den Einstellungen unter „Stream (OBS)“ schreibt die App die aktive Stimme in eine Textdatei – in OBS als „Text (GDI+)“ → „Aus Datei lesen“ einbinden.",
+            "Updates: Die App sucht beim Start nach neuen Versionen (abschaltbar). Von Hand: Hilfe → Nach Updates suchen.",
             "Fenster schließen (Strg+W) lässt die App im Infobereich weiterlaufen – die Shortcuts bleiben aktiv. Beenden: Strg+Q.",
             "Starke Rauschunterdrückung (z. B. Krisp in Discord) kann Effekte abschwächen.",
         ]),

@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -8,13 +10,16 @@ using Microsoft.Win32;
 
 namespace RpVoiceSwitcher;
 
-public sealed class VoicePreset
+public sealed record VoicePreset
 {
     public required string FileName { get; init; }
     public required string FullPath { get; init; }
     public required string Name { get; init; }
     public string Description { get; init; } = "";
     public string GraillonHint { get; init; } = "";
+
+    /// <summary>Lautstärke-Ausgleich in dB (Kopfzeile "# Lautstaerke: +3 dB"), damit alle Stimmen gleich laut ankommen.</summary>
+    public double GainDb { get; init; }
 }
 
 /// <summary>
@@ -112,6 +117,7 @@ public sealed class VoiceStore
         foreach (var path in Directory.GetFiles(VoicesDir, "*.txt").OrderBy(p => p, StringComparer.OrdinalIgnoreCase))
         {
             string name = Path.GetFileNameWithoutExtension(path), desc = "", graillon = "";
+            double gain = 0;
             foreach (var raw in File.ReadLines(path).Take(20))
             {
                 var line = raw.Trim();
@@ -120,6 +126,7 @@ public sealed class VoiceStore
                 if (TryHeader(line, "Name", out var v)) name = v;
                 else if (TryHeader(line, "Beschreibung", out v)) desc = v;
                 else if (TryHeader(line, "Graillon", out v)) graillon = v;
+                else if (TryGainHeader(line, out v)) gain = ParseGain(v);
             }
             result.Add(new VoicePreset
             {
@@ -128,6 +135,7 @@ public sealed class VoiceStore
                 Name = name,
                 Description = desc,
                 GraillonHint = graillon,
+                GainDb = gain,
             });
         }
         return result;
@@ -140,6 +148,23 @@ public sealed class VoiceStore
         value = line[(key.Length + 1)..].Trim();
         return true;
     }
+
+    public const double MaxGainDb = 12;
+
+    private static bool TryGainHeader(string line, out string value) =>
+        TryHeader(line, "Lautstaerke", out value) || TryHeader(line, "Lautstärke", out value);
+
+    /// <summary>"+3 dB", "-2,5", "1.5dB" → Zahl, begrenzt auf ±12 dB.</summary>
+    public static double ParseGain(string text)
+    {
+        var t = text.Replace("dB", "", StringComparison.OrdinalIgnoreCase).Replace(',', '.').Trim();
+        return double.TryParse(t, NumberStyles.Float, CultureInfo.InvariantCulture, out var g) && double.IsFinite(g)
+            ? Math.Clamp(Math.Round(g * 2) / 2, -MaxGainDb, MaxGainDb)
+            : 0;
+    }
+
+    public static string FormatGain(double db) =>
+        (db > 0 ? "+" : "") + db.ToString("0.#", CultureInfo.GetCultureInfo("de-DE")) + " dB";
 
     /// <summary>
     /// Schaltet eine Stimme aktiv. Aufbau von voice.txt:
@@ -168,6 +193,13 @@ public sealed class VoiceStore
         sb.AppendLine("Copy: L=0.5*L+0.5*R R=0.5*L+0.5*R");
         sb.AppendLine("Channel: L R");
         sb.AppendLine("Include: " + Path.GetFileName(ActiveCopyFile));
+        if (Math.Abs(preset.GainDb) >= 0.05)
+        {
+            // Lautstärke-Ausgleich nur auf die Stimme (L/R) – trockene Sounds im geparkten Kanal bleiben unverändert.
+            string f = Math.Pow(10, preset.GainDb / 20).ToString("0.#####", CultureInfo.InvariantCulture);
+            sb.AppendLine($"# Lautstaerke-Ausgleich {FormatGain(preset.GainDb)}");
+            sb.AppendLine($"Copy: L={f}*L R={f}*R");
+        }
         sb.AppendLine("Channel: all");
         sb.AppendLine($"Copy: L=L+{DryChannel} R=R+{DryChannel}");
         sb.AppendLine("Device: all");
@@ -175,6 +207,10 @@ public sealed class VoiceStore
         WriteWithRetry(ActiveCopyFile, copy.ToString());
         WriteWithRetry(ActiveFile, sb.ToString());
     }
+
+    /// <summary>Kein Effekt mehr (z. B. Notfall-Taste, wenn es keine "Normal"-Stimme gibt).</summary>
+    public void Deactivate() =>
+        WriteWithRetry(ActiveFile, "# RP Voice Switcher: keine Stimme aktiv" + Environment.NewLine);
 
     /// <summary>Hält die Stimme auf L/R und verhindert, dass sie den Gerätebereich von voice.txt verlässt.</summary>
     private static string SanitizeLine(string line)
@@ -208,7 +244,7 @@ public sealed class VoiceStore
     // ---------- Stimmen anlegen, bearbeiten, löschen ----------
 
     private static readonly UTF8Encoding Utf8NoBom = new(false);
-    private static readonly string[] HeaderKeys = ["Name", "Beschreibung", "Graillon"];
+    private static readonly string[] HeaderKeys = ["Name", "Beschreibung", "Graillon", "Lautstaerke", "Lautstärke"];
 
     /// <summary>Kopiert alle Stimmen in einen anderen Ordner (vorhandene Dateien bleiben unberührt).</summary>
     public static int CopyVoicesTo(string fromDir, string toDir)
@@ -237,11 +273,11 @@ public sealed class VoiceStore
         File.WriteAllLines(DeletedListFile, names.OrderBy(n => n, StringComparer.OrdinalIgnoreCase));
 
     /// <summary>Legt eine neue Stimmen-Datei an (z. B. "12-kobold.txt") und gibt den Dateinamen zurück.</summary>
-    public string CreateVoice(string name, string description, string graillon, IEnumerable<string>? body = null)
+    public string CreateVoice(string name, string description, string graillon, IEnumerable<string>? body = null, double gainDb = 0)
     {
         Directory.CreateDirectory(VoicesDir);
         string fileName = NextFileName(name);
-        var lines = BuildHeader(name, description, graillon).ToList();
+        var lines = BuildHeader(name, description, graillon, gainDb).ToList();
         var bodyLines = body?.ToList() ?? new List<string>();
         if (bodyLines.Count == 0)
             bodyLines.Add("# Noch keine Effekte – im EAPO-Editor oder hier per Text einbauen.");
@@ -253,10 +289,10 @@ public sealed class VoiceStore
         return fileName;
     }
 
-    /// <summary>Ersetzt nur Name/Beschreibung/Graillon-Hinweis – Effekte (auch Graillon selbst) bleiben unberührt.</summary>
-    public void UpdateHeader(VoicePreset preset, string name, string description, string graillon)
+    /// <summary>Ersetzt nur die Kopfzeilen (Name, Texte, Lautstärke) – Effekte (auch Graillon selbst) bleiben unberührt.</summary>
+    public void UpdateHeader(VoicePreset preset, string name, string description, string graillon, double gainDb)
     {
-        var lines = BuildHeader(name, description, graillon).Concat(ReadBody(preset)).ToList();
+        var lines = BuildHeader(name, description, graillon, gainDb).Concat(ReadBody(preset)).ToList();
         File.WriteAllLines(preset.FullPath, lines, Utf8NoBom);
     }
 
@@ -293,12 +329,62 @@ public sealed class VoiceStore
         return HeaderKeys.Any(k => TryHeader(line, k, out _));
     }
 
-    private static IEnumerable<string> BuildHeader(string name, string description, string graillon)
+    private static IEnumerable<string> BuildHeader(string name, string description, string graillon, double gainDb)
     {
         static string Clean(string s) => s.Replace("\r", " ").Replace("\n", " ").Trim();
         yield return "# Name: " + Clean(name);
         if (Clean(description).Length > 0) yield return "# Beschreibung: " + Clean(description);
         if (Clean(graillon).Length > 0) yield return "# Graillon: " + Clean(graillon);
+        if (Math.Abs(gainDb) >= 0.05)
+            yield return "# Lautstaerke: " + (gainDb > 0 ? "+" : "") + gainDb.ToString("0.#", CultureInfo.InvariantCulture) + " dB";
+    }
+
+    // ---------- Export / Import als ZIP ----------
+
+    /// <summary>Packt Stimmen in eine ZIP-Datei (zum Weitergeben oder Sichern).</summary>
+    public static void ExportZip(IEnumerable<VoicePreset> voices, string zipPath)
+    {
+        string tmp = zipPath + ".tmp";
+        if (File.Exists(tmp)) File.Delete(tmp);
+        using (var zip = ZipFile.Open(tmp, ZipArchiveMode.Create))
+        {
+            var used = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var v in voices)
+            {
+                if (!File.Exists(v.FullPath) || !used.Add(v.FileName)) continue;
+                zip.CreateEntryFromFile(v.FullPath, v.FileName, CompressionLevel.Optimal);
+            }
+        }
+        File.Move(tmp, zipPath, overwrite: true);
+    }
+
+    /// <summary>Übernimmt alle .txt-Stimmen aus einer ZIP-Datei. Liefert die neuen Dateinamen.</summary>
+    public List<string> ImportZip(string zipPath)
+    {
+        var imported = new List<string>();
+        string tmpDir = Path.Combine(Path.GetTempPath(), "RpVoiceSwitcher-import-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(tmpDir);
+        try
+        {
+            using var zip = ZipFile.OpenRead(zipPath);
+            foreach (var entry in zip.Entries)
+            {
+                // Nur Stimmen-Dateien, ohne Unterordner-Pfade (schützt auch vor "..\"-Tricks in der ZIP)
+                string name = Path.GetFileName(entry.FullName);
+                if (!name.EndsWith(".txt", StringComparison.OrdinalIgnoreCase) || entry.Length > 1_000_000) continue;
+                string tmpFile = Path.Combine(tmpDir, name);
+                entry.ExtractToFile(tmpFile, overwrite: true);
+                string existing = Path.Combine(VoicesDir, name);
+                if (File.Exists(existing) && (IsNormalFile(name) || File.ReadAllText(existing) == File.ReadAllText(tmpFile)))
+                    continue; // "Normal" bzw. genau diese Stimme gibt es schon
+                imported.Add(ImportVoice(tmpFile));
+            }
+        }
+        finally
+        {
+            try { Directory.Delete(tmpDir, true); } catch { /* egal */ }
+        }
+        return imported;
     }
 
     /// <summary>Nächste freie Nummer + lesbarer Name, z. B. "12-herr-mondgesicht-2.txt".</summary>

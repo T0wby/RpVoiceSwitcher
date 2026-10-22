@@ -3,3 +3,7 @@ obj/
 publish/
 *.user
 .vs/
+publish-installer/
+dist/
+tools/*/bin/
+tools/*/obj/

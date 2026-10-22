@@ -26,6 +26,7 @@ public partial class MainWindow
         // Datei
         Bind(AppCommands.NewVoice, () => NewVoice_Click(this, Args()), () => _store != null);
         Bind(AppCommands.ImportVoice, ImportVoices, () => _store != null);
+        Bind(AppCommands.ExportVoices, ExportVoices, () => _store != null);
         Bind(AppCommands.AddSounds, AddSoundsFromDialog);
         Bind(AppCommands.CloseWindow, Close);
         Bind(AppCommands.Exit, ExitApp);
@@ -42,6 +43,8 @@ public partial class MainWindow
         Bind(AppCommands.ShowSettings, ShowSettingsWindow);
         Bind(AppCommands.Refresh, () => { LoadVoices(); LoadSounds(); RunSetupCheck(); ShowStatusMessage("Aktualisiert."); });
         // Extras
+        Bind(AppCommands.VoiceTest, ShowVoiceTest, () => _store != null);
+        Bind(AppCommands.Panic, Panic);
         Bind(AppCommands.StopSounds, () => _soundEngine.StopAll());
         Bind(AppCommands.OpenEditor, () => OpenEditor_Click(this, Args()), () => _store != null);
         Bind(AppCommands.OpenDeviceSelector, () => { if (_store != null) SetupChecker.OpenDeviceSelector(_store); }, () => _store != null);
@@ -49,6 +52,7 @@ public partial class MainWindow
         Bind(AppCommands.OpenPlayback, () => SetupChecker.OpenSoundPanel(0));
         // Hilfe
         Bind(AppCommands.Help, () => HelpWindow.ShowFor(this));
+        Bind(AppCommands.CheckUpdates, () => _ = CheckForUpdatesAsync(manual: true));
         Bind(AppCommands.About, ShowAbout);
 
         _statusMessageTimer.Tick += (_, _) => { _statusMessageTimer.Stop(); _statusMessage = null; UpdateStatusBar(); };
@@ -111,17 +115,12 @@ public partial class MainWindow
         var dlg = new OpenFileDialog
         {
             Title = "Stimmen importieren",
-            Filter = "Stimmen (*.txt)|*.txt|Alle Dateien (*.*)|*.*",
+            Filter = "Stimmen und Stimmen-Pakete (*.txt;*.zip)|*.txt;*.zip|Alle Dateien (*.*)|*.*",
             Multiselect = true,
         };
         if (dlg.ShowDialog(this) != true) return;
-        int n = 0;
-        foreach (var path in dlg.FileNames)
-        {
-            try { AddToCurrentProfile(_store.ImportVoice(path)); n++; }
-            catch (Exception ex) { MessageBox.Show(this, $"„{System.IO.Path.GetFileName(path)}“ konnte nicht übernommen werden: {ex.Message}", "RP Voice Switcher"); }
-        }
-        if (n > 0) { LoadVoices(); ShowStatusMessage(n == 1 ? "1 Stimme importiert." : $"{n} Stimmen importiert."); }
+        if (ImportVoiceFiles(dlg.FileNames) == 0)
+            ShowStatusMessage("Keine neuen Stimmen gefunden.");
     }
 
     private void AddSoundsFromDialog()
