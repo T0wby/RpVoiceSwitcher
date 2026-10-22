@@ -23,6 +23,7 @@ public partial class MainWindow
         // Die Notfall-Taste wird hier aufgenommen – Tasten an dieselbe Aufnahme-Logik wie im Hauptfenster geben.
         _settingsWindow.PreviewKeyDown += Window_PreviewKeyDown;
         _settingsWindow.PreviewKeyUp += Window_PreviewKeyUp;
+        _settingsWindow.PreviewMouseDown += Window_PreviewMouseDown; // Sprachtaste kann auch Maus 4/5 sein
         _settingsWindow.Deactivated += (_, _) => CancelCapture();
         _settingsWindow.IsVisibleChanged += (_, _) => { if (!_settingsWindow.IsVisible) { CancelCapture(); SetStatusEditMode(false); } };
     }

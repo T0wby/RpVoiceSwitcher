@@ -19,7 +19,7 @@ Updates findet die App selbst (abschaltbar) – oder *Hilfe → Nach Updates suc
 
 - *Extras → Einrichtung* prüft die ganze Kette und behebt vieles per Klick.
 - Kein Effekt im Spiel, obwohl die Stimme aktiv ist? Meist hat das Spiel das Mikrofon „exklusiv“ geöffnet – die Einrichtung schaltet den Exklusivmodus an „CABLE Output“ ab.
-- Sounds kommen im Sprachchat nicht an? Lautstärke für andere hochdrehen (bis 200 %) – und bei Spielen mit Push-to-Talk (z. B. nanos world) im Soundboard die Sprachtaste wählen und „drücken, solange ein Sound läuft“ anhaken (oder „Dauersenden“ nutzen).
+- Sounds kommen im Sprachchat nicht an? Lautstärke für andere hochdrehen (bis 200 %) – und bei Spielen mit Push-to-Talk (z. B. nanos world) unter *Einstellungen → Sprachtaste im Spiel* dieselbe Taste wie im Spiel wählen und „Beim Abspielen von Sounds automatisch drücken“ anhaken (oder „Dauersenden“ nutzen).
 - Sonst: *Hilfe → Problem melden* kopiert eine Diagnose und öffnet ein [GitHub-Issue](https://github.com/T0wby/RpVoiceSwitcher/issues/new?template=problem.yml) zum Einfügen.
 
 ## Funktionen

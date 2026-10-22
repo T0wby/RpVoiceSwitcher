@@ -130,10 +130,10 @@ public partial class MainWindow
     {
         if (PttKey is not PushToTalk.Binding b)
         {
-            Tabs.SelectedIndex = 1;
-            PttHint.Text = "Für Dauersenden zuerst die Sprachtaste des Spiels wählen (Knopf „Sprachtaste“).";
+            FlashOverlay("Dauersenden: erst die Sprachtaste des Spiels einstellen");
+            OpenPttSettings();
+            PttHint.Text = "Für Dauersenden zuerst hier die Sprachtaste des Spiels wählen.";
             PttHint.Visibility = Visibility.Visible;
-            FlashOverlay("Dauersenden: erst Sprachtaste wählen");
             return;
         }
 
@@ -170,7 +170,36 @@ public partial class MainWindow
         PttLatchToggle.Background = _pttLatched
             ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xC2, 0x3B, 0x32))
             : (System.Windows.Media.Brush)FindResource("Card");
+        UpdatePttSummary();
         UpdateStatusOverlay();
+    }
+
+    /// <summary>Kurzinfo im Soundboard: welche Sprachtaste, welche Umschalt-Taste.</summary>
+    private void UpdatePttSummary()
+    {
+        var key = PttKey;
+        var latch = Hotkey.Parse(_settings.PttLatchHotkey);
+        PttSummary.Text = key == null
+            ? "Keine Sprachtaste eingestellt"
+            : $"Sprachtaste: {key}" + (latch != null ? $" · Umschalten: {latch}" : "");
+    }
+
+    private void OpenPttSettings_Click(object sender, RoutedEventArgs e) => OpenPttSettings();
+
+    /// <summary>Einstellungen öffnen und zum Abschnitt „Sprachtaste im Spiel“ scrollen.</summary>
+    private void OpenPttSettings()
+    {
+        ShowSettingsWindow();
+        Dispatcher.InvokeAsync(() => PttSection.BringIntoView(), DispatcherPriority.Loaded);
+    }
+
+    private void ClearPttKey_Click(object sender, RoutedEventArgs e)
+    {
+        CancelCapture();
+        ReleasePttNow();
+        _settings.PushToTalkKey = null;
+        _settings.Save();
+        UpdatePushToTalkUi();
     }
 
     private void PttLatchToggle_Click(object sender, RoutedEventArgs e) => TogglePttLatch();

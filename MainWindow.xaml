@@ -182,6 +182,38 @@
                             <TextBlock Foreground="{StaticResource FgDim}" TextWrapping="Wrap" Margin="0,6,0,0" FontSize="12"
                                        Text="Gilt in jedem Charakter: schaltet sofort auf „Normal“, stoppt alle Sounds und beendet eine gehaltene Stimme. Ideal: Pause, Rollen oder eine F-Taste."/>
 
+                            <TextBlock x:Name="PttSection" Text="Sprachtaste im Spiel (Push-to-Talk)" FontSize="15" FontWeight="SemiBold" Margin="0,16,0,4"/>
+                            <TextBlock Foreground="{StaticResource FgDim}" TextWrapping="Wrap" Margin="0,0,0,8" FontSize="12"
+                                       Text="Für Spiele, die nur mit gedrückter Sprechtaste senden (z. B. nanos world). Die App kann die Taste nicht aus dem Spiel auslesen – stell hier dieselbe ein wie in den Steuerungs- bzw. Sprachchat-Einstellungen des Spiels."/>
+                            <Grid Margin="0,0,0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Text="Sprachtaste des Spiels" VerticalAlignment="Center" Margin="0,0,12,6"/>
+                                <Button x:Name="PttKeyButton" Grid.Column="1" Content="Taste wählen …" Click="PttKey_Click" MinWidth="200" Padding="10,4" Margin="0,0,4,6"
+                                        AutomationProperties.AutomationId="PttKeyButton"
+                                        ToolTip="Klicken und dann die Sprechtaste aus dem Spiel drücken – Taste oder Maus 4/5. Entf = keine, Esc = abbrechen."/>
+                                <Button Grid.Column="2" Content="✕" Click="ClearPttKey_Click" Padding="8,4" Margin="0,0,0,6"
+                                        ToolTip="Sprachtaste entfernen" AutomationProperties.Name="Sprachtaste entfernen"/>
+                                <TextBlock Grid.Row="1" Text="Dauersenden an/aus" VerticalAlignment="Center" Margin="0,0,12,6"/>
+                                <Button x:Name="PttLatchButton" Grid.Row="1" Grid.Column="1" Content="Keine Taste" Click="PttLatchKey_Click" MinWidth="200" Padding="10,4" Margin="0,0,4,6"
+                                        AutomationProperties.AutomationId="PttLatchButton"
+                                        ToolTip="Shortcut, mit dem du zwischen Dauersenden und Push-to-Talk umschaltest – gilt in allen Charakteren, auch im Spiel. Klicken und Kombination drücken; Entf = keine, Esc = abbrechen."/>
+                                <Button Grid.Row="1" Grid.Column="2" Content="✕" Click="ClearPttLatchKey_Click" Padding="8,4" Margin="0,0,0,6"
+                                        ToolTip="Dauersenden-Taste entfernen" AutomationProperties.Name="Dauersenden-Taste entfernen"/>
+                            </Grid>
+                            <CheckBox x:Name="PttCheck" Content="Beim Abspielen von Sounds automatisch drücken" Click="PttCheck_Click" Margin="0,0,0,4"
+                                      ToolTip="Die App drückt die Sprachtaste kurz vor jedem Sound und lässt sie kurz danach wieder los – sonst hört im Spiel niemand den Sound."/>
+                            <TextBlock x:Name="PttHint" Foreground="#E5C07A" TextWrapping="Wrap" Margin="0,2,0,0" Visibility="Collapsed"/>
+                            <TextBlock Foreground="{StaticResource FgDim}" TextWrapping="Wrap" Margin="0,4,0,0" FontSize="12"
+                                       Text="Dauersenden hält die Sprachtaste gedrückt, bis du es wieder ausschaltest – wie ein offenes Mikrofon. Währenddessen die Sprachtaste nicht selbst drücken. Als Umschalt-Taste eignet sich z. B. Strg + Alt + eine F-Taste."/>
+
                             <TextBlock Text="Status-Anzeige" FontSize="15" FontWeight="SemiBold" Margin="0,16,0,8"/>
                             <WrapPanel>
                                 <CheckBox x:Name="StatusCheck" Content="Auf dem Bildschirm anzeigen" Click="StatusOverlay_Changed" VerticalAlignment="Center"
@@ -434,27 +466,14 @@
                                           ToolTip="Bringt jeden Sound automatisch auf volle Lautstärke – leise Dateien gehen im Sprachchat sonst unter."/>
                             </WrapPanel>
                             <WrapPanel>
-                                <TextBlock Text="Sprachtaste im Spiel" Foreground="{StaticResource FgDim}" VerticalAlignment="Center" Margin="0,0,8,8"
-                                           ToolTip="Für Spiele mit Push-to-Talk (z. B. nanos world): Ohne gedrückte Sprachtaste überträgt der Sprachchat nichts – auch keine Sounds."/>
-                                <Button x:Name="PttKeyButton" Content="Taste wählen …" Click="PttKey_Click" Padding="10,4" MinWidth="120" VerticalAlignment="Center" Margin="0,0,12,8"
-                                        AutomationProperties.AutomationId="PttKeyButton"
-                                        ToolTip="Klicken und dann die Sprachtaste aus dem Spiel drücken (Taste oder Maus 4/5). Entf = keine, Esc = abbrechen."/>
-                                <CheckBox x:Name="PttCheck" Content="drücken, solange ein Sound läuft" Click="PttCheck_Click" VerticalAlignment="Center" Margin="0,0,8,8"
-                                          ToolTip="Die App drückt die Sprachtaste kurz vor jedem Sound und lässt sie kurz danach wieder los."/>
-                            </WrapPanel>
-                            <WrapPanel>
                                 <Button x:Name="PttLatchToggle" Content="Dauersenden: aus" Click="PttLatchToggle_Click" Padding="12,4" MinWidth="150" VerticalAlignment="Center" Margin="0,0,12,8"
                                         AutomationProperties.AutomationId="PttLatchToggle"
-                                        ToolTip="Hält die Sprachtaste dauerhaft gedrückt – du sendest dann ständig wie mit offenem Mikrofon. Nochmal = wieder Push-to-Talk. Die Notfall-Taste schaltet es auch aus."/>
-                                <TextBlock Text="Taste dafür" Foreground="{StaticResource FgDim}" VerticalAlignment="Center" Margin="0,0,8,8"/>
-                                <Button x:Name="PttLatchButton" Content="Keine Taste" Click="PttLatchKey_Click" MinWidth="130" Padding="10,4" VerticalAlignment="Center" Margin="0,0,4,8"
-                                        AutomationProperties.AutomationId="PttLatchButton"
-                                        ToolTip="Globaler Shortcut zum Umschalten zwischen Dauersenden und Push-to-Talk – gilt in allen Charakteren, auch im Spiel."/>
-                                <Button Content="✕" Click="ClearPttLatchKey_Click" Padding="8,4" VerticalAlignment="Center" Margin="0,0,0,8"
-                                        ToolTip="Dauersenden-Taste entfernen" AutomationProperties.Name="Dauersenden-Taste entfernen"/>
+                                        ToolTip="Hält die Sprachtaste des Spiels dauerhaft gedrückt – du sendest dann ständig wie mit offenem Mikrofon. Nochmal = wieder Push-to-Talk. Die Notfall-Taste schaltet es auch aus."/>
+                                <TextBlock x:Name="PttSummary" Foreground="{StaticResource FgDim}" VerticalAlignment="Center" Margin="0,0,10,8" TextWrapping="Wrap"
+                                           AutomationProperties.AutomationId="PttSummary"/>
+                                <Button Content="Sprachtaste einstellen …" Click="OpenPttSettings_Click" Padding="10,4" VerticalAlignment="Center" Margin="0,0,0,8"
+                                        ToolTip="Einstellungen → Sprachtaste im Spiel: welche Taste die App drückt und mit welcher Taste du Dauersenden umschaltest"/>
                             </WrapPanel>
-                            <TextBlock x:Name="PttHint" Foreground="#E5C07A" TextWrapping="Wrap" Margin="0,0,0,6" Visibility="Collapsed"
-                                       Text="Noch keine Sprachtaste gewählt – auf den Knopf klicken und dieselbe Taste drücken, die du im Spiel zum Sprechen nutzt."/>
                             <TextBlock x:Name="SoundHint" Foreground="{StaticResource FgDim}" TextWrapping="Wrap"
                                        Text="Audiodateien (wav, mp3, m4a, flac …) einfach hierher ziehen. Mit „Durch Stimmeffekt“ klingt ein Sound wie deine Stimme – unter der Maske also auch gedämpft. Ohne Haken hören die anderen ihn unverändert."/>
                             <TextBlock x:Name="SoundError" Foreground="#E5807A" TextWrapping="Wrap" Margin="0,6,0,0" Visibility="Collapsed"/>

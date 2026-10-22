@@ -115,8 +115,19 @@ try {
     Write-TestSettings $true 1.0 'Key|F13'
     $p = Start-App
     $win = SoundTab $p
-    $btn = @($win.FindAll('Descendants', (Cond $AE::AutomationIdProperty 'PttKeyButton'))) | Select-Object -First 1
-    Check ("Knopf zeigt die Sprachtaste ({0})" -f $btn.Current.Name) ($btn.Current.Name -eq 'F13')
+    $sum = @($win.FindAll('Descendants', (Cond $AE::AutomationIdProperty 'PttSummary'))) | Select-Object -First 1
+    Check ("Soundboard zeigt Sprachtaste und Umschalt-Taste ({0})" -f $sum.Current.Name) ($sum.Current.Name -eq 'Sprachtaste: F13 · Umschalten: Strg + Alt + F10')
+    # "Sprachtaste einstellen …" oeffnet die Einstellungen mit beiden Tasten
+    $open = @($win.FindAll('Descendants', (Cond $AE::NameProperty 'Sprachtaste einstellen …'))) | Select-Object -First 1
+    $open.GetCurrentPattern([Windows.Automation.InvokePattern]::Pattern).Invoke(); Start-Sleep -m 800
+    # Eigene Fenster der App haengen in UIA mal unter dem Desktop, mal unter dem Hauptfenster
+    $sw = @($AE::RootElement.FindAll('Children', (Cond $AE::ProcessIdProperty $p.Id))) + @($win.FindAll('Children', (Cond $AE::ControlTypeProperty ([Windows.Automation.ControlType]::Window)))) |
+          Where-Object { $_ -and $_.Current.Name -like 'Einstellungen*' } | Select-Object -First 1
+    $k1 = (@($sw.FindAll('Descendants', (Cond $AE::AutomationIdProperty 'PttKeyButton'))) | Select-Object -First 1).Current.Name
+    $k2 = (@($sw.FindAll('Descendants', (Cond $AE::AutomationIdProperty 'PttLatchButton'))) | Select-Object -First 1).Current.Name
+    Check ("Einstellungen: Sprachtaste '{0}', Dauersenden-Taste '{1}'" -f $k1, $k2) ($k1 -eq 'F13' -and $k2 -like 'Strg + Alt + F10*')
+    $sw.GetCurrentPattern([Windows.Automation.WindowPattern]::Pattern).Close(); Start-Sleep -m 400
+
     $before = F13Down
     $script:during = $null; $script:after = $null
     $l = Record 4000 @{ 500 = { Press }; 1300 = { $script:during = F13Down }; 2900 = { $script:after = F13Down } }
@@ -132,8 +143,6 @@ try {
     Check '... und nach dem Abbrechen wieder losgelassen' (-not $script:after)
 
     "=== Dauersenden (Strg+Alt+F10) ==="
-    $latchBtn = @($win.FindAll('Descendants', (Cond $AE::AutomationIdProperty 'PttLatchButton'))) | Select-Object -First 1
-    Check ("Dauersenden-Taste angezeigt ({0})" -f $latchBtn.Current.Name) ($latchBtn.Current.Name -like 'Strg + Alt + F10*')
     Combo 0x79; Start-Sleep -m 500
     $on = F13Down
     $toggle = @($win.FindAll('Descendants', (Cond $AE::AutomationIdProperty 'PttLatchToggle'))) | Select-Object -First 1

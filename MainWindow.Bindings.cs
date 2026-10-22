@@ -38,6 +38,7 @@ public partial class MainWindow
         var latch = Hotkey.Parse(_settings.PttLatchHotkey);
         PttLatchButton.Content = latch is Hotkey lh ? RegisterToggle(lh, TogglePttLatch) : "Keine Taste";
         PttLatchMenuItem.InputGestureText = latch?.ToString() ?? "";
+        UpdatePttSummary();
 
         foreach (var item in ProfileVoices())
         {
