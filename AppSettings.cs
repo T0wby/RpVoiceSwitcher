@@ -107,6 +107,8 @@ public sealed class AppSettings
     public bool PushToTalkEnabled { get; set; }
     /// <summary>z. B. "Key|V" oder "Mouse|1" (Maus 4).</summary>
     public string? PushToTalkKey { get; set; }
+    /// <summary>Globaler Shortcut: Sprachtaste dauerhaft halten an/aus ("Dauersenden"), wie die Notfall-Taste für alle Charaktere.</summary>
+    public string? PttLatchHotkey { get; set; }
 
     /// <summary>Sounds, die durch den aktiven Stimmeffekt laufen sollen (Standard: ohne Effekt).</summary>
     public List<string> SoundsWithEffect { get; set; } = new();

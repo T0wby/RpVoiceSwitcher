@@ -9,7 +9,7 @@ namespace RpVoiceSwitcher;
 // Tastenbelegung: Umschalten, Halten und Sounds – jeweils pro Charakter
 public partial class MainWindow
 {
-    private enum BindingKind { Toggle, Hold, Sound, Panic, PushToTalk }
+    private enum BindingKind { Toggle, Hold, Sound, Panic, PushToTalk, PttLatch }
 
     private sealed record Capture(BindingKind Kind, string FileName, Action<string> SetText);
 
@@ -33,6 +33,11 @@ public partial class MainWindow
         PanicButton.Content = panic is Hotkey ph ? RegisterToggle(ph, Panic) : "Keine Taste";
         // Im Menü als Hinweis (die Taste ist global, nicht nur im Fenster)
         PanicMenuItem.InputGestureText = panic?.ToString() ?? "";
+
+        // Dauersenden an/aus – ebenfalls global
+        var latch = Hotkey.Parse(_settings.PttLatchHotkey);
+        PttLatchButton.Content = latch is Hotkey lh ? RegisterToggle(lh, TogglePttLatch) : "Keine Taste";
+        PttLatchMenuItem.InputGestureText = latch?.ToString() ?? "";
 
         foreach (var item in ProfileVoices())
         {
@@ -134,6 +139,7 @@ public partial class MainWindow
         if (key is Key.Delete or Key.Back)
         {
             if (capture.Kind == BindingKind.Panic) _settings.PanicHotkey = null;
+            else if (capture.Kind == BindingKind.PttLatch) _settings.PttLatchHotkey = null;
             else BindingsFor(capture.Kind).Remove(capture.FileName);
             FinishCapture();
             return;
@@ -150,21 +156,45 @@ public partial class MainWindow
         string? aliasSerialized = hk.NumberAlias?.Serialize();
         bool Same(string? value) => value != null && (value == serialized || value == aliasSerialized);
 
-        if (capture.Kind == BindingKind.Panic)
+        // Die Sprachtaste drückt die App selbst – als Shortcut würde sie sich sonst selbst auslösen.
+        if (hk.Modifiers == ModifierKeys.None && PttKey is { IsMouse: false } pk && pk.Key == key)
         {
-            // Die Notfall-Taste gilt überall – deshalb aus allen Charakteren entfernen.
+            capture.SetText("Ist die Sprachtaste des Spiels");
+            return;
+        }
+
+        bool IsGlobal(string? value) => Same(value) || Hotkey.Parse(value)?.NumberAlias?.Serialize() == serialized;
+
+        if (capture.Kind is BindingKind.Panic or BindingKind.PttLatch)
+        {
+            if (capture.Kind == BindingKind.PttLatch && IsGlobal(_settings.PanicHotkey))
+            {
+                capture.SetText("Ist schon die Notfall-Taste");
+                return;
+            }
+            // Notfall-Taste und Dauersenden gelten überall – deshalb aus allen Charakteren entfernen.
             foreach (var profile in _settings.Profiles)
                 foreach (var map in profile.AllBindings())
                     foreach (var other in map.Where(kv => Same(kv.Value)).Select(kv => kv.Key).ToList())
                         map.Remove(other);
-            _settings.PanicHotkey = serialized;
+            if (capture.Kind == BindingKind.Panic)
+            {
+                if (IsGlobal(_settings.PttLatchHotkey)) _settings.PttLatchHotkey = null;
+                _settings.PanicHotkey = serialized;
+            }
+            else _settings.PttLatchHotkey = serialized;
             FinishCapture();
             return;
         }
 
-        if (Same(_settings.PanicHotkey) || Hotkey.Parse(_settings.PanicHotkey)?.NumberAlias?.Serialize() == serialized)
+        if (IsGlobal(_settings.PanicHotkey))
         {
             capture.SetText("Ist schon die Notfall-Taste");
+            return;
+        }
+        if (IsGlobal(_settings.PttLatchHotkey))
+        {
+            capture.SetText("Ist schon die Dauersenden-Taste");
             return;
         }
 

@@ -108,6 +108,27 @@ public sealed class StatusOverlayWindow : Window
         MouseLeftButtonDown += OnMouseDown;
     }
 
+    private TextBlock? _transmit;
+
+    /// <summary>Zeile "● Dauersenden" unter der Stimme (nur sichtbar, wenn an).</summary>
+    public void SetTransmitting(bool on)
+    {
+        if (_transmit == null)
+        {
+            if (!on) return;
+            _transmit = new TextBlock
+            {
+                Text = "● Dauersenden",
+                Foreground = new SolidColorBrush(Color.FromRgb(0xF0, 0x5A, 0x4E)),
+                FontSize = 12,
+                FontWeight = FontWeights.SemiBold,
+                Margin = new Thickness(1, 4, 0, 0),
+            };
+            ((StackPanel)_border.Child).Children.Insert(1, _transmit);
+        }
+        _transmit.Visibility = on ? Visibility.Visible : Visibility.Collapsed;
+    }
+
     public void SetVoice(string name, bool isNormal)
     {
         _name.Text = name;

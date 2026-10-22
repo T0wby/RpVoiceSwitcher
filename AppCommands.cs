@@ -42,6 +42,7 @@ public static class AppCommands
     public static readonly RoutedUICommand ShowSettings = C("Ein_stellungen …", nameof(ShowSettings), K(Key.OemComma, Ctrl, "Strg+,"));
     public static readonly RoutedUICommand VoiceTest = C("_Probehören …", nameof(VoiceTest), K(Key.P, Ctrl, "Strg+P"));
     public static readonly RoutedUICommand Panic = C("_Notfall: normale Stimme, Sounds aus", nameof(Panic));
+    public static readonly RoutedUICommand TogglePttLatch = C("_Dauersenden an/aus (Sprachtaste halten)", nameof(TogglePttLatch));
     public static readonly RoutedUICommand StopSounds = C("Alle Sounds _stoppen", nameof(StopSounds), K(Key.OemPeriod, Ctrl, "Strg+."));
     public static readonly RoutedUICommand OpenEditor = C("Equalizer-APO-_Editor", nameof(OpenEditor));
     public static readonly RoutedUICommand OpenDeviceSelector = C("Equalizer-APO-_Device-Selector", nameof(OpenDeviceSelector));

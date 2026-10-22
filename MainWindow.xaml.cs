@@ -217,6 +217,13 @@ public partial class MainWindow : Window
         };
         panic.Click += (_, _) => Panic();
         menu.Items.Add(panic);
+        var latch = new WinForms.ToolStripMenuItem("Dauersenden (Sprachtaste halten)")
+        {
+            Checked = _pttLatched,
+            ShortcutKeyDisplayString = Hotkey.Parse(_settings.PttLatchHotkey)?.ToString() ?? "",
+        };
+        latch.Click += (_, _) => TogglePttLatch();
+        menu.Items.Add(latch);
         menu.Items.Add("Probehören …", null, (_, _) => ShowVoiceTest());
         var statusEntry = new WinForms.ToolStripMenuItem("Status-Anzeige") { Checked = _settings.ShowStatusOverlay };
         statusEntry.Click += (_, _) => ToggleStatusOverlay();

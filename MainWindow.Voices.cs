@@ -204,9 +204,10 @@ public partial class MainWindow
         _status.SetLook(_settings.StatusOverlayScale, _settings.StatusOverlayOpacity);
         var sounds = _settings.StatusOverlayShowSounds ? _overlaySounds : new List<StatusOverlayWindow.SoundLine>();
         _status.SetSounds(sounds);
+        _status.SetTransmitting(_pttLatched);
 
-        // Optional nur zeigen, wenn ein Effekt aktiv ist (oder ein Sound läuft) – beim Verschieben aber immer.
-        if (_settings.StatusOverlayHideNormal && isNormal && !_statusEditing && sounds.Count == 0)
+        // Optional nur zeigen, wenn ein Effekt aktiv ist (oder ein Sound läuft / Dauersenden an) – beim Verschieben aber immer.
+        if (_settings.StatusOverlayHideNormal && isNormal && !_statusEditing && sounds.Count == 0 && !_pttLatched)
         {
             _status.Hide();
             return;

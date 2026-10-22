@@ -49,6 +49,7 @@
                 <Separator/>
                 <MenuItem Command="{x:Static local:AppCommands.VoiceTest}"/>
                 <MenuItem x:Name="PanicMenuItem" Command="{x:Static local:AppCommands.Panic}"/>
+                <MenuItem x:Name="PttLatchMenuItem" Command="{x:Static local:AppCommands.TogglePttLatch}" IsCheckable="False"/>
                 <MenuItem Command="{x:Static local:AppCommands.StopSounds}"/>
                 <Separator/>
                 <MenuItem Command="{x:Static local:AppCommands.OpenEditor}"/>
@@ -431,11 +432,26 @@
                             <WrapPanel>
                                 <CheckBox x:Name="SoundNormalizeCheck" Content="Lautstärke angleichen" Click="SoundNormalize_Click" VerticalAlignment="Center" Margin="0,0,18,8"
                                           ToolTip="Bringt jeden Sound automatisch auf volle Lautstärke – leise Dateien gehen im Sprachchat sonst unter."/>
-                                <CheckBox x:Name="PttCheck" Content="Sprachtaste des Spiels drücken, solange ein Sound läuft:" Click="PttCheck_Click" VerticalAlignment="Center" Margin="0,0,8,8"
-                                          ToolTip="Für Spiele mit Push-to-Talk (z. B. nanos world): Ohne gedrückte Sprachtaste überträgt der Sprachchat nichts – auch keine Sounds."/>
-                                <Button x:Name="PttKeyButton" Content="Taste wählen …" Click="PttKey_Click" Padding="10,4" MinWidth="120" VerticalAlignment="Center" Margin="0,0,0,8"
+                            </WrapPanel>
+                            <WrapPanel>
+                                <TextBlock Text="Sprachtaste im Spiel" Foreground="{StaticResource FgDim}" VerticalAlignment="Center" Margin="0,0,8,8"
+                                           ToolTip="Für Spiele mit Push-to-Talk (z. B. nanos world): Ohne gedrückte Sprachtaste überträgt der Sprachchat nichts – auch keine Sounds."/>
+                                <Button x:Name="PttKeyButton" Content="Taste wählen …" Click="PttKey_Click" Padding="10,4" MinWidth="120" VerticalAlignment="Center" Margin="0,0,12,8"
                                         AutomationProperties.AutomationId="PttKeyButton"
                                         ToolTip="Klicken und dann die Sprachtaste aus dem Spiel drücken (Taste oder Maus 4/5). Entf = keine, Esc = abbrechen."/>
+                                <CheckBox x:Name="PttCheck" Content="drücken, solange ein Sound läuft" Click="PttCheck_Click" VerticalAlignment="Center" Margin="0,0,8,8"
+                                          ToolTip="Die App drückt die Sprachtaste kurz vor jedem Sound und lässt sie kurz danach wieder los."/>
+                            </WrapPanel>
+                            <WrapPanel>
+                                <Button x:Name="PttLatchToggle" Content="Dauersenden: aus" Click="PttLatchToggle_Click" Padding="12,4" MinWidth="150" VerticalAlignment="Center" Margin="0,0,12,8"
+                                        AutomationProperties.AutomationId="PttLatchToggle"
+                                        ToolTip="Hält die Sprachtaste dauerhaft gedrückt – du sendest dann ständig wie mit offenem Mikrofon. Nochmal = wieder Push-to-Talk. Die Notfall-Taste schaltet es auch aus."/>
+                                <TextBlock Text="Taste dafür" Foreground="{StaticResource FgDim}" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                <Button x:Name="PttLatchButton" Content="Keine Taste" Click="PttLatchKey_Click" MinWidth="130" Padding="10,4" VerticalAlignment="Center" Margin="0,0,4,8"
+                                        AutomationProperties.AutomationId="PttLatchButton"
+                                        ToolTip="Globaler Shortcut zum Umschalten zwischen Dauersenden und Push-to-Talk – gilt in allen Charakteren, auch im Spiel."/>
+                                <Button Content="✕" Click="ClearPttLatchKey_Click" Padding="8,4" VerticalAlignment="Center" Margin="0,0,0,8"
+                                        ToolTip="Dauersenden-Taste entfernen" AutomationProperties.Name="Dauersenden-Taste entfernen"/>
                             </WrapPanel>
                             <TextBlock x:Name="PttHint" Foreground="#E5C07A" TextWrapping="Wrap" Margin="0,0,0,6" Visibility="Collapsed"
                                        Text="Noch keine Sprachtaste gewählt – auf den Knopf klicken und dieselbe Taste drücken, die du im Spiel zum Sprechen nutzt."/>

@@ -51,6 +51,7 @@ function Write-TestSettings([bool]$normalize, [double]$volume, [string]$ptt) {
     $j.Profiles = @($p0); $j.ActiveProfile = $p0.Name
     $extra = @{ SoundMonitor = $false; SoundVolume = $volume; SoundNormalize = $normalize; SoundFolder = $soundDir
                 PushToTalkEnabled = [bool]$ptt; PushToTalkKey = $(if ($ptt) { $ptt } else { $null })
+                PttLatchHotkey = 'Control, Alt|F10'; PanicHotkey = 'None|Pause'
                 ShowOverlay = $false; PlaySound = $false; CheckForUpdates = $false; ShowStatusOverlay = $false
                 SetupWizardDone = $true; SoundsWithEffect = @(); SoundRepeat = [pscustomobject]@{} }
     foreach ($k in $extra.Keys) { $j | Add-Member $k $extra[$k] -Force }
@@ -129,6 +130,22 @@ try {
     $l = Record 3000 @{ 500 = { Press }; 900 = { $script:during = F13Down }; 1000 = { Press }; 1800 = { $script:after = F13Down } }
     Check 'Abbrechen: erst gedrueckt ...' $script:during
     Check '... und nach dem Abbrechen wieder losgelassen' (-not $script:after)
+
+    "=== Dauersenden (Strg+Alt+F10) ==="
+    $latchBtn = @($win.FindAll('Descendants', (Cond $AE::AutomationIdProperty 'PttLatchButton'))) | Select-Object -First 1
+    Check ("Dauersenden-Taste angezeigt ({0})" -f $latchBtn.Current.Name) ($latchBtn.Current.Name -like 'Strg + Alt + F10*')
+    Combo 0x79; Start-Sleep -m 500
+    $on = F13Down
+    $toggle = @($win.FindAll('Descendants', (Cond $AE::AutomationIdProperty 'PttLatchToggle'))) | Select-Object -First 1
+    Check ("An: F13 gedrueckt, Knopf zeigt '{0}'" -f $toggle.Current.Name) ($on -and $toggle.Current.Name -like '*AN*')
+    Press; Start-Sleep 3   # Sound laeuft durch - Taste muss gedrueckt bleiben
+    Check 'Nach einem Sound bleibt F13 bei Dauersenden gedrueckt' (F13Down)
+    Combo 0x79; Start-Sleep -m 500
+    Check 'Aus: F13 wieder losgelassen' (-not (F13Down))
+    Combo 0x79; Start-Sleep -m 500
+    $onAgain = F13Down
+    Key 0x13; Start-Sleep -m 60; Key 0x13 -Up; Start-Sleep -m 600   # Pause = Notfall-Taste
+    Check 'Notfall-Taste beendet Dauersenden' ($onAgain -and -not (F13Down))
     Stop-Process -Id $p.Id
 }
 finally {

@@ -47,6 +47,7 @@ public partial class MainWindow
         Bind(AppCommands.VoiceTest, ShowVoiceTest, () => _store != null);
         Bind(AppCommands.Panic, Panic);
         Bind(AppCommands.StopSounds, StopAllSounds);
+        Bind(AppCommands.TogglePttLatch, TogglePttLatch);
         Bind(AppCommands.OpenEditor, () => OpenEditor_Click(this, Args()), () => _store != null);
         Bind(AppCommands.OpenDeviceSelector, () => { if (_store != null) SetupChecker.OpenDeviceSelector(_store); }, () => _store != null);
         Bind(AppCommands.OpenRecording, () => SetupChecker.OpenSoundPanel(1));
