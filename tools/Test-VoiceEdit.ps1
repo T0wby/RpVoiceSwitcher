@@ -1,11 +1,13 @@
 ﻿# Testet per UI-Automation: Stimme anlegen, bearbeiten, kopieren, loeschen; Charakterwechsel beendet die Stimmenauswahl.
-# Sichert settings.json und raeumt angelegte Testdateien wieder auf.
+# Arbeitet mit einer Kopie der Einstellungen (--settings) und raeumt angelegte Testdateien wieder auf.
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path $PSScriptRoot -Parent
 $exe = Join-Path $repo 'publish\RpVoiceSwitcher.exe'
-$settings = "$env:APPDATA\RpVoiceSwitcher\settings.json"
+$realSettings = "$env:APPDATA\RpVoiceSwitcher\settings.json"   # wird nur gelesen, nie veraendert
+$settings = Join-Path $env:TEMP "rpvs-test-settings-$PID.json"     # eigene Kopie fuer den Test
 $voices = 'C:\Program Files\EqualizerAPO\config\rp-voices'
-Copy-Item $settings "$settings.testbackup" -Force
+$realHash = (Get-FileHash $realSettings).Hash
+Copy-Item $realSettings $settings -Force
 $before = Get-ChildItem $voices -File | Select-Object -ExpandProperty Name
 
 Add-Type -AssemblyName UIAutomationClient, UIAutomationTypes
@@ -35,7 +37,7 @@ function Check($name, $ok) { "{0,-60} {1}" -f $name, $(if ($ok) { 'OK' } else { 
 
 try {
     Get-Process RpVoiceSwitcher -EA SilentlyContinue | Stop-Process; Start-Sleep -m 600
-    $p = Start-Process $exe -PassThru; Start-Sleep 4
+    $p = Start-Process $exe -ArgumentList '--settings', "`"$settings`"" -PassThru; Start-Sleep 4
     $win = Win $p.Id 'RP Voice Switcher'
 
     # --- Neue Stimme ---
@@ -93,7 +95,8 @@ try {
 finally {
     Get-Process RpVoiceSwitcher -EA SilentlyContinue | Stop-Process
     Start-Sleep -m 500
-    Copy-Item "$settings.testbackup" $settings -Force; Remove-Item "$settings.testbackup"
+    Remove-Item $settings -ErrorAction SilentlyContinue
+    if ((Get-FileHash $realSettings).Hash -ne $realHash) { "!! FEHLER: Die echte settings.json wurde veraendert!" } else { "Echte Einstellungen unveraendert                                     OK" }
     Get-ChildItem $voices -File | Where-Object { $before -notcontains $_.Name } | Remove-Item
     # Loesch-Merkliste von Testeintraegen befreien
     $del = Join-Path $voices '.geloeschte-stimmen'

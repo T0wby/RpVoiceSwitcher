@@ -38,6 +38,8 @@ public partial class MainWindow : Window
         CheckList.ItemsSource = _checks;
         ProfileList.ItemsSource = _profileChips;
 
+        WindowTheme.Apply(this); // App-Icon + dunkle Titelleiste, vor dem Erzeugen des Handles
+
         // Fenster-Handle sofort erzeugen, damit Hotkeys auch funktionieren, wenn das Fenster nie gezeigt wird (Autostart).
         var helper = new WindowInteropHelper(this);
         helper.EnsureHandle();
@@ -69,12 +71,8 @@ public partial class MainWindow : Window
             }
             catch (Exception ex)
             {
-                StatusText.Text = "Konnte nicht in den Equalizer-APO-Ordner schreiben: " + ex.Message;
+                ShowStatusMessage("Konnte nicht in den Equalizer-APO-Ordner schreiben: " + ex.Message);
             }
-        }
-        else
-        {
-            StatusText.Text = "Equalizer APO wurde nicht gefunden – siehe Tab „Einrichtung“.";
         }
 
         _reloadDebounce.Tick += (_, _) =>
@@ -84,6 +82,7 @@ public partial class MainWindow : Window
             LoadVoices();
         };
 
+        InitShell();
         RefreshProfileChips();
         LoadVoices();
         EnsureActiveVoiceInProfile();
@@ -91,6 +90,7 @@ public partial class MainWindow : Window
         InitSoundboard();
         RefreshFolderTexts();
         RunSetupCheck();
+        WatchDevices();
         _initializing = false;
     }
 
@@ -174,7 +174,7 @@ public partial class MainWindow : Window
     {
         var tray = new WinForms.NotifyIcon
         {
-            Icon = DrawTrayIcon(),
+            Icon = WindowTheme.LoadTrayIcon() ?? DrawTrayIcon(),
             Text = "RP Voice Switcher",
             Visible = true,
             ContextMenuStrip = new WinForms.ContextMenuStrip(),
@@ -249,6 +249,7 @@ public partial class MainWindow : Window
         // Im Bearbeitungsmodus wäre die Anzeige anklickbar und würde Klicks im Spiel abfangen.
         SetStatusEditMode(false);
         CancelCapture();
+        SaveWindowPlacement();
 
         if (!_exiting && _settings.CloseToTray)
         {
@@ -274,6 +275,9 @@ public partial class MainWindow : Window
         _soundWatcher?.Dispose();
         _reloadDebounce.Stop();
         _soundReloadDebounce.Stop();
+        _statusMessageTimer.Stop();
+        _deviceDebounce.Stop();
+        _deviceWatcher?.Dispose();
         _holdHook.Dispose();
         _hotkeys.Dispose();
         _soundEngine.Dispose();

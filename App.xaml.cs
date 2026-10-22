@@ -23,6 +23,11 @@ public partial class App : Application
         }
 
         bool startMinimized = e.Args.Any(a => a.Equals("--minimized", StringComparison.OrdinalIgnoreCase));
+
+        // --settings <Datei>: z. B. für Tests, damit die echten Einstellungen nie angefasst werden
+        int s = Array.FindIndex(e.Args, a => a.Equals("--settings", StringComparison.OrdinalIgnoreCase));
+        if (s >= 0 && s + 1 < e.Args.Length)
+            AppSettings.OverridePath = System.IO.Path.GetFullPath(e.Args[s + 1]);
         var window = new MainWindow();
         if (startMinimized)
             window.InitializeHidden();

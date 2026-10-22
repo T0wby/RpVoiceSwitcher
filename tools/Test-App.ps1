@@ -1,14 +1,16 @@
 ﻿# Rauchtest fuer RP Voice Switcher: Umschalten, Halten, Profile, Soundboard, Einrichtungs-Check + Screenshots.
-# Sichert settings.json vorher und stellt sie am Ende wieder her.
+# Arbeitet mit einer Kopie der Einstellungen (--settings) - die echte settings.json wird nie veraendert.
 param([string]$OutDir = "$env:TEMP\rpvs-test")
 
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path $PSScriptRoot -Parent
 $exe = Join-Path $repo 'publish\RpVoiceSwitcher.exe'
-$settings = "$env:APPDATA\RpVoiceSwitcher\settings.json"
+$realSettings = "$env:APPDATA\RpVoiceSwitcher\settings.json"   # wird nur gelesen, nie veraendert
+$settings = Join-Path $env:TEMP "rpvs-test-settings-$PID.json"     # eigene Kopie fuer den Test
 $voiceTxt = 'C:\Program Files\EqualizerAPO\config\voice.txt'
 New-Item -ItemType Directory -Force $OutDir | Out-Null
-Copy-Item $settings "$settings.testbackup" -Force
+$realHash = (Get-FileHash $realSettings).Hash
+Copy-Item $realSettings $settings -Force
 
 Add-Type -AssemblyName UIAutomationClient, UIAutomationTypes, System.Drawing
 Add-Type -Path (Join-Path $repo 'publish\NAudio.Core.dll')
@@ -27,7 +29,7 @@ function Check($name, $ok) { "{0,-62} {1}" -f $name, $(if ($ok) { 'OK' } else { 
 
 function Start-App([switch]$Visible) {
     Get-Process RpVoiceSwitcher -EA SilentlyContinue | Stop-Process; Start-Sleep -m 600
-    if ($Visible) { $p = Start-Process $exe -PassThru } else { $p = Start-Process $exe -ArgumentList '--minimized' -PassThru }
+    if ($Visible) { $p = Start-Process $exe -ArgumentList '--settings', "`"$settings`"" -PassThru } else { $p = Start-Process $exe -ArgumentList '--minimized', '--settings', "`"$settings`"" -PassThru }
     Start-Sleep 4; $p
 }
 
@@ -119,5 +121,6 @@ try {
 finally {
     Get-Process RpVoiceSwitcher -EA SilentlyContinue | Stop-Process
     Start-Sleep -m 500
-    Copy-Item "$settings.testbackup" $settings -Force; Remove-Item "$settings.testbackup"
+    Remove-Item $settings -ErrorAction SilentlyContinue
+    if ((Get-FileHash $realSettings).Hash -ne $realHash) { "!! FEHLER: Die echte settings.json wurde veraendert!" } else { "Echte Einstellungen unveraendert                                     OK" }
 }

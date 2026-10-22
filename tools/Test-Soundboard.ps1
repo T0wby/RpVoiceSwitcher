@@ -1,14 +1,16 @@
 ﻿# Testet: Sounds mit/ohne Stimmeffekt (Mitte/Seite-Trick) sowie eigene Ordner fuer Stimmen und Sounds.
-# Sichert settings.json und voice.txt, raeumt Testdateien wieder auf.
+# Arbeitet mit einer Kopie der Einstellungen (--settings), sichert voice.txt, raeumt Testdateien wieder auf.
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path $PSScriptRoot -Parent
 $exe = Join-Path $repo 'publish\RpVoiceSwitcher.exe'
 $probe = Join-Path $repo 'tools\AudioProbe\bin\out\AudioProbe.exe'
-$settings = "$env:APPDATA\RpVoiceSwitcher\settings.json"
+$realSettings = "$env:APPDATA\RpVoiceSwitcher\settings.json"   # wird nur gelesen, nie veraendert
+$settings = Join-Path $env:TEMP "rpvs-test-settings-$PID.json"     # eigene Kopie fuer den Test
 $cfg = 'C:\Program Files\EqualizerAPO\config'
 $voices = Join-Path $cfg 'rp-voices'
 $tmp = Join-Path $env:TEMP 'rpvs-soundtest'
-Copy-Item $settings "$settings.testbackup" -Force
+$realHash = (Get-FileHash $realSettings).Hash
+Copy-Item $realSettings $settings -Force
 Copy-Item (Join-Path $cfg 'voice.txt') "$env:TEMP\voice.testbackup" -Force
 New-Item -ItemType Directory -Force $tmp | Out-Null
 
@@ -24,7 +26,7 @@ function Peak([int[]]$combo) {
     # Die ersten 300 ms enthalten noch Restpuffer vom Aufnahmestart - erst danach wird der Sound ausgeloest
     (Get-Content $log | Where-Object { $_ -match '^\s*(\d+) ms\s+([\d,\.]+)' -and [int]$Matches[1] -gt 300 } | ForEach-Object { [double]($Matches[2] -replace ',', '.') } | Measure-Object -Maximum).Maximum
 }
-function Start-App { Get-Process RpVoiceSwitcher -EA SilentlyContinue | Stop-Process; Start-Sleep -m 600; $p = Start-Process $exe -ArgumentList '--minimized' -PassThru; Start-Sleep 4; $p }
+function Start-App { Get-Process RpVoiceSwitcher -EA SilentlyContinue | Stop-Process; Start-Sleep -m 600; $p = Start-Process $exe -ArgumentList '--minimized', '--settings', "`"$settings`"" -PassThru; Start-Sleep 4; $p }
 function Set-TestSettings($extra) {
     $j = Get-Content $settings -Raw | ConvertFrom-Json
     $p0 = $j.Profiles[0]
@@ -34,6 +36,7 @@ function Set-TestSettings($extra) {
     $j.Profiles = @($p0); $j.ActiveProfile = $p0.Name
     $j | Add-Member SoundsWithEffect @('Ringglocke.wav') -Force
     $j | Add-Member SoundMonitor $false -Force
+    $j | Add-Member SoundVolume 0.8 -Force   # feste Lautstaerke, unabhaengig vom Regler des Nutzers
     foreach ($k in $extra.Keys) { $j | Add-Member $k $extra[$k] -Force }
     $j | ConvertTo-Json -Depth 6 | Set-Content $settings
 }
@@ -86,7 +89,8 @@ try {
 finally {
     Get-Process RpVoiceSwitcher -EA SilentlyContinue | Stop-Process
     Start-Sleep -m 500
-    Copy-Item "$settings.testbackup" $settings -Force; Remove-Item "$settings.testbackup"
+    Remove-Item $settings -ErrorAction SilentlyContinue
+    if ((Get-FileHash $realSettings).Hash -ne $realHash) { "!! FEHLER: Die echte settings.json wurde veraendert!" } else { "Echte Einstellungen unveraendert                                     OK" }
     Remove-Item (Join-Path $voices '99-teststumm.txt') -EA SilentlyContinue
     Remove-Item $tmp -Recurse -Force -EA SilentlyContinue
     Copy-Item "$env:TEMP\voice.testbackup" (Join-Path $cfg 'voice.txt') -Force

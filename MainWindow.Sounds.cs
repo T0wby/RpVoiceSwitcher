@@ -75,6 +75,7 @@ public partial class MainWindow
         }
         catch (Exception ex) { ShowSoundError("Sound-Ordner konnte nicht gelesen werden: " + ex.Message); }
         RegisterAllBindings();
+        UpdateSoundStatus();
     }
 
     private void RestartSoundEngine()
@@ -87,6 +88,7 @@ public partial class MainWindow
     {
         SoundError.Text = message ?? "";
         SoundError.Visibility = string.IsNullOrEmpty(message) ? Visibility.Collapsed : Visibility.Visible;
+        UpdateSoundStatus();
     }
 
     private void PlaySound(SoundItem item)

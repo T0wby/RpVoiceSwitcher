@@ -77,6 +77,16 @@ public sealed class AppSettings
     /// <summary>Eigener Ordner für Sounds; null = Dokumente\RP Voice Switcher\Sounds.</summary>
     public string? SoundFolder { get; set; }
 
+    // Fensterposition (wie Windows-Programme sie sich merken)
+    public double? WindowLeft { get; set; }
+    public double? WindowTop { get; set; }
+    public double? WindowWidth { get; set; }
+    public double? WindowHeight { get; set; }
+    public bool WindowMaximized { get; set; }
+
+    [JsonIgnore]
+    public static string SettingsFile => FilePath;
+
     /// <summary>Alte Version (vor Profilen) – wird beim Laden ins Profil "Standard" übernommen.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public Dictionary<string, string>? Hotkeys { get; set; }
@@ -85,7 +95,10 @@ public sealed class AppSettings
     public CharacterProfile Current =>
         Profiles.FirstOrDefault(p => p.Name.Equals(ActiveProfile, StringComparison.OrdinalIgnoreCase)) ?? Profiles[0];
 
-    private static string FilePath => Path.Combine(
+    /// <summary>Für Tests: eigene Einstellungsdatei statt der echten (Startparameter --settings &lt;Datei&gt;).</summary>
+    public static string? OverridePath { get; set; }
+
+    private static string FilePath => OverridePath ?? Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RpVoiceSwitcher", "settings.json");
 
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };

@@ -2,6 +2,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
+using System.Windows.Input;
 
 namespace RpVoiceSwitcher;
 
@@ -16,7 +17,7 @@ public partial class MainWindow
         _profileChips.Clear();
         foreach (var p in _settings.Profiles)
             _profileChips.Add(new ProfileChip(p.Name, p == _settings.Current));
-        DeleteProfileButton.IsEnabled = _settings.Profiles.Count > 1;
+        CommandManager.InvalidateRequerySuggested(); // z. B. „Löschen“ geht erst ab zwei Charakteren
     }
 
     private void ProfileChip_Click(object sender, RoutedEventArgs e)

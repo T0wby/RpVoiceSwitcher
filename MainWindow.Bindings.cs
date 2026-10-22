@@ -133,6 +133,7 @@ public partial class MainWindow
 
     private void FinishCapture()
     {
+        MarkCaptureEnded();
         _capture = null;
         _holdHook.Suspended = false;
         _settings.Save();
@@ -142,6 +143,7 @@ public partial class MainWindow
     private void CancelCapture()
     {
         if (_capture == null) return;
+        MarkCaptureEnded();
         _capture = null;
         _holdHook.Suspended = false;
         RegisterAllBindings();

@@ -122,8 +122,19 @@ public static class SetupChecker
             var mics = capture.Where(e => e.Active && !e.Name.Contains("CABLE", StringComparison.OrdinalIgnoreCase)).ToList();
             var toCable = mics.Where(m => m.ListenEnabled && Contains(m.ListenTarget, cableIn.Guid)).ToList();
             var elsewhere = mics.Where(m => m.ListenEnabled && !Contains(m.ListenTarget, cableIn.Guid)).ToList();
+            // Eingerichtet, aber gerade nicht da (USB getrennt, Stromsparmodus …)
+            var disconnected = capture.Where(e => !e.Active && !e.Name.Contains("CABLE", StringComparison.OrdinalIgnoreCase)
+                                                 && e.ListenEnabled && Contains(e.ListenTarget, cableIn.Guid)).ToList();
 
-            if (toCable.Count == 1)
+            if (toCable.Count == 0 && disconnected.Count > 0)
+                results.Add(new CheckResult
+                {
+                    Title = "Mikrofon ins Kabel weitergeleitet",
+                    State = CheckState.Error,
+                    Detail = $"„{disconnected[0].Name}“ ist richtig eingerichtet, aber gerade nicht angeschlossen (USB-Kabel, Hub, Stromsparmodus?). " +
+                             "Sobald es wieder verbunden ist, aktualisiert sich diese Prüfung von selbst.",
+                });
+            else if (toCable.Count == 1)
                 results.Add(new CheckResult { Title = "Mikrofon ins Kabel weitergeleitet", State = CheckState.Ok, Detail = $"{toCable[0].Name} → {cableIn.Name}" });
             else if (toCable.Count > 1)
                 results.Add(new CheckResult
@@ -157,7 +168,8 @@ public static class SetupChecker
                 Title = "Standard-Wiedergabegerät",
                 State = isCable ? CheckState.Error : CheckState.Ok,
                 Detail = isCable
-                    ? $"\"{standard.FriendlyName}\" ist Standard – dann hörst du selbst nichts mehr. Wähle deine Kopfhörer oder Lautsprecher."
+                    ? $"\"{standard.FriendlyName}\" ist Standard – dann hörst du selbst nichts mehr, und andere hören deine PC-Sounds. " +
+                      "Das passiert oft, wenn das Headset oder Mikro getrennt wurde. Wähle deine Kopfhörer oder Lautsprecher."
                     : standard.FriendlyName,
                 FixLabel = isCable ? "Wiedergabe-Einstellungen öffnen" : null,
                 Fix = isCable ? () => OpenSoundPanel(0) : null,

@@ -129,7 +129,7 @@ public partial class MainWindow
         }
         catch (Exception ex)
         {
-            StatusText.Text = "Umschalten fehlgeschlagen: " + ex.Message;
+            ShowStatusMessage("Umschalten fehlgeschlagen: " + ex.Message);
             return;
         }
 
@@ -160,9 +160,7 @@ public partial class MainWindow
     {
         var active = CurrentVoice();
         string voice = active?.Name ?? "keine";
-        string profile = _settings.Profiles.Count > 1 ? $"Charakter: {_settings.Current.Name}   ·   " : "";
-        if (_store != null)
-            StatusText.Text = $"{profile}Aktive Stimme: {voice}{(_holdVoice != null ? " (gehalten)" : "")}   ·   Wirkt auf: {_settings.TargetDevice}";
+        UpdateStatusBar();
         _tray.Text = Truncate((_settings.Profiles.Count > 1 ? _settings.Current.Name + ": " : "RP-Stimme: ") + voice, 63);
         UpdateStatusOverlay();
     }

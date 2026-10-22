@@ -4,27 +4,49 @@
              ShutdownMode="OnExplicitShutdown">
     <Application.Resources>
         <SolidColorBrush x:Key="Bg" Color="#1B1B1F"/>
+        <SolidColorBrush x:Key="Bar" Color="#202025"/>
         <SolidColorBrush x:Key="Card" Color="#26262C"/>
         <SolidColorBrush x:Key="CardActive" Color="#3A2A14"/>
         <SolidColorBrush x:Key="Accent" Color="#F28C28"/>
         <SolidColorBrush x:Key="Fg" Color="#EDEDED"/>
         <SolidColorBrush x:Key="FgDim" Color="#9A9AA2"/>
+        <SolidColorBrush x:Key="FgDisabled" Color="#66666E"/>
         <SolidColorBrush x:Key="Line" Color="#33333A"/>
+        <SolidColorBrush x:Key="Hover" Color="#3A3A42"/>
+
+        <!-- Sichtbarer Tastaturfokus auf dunklem Grund (der Windows-Standard ist schwarz gestrichelt und hier unsichtbar) -->
+        <Style x:Key="DarkFocusVisual">
+            <Setter Property="Control.Template">
+                <Setter.Value>
+                    <ControlTemplate>
+                        <Rectangle Margin="-3" Stroke="{StaticResource Accent}" StrokeThickness="1.5" StrokeDashArray="2 1.5" RadiusX="4" RadiusY="4"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
         <Style TargetType="Button">
             <Setter Property="Foreground" Value="{StaticResource Fg}"/>
             <Setter Property="Background" Value="#34343C"/>
             <Setter Property="Padding" Value="12,6"/>
             <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="6"
                                 Padding="{TemplateBinding Padding}" BorderThickness="1" BorderBrush="#44444C">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource Accent}"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource Accent}"/>
+                                <Setter TargetName="Bd" Property="BorderThickness" Value="2"/>
+                            </Trigger>
+                            <Trigger Property="IsDefaulted" Value="True">
                                 <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource Accent}"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
@@ -55,6 +77,14 @@
         <Style TargetType="CheckBox">
             <Setter Property="Foreground" Value="{StaticResource Fg}"/>
             <Setter Property="Margin" Value="0,0,18,6"/>
+            <Setter Property="FocusVisualStyle" Value="{StaticResource DarkFocusVisual}"/>
+        </Style>
+
+        <Style TargetType="Slider">
+            <Setter Property="FocusVisualStyle" Value="{StaticResource DarkFocusVisual}"/>
+            <Setter Property="IsMoveToPointEnabled" Value="True"/>
+            <Setter Property="SmallChange" Value="0.05"/>
+            <Setter Property="LargeChange" Value="0.1"/>
         </Style>
 
         <Style TargetType="TextBox">
@@ -62,10 +92,27 @@
             <Setter Property="Foreground" Value="{StaticResource Fg}"/>
             <Setter Property="BorderBrush" Value="#44444C"/>
             <Setter Property="CaretBrush" Value="{StaticResource Fg}"/>
+            <Setter Property="SelectionBrush" Value="{StaticResource Accent}"/>
             <Setter Property="Padding" Value="6,4"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Style.Triggers>
+                <Trigger Property="IsKeyboardFocused" Value="True">
+                    <Setter Property="BorderBrush" Value="{StaticResource Accent}"/>
+                </Trigger>
+            </Style.Triggers>
         </Style>
 
+        <Style TargetType="Hyperlink">
+            <Setter Property="Foreground" Value="{StaticResource Accent}"/>
+            <Setter Property="TextDecorations" Value="{x:Null}"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="TextDecorations" Value="Underline"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- ===== Tabs ===== -->
         <Style TargetType="TabControl">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
@@ -75,7 +122,7 @@
                     <ControlTemplate TargetType="TabControl">
                         <DockPanel>
                             <Border DockPanel.Dock="Top" BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1" Padding="16,0">
-                                <TabPanel IsItemsHost="True"/>
+                                <TabPanel IsItemsHost="True" KeyboardNavigation.TabIndex="1"/>
                             </Border>
                             <!-- Name ist wichtig: so sehen Bedienhilfen (Screenreader, UI-Automation) den Tab-Inhalt -->
                             <ContentPresenter x:Name="PART_SelectedContentHost" ContentSource="SelectedContent"/>
@@ -89,11 +136,12 @@
             <Setter Property="Foreground" Value="{StaticResource FgDim}"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FocusVisualStyle" Value="{StaticResource DarkFocusVisual}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TabItem">
                         <Border x:Name="Bd" Padding="12,8,12,7" BorderThickness="0,0,0,3" BorderBrush="Transparent" Background="Transparent">
-                            <ContentPresenter ContentSource="Header" TextElement.Foreground="{TemplateBinding Foreground}"/>
+                            <ContentPresenter ContentSource="Header" RecognizesAccessKey="True" TextElement.Foreground="{TemplateBinding Foreground}"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsSelected" Value="True">
@@ -107,6 +155,114 @@
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
+        </Style>
+
+        <!-- ===== Menü (dunkel, sonst wäre es ein heller Fremdkörper) ===== -->
+        <Style TargetType="Menu">
+            <Setter Property="Background" Value="{StaticResource Bar}"/>
+            <Setter Property="Foreground" Value="{StaticResource Fg}"/>
+            <Setter Property="Padding" Value="6,2"/>
+            <Setter Property="FontSize" Value="13"/>
+        </Style>
+
+        <Style x:Key="{x:Static MenuItem.SeparatorStyleKey}" TargetType="Separator">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Separator">
+                        <Border Height="1" Margin="8,4" Background="{StaticResource Hover}"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="MenuItem">
+            <Setter Property="Foreground" Value="{StaticResource Fg}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="MenuItem">
+                        <Border x:Name="Bd" Background="Transparent" CornerRadius="4">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <Border x:Name="IconBox" Width="28">
+                                    <TextBlock x:Name="Check" Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="12" Visibility="Collapsed"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{StaticResource Accent}"/>
+                                </Border>
+                                <ContentPresenter x:Name="HeaderHost" Grid.Column="1" ContentSource="Header" RecognizesAccessKey="True"
+                                                  VerticalAlignment="Center" Margin="0,6,16,6"/>
+                                <TextBlock x:Name="Gesture" Grid.Column="2" Text="{TemplateBinding InputGestureText}" Foreground="{StaticResource FgDim}"
+                                           VerticalAlignment="Center" Margin="16,0,6,0"/>
+                                <TextBlock x:Name="Arrow" Grid.Column="3" Text="&#xE76C;" FontFamily="Segoe MDL2 Assets" FontSize="10"
+                                           VerticalAlignment="Center" Margin="0,0,8,0" Visibility="Collapsed"/>
+                                <Popup x:Name="PART_Popup" Placement="Right" IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}"
+                                       AllowsTransparency="True" Focusable="False" PopupAnimation="Fade" HorizontalOffset="2">
+                                    <Border Background="{StaticResource Card}" BorderBrush="{StaticResource Hover}" BorderThickness="1" CornerRadius="6" Padding="4" MinWidth="230">
+                                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                            <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Cycle" KeyboardNavigation.TabNavigation="Cycle"/>
+                                        </ScrollViewer>
+                                    </Border>
+                                </Popup>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="Role" Value="TopLevelHeader">
+                                <Setter TargetName="IconBox" Property="Visibility" Value="Collapsed"/>
+                                <Setter TargetName="Gesture" Property="Visibility" Value="Collapsed"/>
+                                <Setter TargetName="HeaderHost" Property="Margin" Value="10,4"/>
+                                <Setter TargetName="PART_Popup" Property="Placement" Value="Bottom"/>
+                                <Setter TargetName="PART_Popup" Property="HorizontalOffset" Value="0"/>
+                            </Trigger>
+                            <Trigger Property="Role" Value="TopLevelItem">
+                                <Setter TargetName="IconBox" Property="Visibility" Value="Collapsed"/>
+                                <Setter TargetName="Gesture" Property="Visibility" Value="Collapsed"/>
+                                <Setter TargetName="HeaderHost" Property="Margin" Value="10,4"/>
+                            </Trigger>
+                            <Trigger Property="Role" Value="SubmenuHeader">
+                                <Setter TargetName="Arrow" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Check" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource Hover}"/>
+                            </Trigger>
+                            <Trigger Property="IsSubmenuOpen" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource Hover}"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Foreground" Value="{StaticResource FgDisabled}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ===== Statusleiste ===== -->
+        <Style TargetType="StatusBar">
+            <Setter Property="Background" Value="{StaticResource Bar}"/>
+            <Setter Property="Foreground" Value="{StaticResource FgDim}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
+            <Setter Property="BorderThickness" Value="0,1,0,0"/>
+            <Setter Property="Padding" Value="8,1"/>
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+        <Style x:Key="{x:Static StatusBar.SeparatorStyleKey}" TargetType="Separator">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Separator">
+                        <Border Width="1" Margin="6,4" Background="{StaticResource Line}"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style TargetType="StatusBarItem">
+            <Setter Property="Foreground" Value="{StaticResource FgDim}"/>
+            <Setter Property="Padding" Value="4,3"/>
         </Style>
     </Application.Resources>
 </Application>
