@@ -29,11 +29,30 @@ public partial class MainWindow
 
     [DllImport("user32.dll")] private static extern short GetAsyncKeyState(int vKey);
 
-    private PushToTalk.Binding? PttKey => PushToTalk.Binding.Parse(_settings.PushToTalkKey);
+    private PushToTalk.Binding? PttKey => TestSafe(PushToTalk.Binding.Parse(_settings.PushToTalkKey));
+
+    /// <summary>
+    /// Läuft die App mit eigener Einstellungsdatei (--settings, nur für Tests), drückt sie nur F13–F24 –
+    /// nie die echte Sprachtaste (z. B. Maus 5) des Nutzers.
+    /// </summary>
+    private static PushToTalk.Binding? TestSafe(PushToTalk.Binding? b) =>
+        AppSettings.OverridePath == null || b is { IsMouse: false, Key: >= Key.F13 and <= Key.F24 } ? b : null;
+
+    private static bool IsTestRun => AppSettings.OverridePath != null;
     private PushToTalk.Binding? PttBinding => _settings.PushToTalkEnabled ? PttKey : null;
 
     private void InitPushToTalk()
     {
+        // Hat die App beim letzten Mal eine Taste gedrückt gelassen (Absturz, hart beendet)? Jetzt loslassen.
+        PushToTalk.MarkerFile = Path.Combine(Path.GetDirectoryName(PttLogFile)!, IsTestRun ? "sprachtaste-test.gedrueckt" : "sprachtaste.gedrueckt");
+        try { Directory.CreateDirectory(Path.GetDirectoryName(PttLogFile)!); } catch { }
+        if (PushToTalk.ReleaseLeftover() is PushToTalk.Binding left)
+            PttLog($"losgelassen ({left}, hing noch vom letzten Mal)");
+        // Notbremse, falls der Prozess ohne ExitApp endet (z. B. Abmelden, unerwarteter Fehler)
+        AppDomain.CurrentDomain.ProcessExit += (_, _) => _ptt.ReleaseOnExit();
+        AppDomain.CurrentDomain.UnhandledException += (_, _) => _ptt.ReleaseOnExit();
+        Application.Current.SessionEnding += (_, _) => _ptt.ReleaseOnExit();
+
         _pttReleaseTimer.Tick += (_, _) =>
         {
             _pttReleaseTimer.Stop();
@@ -289,8 +308,9 @@ public partial class MainWindow
 
     // ---------- Protokoll (für die Fehlersuche, nur die letzten Einträge) ----------
 
-    private static readonly string PttLogFile = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RpVoiceSwitcher", "sprachtaste.log");
+    private static string PttLogFile => Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RpVoiceSwitcher",
+        AppSettings.OverridePath != null ? "sprachtaste-test.log" : "sprachtaste.log");
 
     private static void PttLog(string text)
     {

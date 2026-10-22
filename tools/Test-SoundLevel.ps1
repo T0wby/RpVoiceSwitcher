@@ -160,6 +160,22 @@ try {
     $onAgain = F13Down
     Key 0x13; Start-Sleep -m 60; Key 0x13 -Up; Start-Sleep -m 600   # Pause = Notfall-Taste
     Check 'Notfall-Taste beendet Dauersenden' ($onAgain -and -not (F13Down))
+
+    # App wird hart beendet, waehrend sie die Taste haelt -> beim naechsten Start wird sie losgelassen
+    Combo 0x79; Start-Sleep -m 500
+    $heldBeforeKill = F13Down
+    Stop-Process -Id $p.Id -Force; Start-Sleep -m 500
+    $stuck = F13Down
+    $p = Start-Process $exe -ArgumentList '--settings', "`"$settings`"" -PassThru; Start-Sleep 5
+    Check ("Hart beendet: Taste hing ({0}), naechster Start laesst sie los" -f $stuck) ($heldBeforeKill -and $stuck -and -not (F13Down))
+    Stop-Process -Id $p.Id
+
+    # Test-Instanzen druecken nie die echte Sprachtaste (z. B. Maus 5) des Nutzers
+    Write-TestSettings $true 1.0 'Mouse|2'
+    $p = Start-App
+    $win = SoundTab $p
+    $sum = @($win.FindAll('Descendants', (Cond $AE::AutomationIdProperty 'PttSummary'))) | Select-Object -First 1
+    Check ("Test-Instanz ignoriert Maus 5 ({0})" -f $sum.Current.Name) ($sum.Current.Name -eq 'Keine Sprachtaste eingestellt')
     Stop-Process -Id $p.Id
 }
 finally {

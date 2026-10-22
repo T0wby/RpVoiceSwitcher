@@ -84,6 +84,7 @@ public sealed class PushToTalk : IDisposable
     public void Press(Binding binding)
     {
         if (_held != null) return;
+        WriteMarker(binding);
         Send(binding, down: true);
         _held = binding;
         _repressPending = _keepDownBroken = false;
@@ -120,6 +121,46 @@ public sealed class PushToTalk : IDisposable
         if (_held is not Binding b) return;
         _held = null;
         Send(b, down: false);
+        DeleteMarker();
+    }
+
+    // ---------- Absicherung: Taste nie "hängen" lassen ----------
+    // Wird die App hart beendet (Absturz, Task-Manager), während sie die Taste hält, bleibt sie in Windows gedrückt –
+    // bei einer Maustaste lässt sich dann nichts mehr anklicken. Deshalb merkt sich eine kleine Datei, was gedrückt ist;
+    // beim nächsten Start wird es losgelassen.
+
+    /// <summary>Datei, in der steht, welche Taste die App gerade hält (null = nicht merken).</summary>
+    public static string? MarkerFile { get; set; }
+
+    private static void WriteMarker(Binding b)
+    {
+        if (MarkerFile == null) return;
+        try { System.IO.File.WriteAllText(MarkerFile, b.Serialize()); } catch { /* nur Absicherung */ }
+    }
+
+    private static void DeleteMarker()
+    {
+        if (MarkerFile == null) return;
+        try { System.IO.File.Delete(MarkerFile); } catch { /* nur Absicherung */ }
+    }
+
+    /// <summary>Hängt noch eine Taste vom letzten Mal? Dann jetzt loslassen. Liefert die Taste oder null.</summary>
+    public static Binding? ReleaseLeftover()
+    {
+        if (MarkerFile == null || !System.IO.File.Exists(MarkerFile)) return null;
+        Binding? b = null;
+        try { b = Binding.Parse(System.IO.File.ReadAllText(MarkerFile).Trim()); } catch { }
+        if (b is Binding binding) Send(binding, down: false);
+        DeleteMarker();
+        return b;
+    }
+
+    /// <summary>Notbremse beim Beenden des Prozesses (auch aus anderen Threads aufrufbar).</summary>
+    public void ReleaseOnExit()
+    {
+        var b = _held;
+        _held = null;
+        if (b is Binding binding) { Send(binding, down: false); DeleteMarker(); }
     }
 
     private static void Send(Binding b, bool down)
