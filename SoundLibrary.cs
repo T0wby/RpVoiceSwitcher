@@ -76,6 +76,36 @@ public static class SoundLibrary
         return count;
     }
 
+    /// <summary>Benennt einen Sound um (Endung bleibt). Gibt den neuen Dateinamen zurück.</summary>
+    public static string Rename(SoundFile sound, string newName)
+    {
+        foreach (char c in Path.GetInvalidFileNameChars()) newName = newName.Replace(c, '_');
+        newName = newName.Trim().TrimEnd('.');
+        if (newName.Length == 0) throw new ArgumentException("Der Name darf nicht leer sein.");
+
+        string ext = Path.GetExtension(sound.FullPath);
+        string target = Path.Combine(Path.GetDirectoryName(sound.FullPath)!, newName + ext);
+        if (string.Equals(target, sound.FullPath, StringComparison.Ordinal)) return sound.FileName;
+        bool onlyCase = string.Equals(target, sound.FullPath, StringComparison.OrdinalIgnoreCase);
+        if (File.Exists(target) && !onlyCase) throw new IOException($"Es gibt schon einen Sound „{newName}“.");
+
+        if (onlyCase)
+        {
+            // Windows unterscheidet keine Groß-/Kleinschreibung – über einen Zwischennamen umbenennen
+            string temp = sound.FullPath + ".umbenennen";
+            File.Move(sound.FullPath, temp);
+            File.Move(temp, target);
+        }
+        else File.Move(sound.FullPath, target);
+        return Path.GetFileName(target);
+    }
+
+    /// <summary>Verschiebt einen Sound in den Papierkorb (so wie Löschen im Explorer).</summary>
+    public static void DeleteToRecycleBin(SoundFile sound) =>
+        Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(sound.FullPath,
+            Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs,
+            Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin);
+
     /// <summary>Legt beim ersten Start ein paar selbst erzeugte Sounds an (keine Lizenzfragen).</summary>
     public static void EnsureStarterSounds()
     {

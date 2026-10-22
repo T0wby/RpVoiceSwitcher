@@ -343,8 +343,16 @@
                                 <DataTemplate>
                                     <Border Background="{StaticResource Card}" CornerRadius="8" Padding="12,10" Margin="0,0,8,8" Width="220">
                                         <StackPanel>
-                                            <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Margin="0,0,0,8"
-                                                       ToolTip="{Binding FileName}"/>
+                                            <DockPanel Margin="0,0,0,8">
+                                                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top" Margin="6,0,0,0">
+                                                    <Button Content="&#xE70F;" FontFamily="Segoe MDL2 Assets" Click="RenameSound_Click" Padding="7,4" Margin="0,0,3,0"
+                                                            ToolTip="Sound umbenennen" AutomationProperties.Name="Sound umbenennen"/>
+                                                    <Button Content="&#xE74D;" FontFamily="Segoe MDL2 Assets" Click="DeleteSound_Click" Padding="7,4"
+                                                            ToolTip="Sound löschen (in den Papierkorb)" AutomationProperties.Name="Sound löschen"/>
+                                                </StackPanel>
+                                                <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
+                                                           VerticalAlignment="Center" ToolTip="{Binding FileName}"/>
+                                            </DockPanel>
                                             <Button Content="▶  Abspielen" Click="PlaySound_Click" Margin="0,0,0,6"/>
                                             <CheckBox Content="Durch Stimmeffekt" IsChecked="{Binding ThroughEffect, Mode=TwoWay}" Click="SoundEffect_Click"
                                                       Margin="0,0,0,6" ToolTip="An: Der Sound bekommt denselben Effekt wie deine Stimme. Aus: Die anderen hören ihn unverändert."/>

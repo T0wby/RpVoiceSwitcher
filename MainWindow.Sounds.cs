@@ -113,6 +113,59 @@ public partial class MainWindow
 
     private void StopSounds_Click(object sender, RoutedEventArgs e) => _soundEngine.StopAll();
 
+    // ---------- Umbenennen / Löschen ----------
+
+    private void RenameSound_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.DataContext is not SoundItem item) return;
+        CancelCapture();
+        string? name = InputDialog.Ask(this, "Sound umbenennen", "Neuer Name des Sounds:", item.Name);
+        if (string.IsNullOrWhiteSpace(name) || name == item.Name) return;
+
+        try
+        {
+            _soundEngine.StopAll(); // laufende Sounds halten die Datei offen
+            string newFile = SoundLibrary.Rename(item.File, name);
+
+            // Shortcuts (in allen Charakteren) und den Effekt-Schalter mitnehmen
+            foreach (var p in _settings.Profiles)
+                if (p.SoundHotkeys.Remove(item.FileName, out var hk)) p.SoundHotkeys[newFile] = hk;
+            if (_settings.SoundsWithEffect.RemoveAll(f => f.Equals(item.FileName, StringComparison.OrdinalIgnoreCase)) > 0)
+                _settings.SoundsWithEffect.Add(newFile);
+            _settings.Save();
+            LoadSounds();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(this, "Umbenennen fehlgeschlagen: " + ex.Message, "RP Voice Switcher");
+        }
+    }
+
+    private void DeleteSound_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.DataContext is not SoundItem item) return;
+        CancelCapture();
+        var answer = MessageBox.Show(this,
+            $"Sound „{item.Name}“ löschen?\n\nDie Datei wandert in den Papierkorb, die Shortcuts dazu werden in allen Charakteren entfernt.",
+            "Sound löschen", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+        if (answer != MessageBoxResult.Yes) return;
+
+        try
+        {
+            _soundEngine.StopAll();
+            SoundLibrary.DeleteToRecycleBin(item.File);
+            foreach (var p in _settings.Profiles) p.SoundHotkeys.Remove(item.FileName);
+            _settings.SoundsWithEffect.RemoveAll(f => f.Equals(item.FileName, StringComparison.OrdinalIgnoreCase));
+            _settings.Save();
+            LoadSounds();
+            ShowStatusMessage($"„{item.Name}“ in den Papierkorb verschoben.");
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(this, "Löschen fehlgeschlagen: " + ex.Message, "RP Voice Switcher");
+        }
+    }
+
     private void SoundVolume_Changed(object sender, RoutedPropertyChangedEventArgs<double> e)
     {
         if (_initializing) return;
