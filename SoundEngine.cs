@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using NAudio.CoreAudioApi;
 using NAudio.Wave;
@@ -201,6 +202,45 @@ public sealed class SoundEngine : IDisposable
     private static ISampleProvider Gain(ISampleProvider sp, float gain) =>
         Math.Abs(gain - 1f) < 0.01f ? sp : new VolumeSampleProvider(sp) { Volume = gain };
 
+    /// <summary>
+    /// Echte Länge eines Sounds. WAV-Dateien, die als "Stream" geschrieben wurden (z. B. von ffmpeg über eine Pipe
+    /// oder manchen Online-Konvertern), tragen als Größe 0xFFFFFFFF ein – dann hält NAudio sie für über drei Stunden
+    /// lang. In dem Fall zählt, was tatsächlich in der Datei steht.
+    /// </summary>
+    public static TimeSpan DurationOf(string path, TimeSpan reported)
+    {
+        try
+        {
+            if (!path.EndsWith(".wav", StringComparison.OrdinalIgnoreCase)) return reported;
+            using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            using var br = new BinaryReader(fs);
+            if (fs.Length < 12 || new string(br.ReadChars(4)) != "RIFF") return reported;
+            br.ReadUInt32();
+            if (new string(br.ReadChars(4)) != "WAVE") return reported;
+            uint bytesPerSecond = 0;
+            while (fs.Position + 8 <= fs.Length)
+            {
+                string id = new string(br.ReadChars(4));
+                uint size = br.ReadUInt32();
+                long start = fs.Position;
+                if (id == "fmt " && size >= 16)
+                {
+                    br.ReadUInt16(); br.ReadUInt16(); br.ReadUInt32();
+                    bytesPerSecond = br.ReadUInt32();
+                }
+                if (id == "data")
+                {
+                    long available = fs.Length - start;
+                    if (bytesPerSecond == 0 || size <= available) return reported; // Kopf stimmt
+                    return TimeSpan.FromSeconds((double)available / bytesPerSecond);
+                }
+                fs.Position = start + size + (size & 1);
+            }
+        }
+        catch { /* im Zweifel die Angabe des Readers */ }
+        return reported;
+    }
+
     /// <summary>Lautester Wert einer Datei (0 … 1+), für das automatische Angleichen. Liest höchstens 10 Minuten.</summary>
     public static float MeasurePeak(string path)
     {
@@ -235,7 +275,7 @@ public sealed class SoundEngine : IDisposable
             sp = new WdlResamplingSampleProvider(sp, output.Mixer.WaveFormat.SampleRate);
         if (transform != null) sp = transform(sp);
 
-        var tracked = new AutoDisposeProvider(sp, reader, path, reader.TotalTime, repeat, primary);
+        var tracked = new AutoDisposeProvider(sp, reader, path, DurationOf(path, reader.TotalTime), repeat, primary);
         lock (_lock)
         {
             _playing.RemoveAll(p => p.IsDone); // fertige Sounds aus der Liste nehmen

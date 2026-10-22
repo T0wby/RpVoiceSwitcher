@@ -19,6 +19,34 @@ Check("ParseGain begrenzt auf +12", VoiceStore.ParseGain("40") == 12);
 Check("ParseGain Unsinn = 0", VoiceStore.ParseGain("laut") == 0);
 Check("FormatGain +2,5 dB", VoiceStore.FormatGain(2.5) == "+2,5 dB");
 
+// ---------- Laenge von "Stream"-WAVs (Groesse 0xFFFFFFFF im Kopf, z. B. ffmpeg-Pipe) ----------
+{
+    string wav = Path.Combine(Path.GetTempPath(), "rpvs-streamwav-" + Guid.NewGuid().ToString("N") + ".wav");
+    int rate = 48000, seconds = 3;
+    using (var bw = new BinaryWriter(File.Create(wav)))
+    {
+        bw.Write("RIFF"u8); bw.Write(0xFFFFFFFFu); bw.Write("WAVE"u8);
+        bw.Write("fmt "u8); bw.Write(18); bw.Write((short)3); bw.Write((short)2); bw.Write(rate); bw.Write(rate * 8); bw.Write((short)8); bw.Write((short)32); bw.Write((short)0);
+        bw.Write("LIST"u8); bw.Write(26); bw.Write(new byte[26]);
+        bw.Write("data"u8); bw.Write(0xFFFFFFFFu);
+        for (int i = 0; i < rate * seconds; i++) { float s = 0.3f * MathF.Sin(i * 0.05f); bw.Write(s); bw.Write(s); }
+    }
+    TimeSpan reported;
+    using (var r = new NAudio.Wave.AudioFileReader(wav)) reported = r.TotalTime;
+    var real = SoundEngine.DurationOf(wav, reported);
+    Check($"Stream-WAV: NAudio meldet {reported:h\\:mm\\:ss}, echte Laenge {real.TotalSeconds:F2} s", Math.Abs(real.TotalSeconds - seconds) < 0.01);
+    Check("Normale WAV: Laenge unveraendert", SoundEngine.DurationOf(wav.Replace(".wav", ".mp3"), TimeSpan.FromSeconds(7)) == TimeSpan.FromSeconds(7));
+    File.Delete(wav);
+    // Nur zur Info: echte Sounds des Nutzers (werden nicht veraendert)
+    string sounds = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "RP Voice Switcher", "Sounds");
+    if (Directory.Exists(sounds))
+        foreach (var f in Directory.GetFiles(sounds, "*.wav"))
+        {
+            using var r = new NAudio.Wave.AudioFileReader(f);
+            Console.WriteLine($"   {Path.GetFileName(f),-42} Kopf: {r.TotalTime:h\\:mm\\:ss}  ->  {SoundEngine.DurationOf(f, r.TotalTime).TotalSeconds:F2} s");
+        }
+}
+
 string dir = Path.Combine(Path.GetTempPath(), "rpvs-probe-" + Guid.NewGuid().ToString("N"));
 string dir2 = dir + "-import";
 string zip = dir + ".zip";
