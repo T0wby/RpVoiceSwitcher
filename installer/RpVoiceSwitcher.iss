@@ -41,7 +41,7 @@ RestartApplications=no
 Name: "de"; MessagesFile: "compiler:Languages\German.isl"
 
 [Messages]
-de.FinishedLabel=[name] ist installiert.%n%nWichtig: Für die Stimmen braucht es außerdem Equalizer APO und VB-CABLE. Die App zeigt unter Extras → Einrichtung, was noch fehlt, und hilft beim Einrichten.
+de.FinishedLabel=[name] ist installiert.%n%nFür die Stimmen braucht es außerdem VB-CABLE und Equalizer APO. Beim ersten Start führt dich ein Assistent Schritt für Schritt durch Download und Einrichtung.
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"

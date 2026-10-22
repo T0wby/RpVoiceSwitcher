@@ -82,6 +82,11 @@ public sealed class AppSettings
     public string? ObsFilePath { get; set; }
     public string ObsTemplate { get; set; } = "{stimme}";
 
+    // Einrichtungs-Assistent
+    public bool SetupWizardDone { get; set; }
+    public int SetupWizardStep { get; set; }
+    public bool OpenWizardAfterRestart { get; set; }
+
     // Updates
     public bool CheckForUpdates { get; set; } = true;
     public string? SkippedUpdateVersion { get; set; }

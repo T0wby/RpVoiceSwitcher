@@ -38,6 +38,7 @@ public static class AppCommands
 
     // Extras
     public static readonly RoutedUICommand ShowSetup = C("_Einrichtung …", nameof(ShowSetup), K(Key.E, Ctrl | Shift, "Strg+Umschalt+E"));
+    public static readonly RoutedUICommand SetupWizard = C("Einrichtungs-_Assistent …", nameof(SetupWizard));
     public static readonly RoutedUICommand ShowSettings = C("Ein_stellungen …", nameof(ShowSettings), K(Key.OemComma, Ctrl, "Strg+,"));
     public static readonly RoutedUICommand VoiceTest = C("_Probehören …", nameof(VoiceTest), K(Key.P, Ctrl, "Strg+P"));
     public static readonly RoutedUICommand Panic = C("_Notfall: normale Stimme, Sounds aus", nameof(Panic));

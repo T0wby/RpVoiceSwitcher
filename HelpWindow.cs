@@ -16,6 +16,7 @@ public sealed class HelpWindow : Window
         [
             "Dein Mikrofon wird über „Abhören“ in das virtuelle Kabel (VB-CABLE) geleitet. Equalizer APO legt dort die aktive Stimme drauf.",
             "Im Spiel und in Discord wählst du deshalb „CABLE Output“ als Mikrofon.",
+            "Neu hier? Hilfe → Einrichtungs-Assistent führt von null durch Downloads, Installation und Windows-Einstellungen.",
             "Ob alles richtig eingerichtet ist, zeigt Extras → Einrichtung (Strg+Umschalt+E) oder ein Klick unten rechts in der Statusleiste – rote Punkte lassen sich dort meist per Klick beheben.",
             "Einstellungen (Ton, Status-Anzeige, Geräte, Ordner) findest du unter Extras → Einstellungen (Strg+,).",
         ]),

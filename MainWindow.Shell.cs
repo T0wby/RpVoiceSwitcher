@@ -40,6 +40,7 @@ public partial class MainWindow
         Bind(AppCommands.ShowVoices, () => Tabs.SelectedIndex = 0);
         Bind(AppCommands.ShowSoundboard, () => Tabs.SelectedIndex = 1);
         Bind(AppCommands.ShowSetup, ShowSetupWindow);
+        Bind(AppCommands.SetupWizard, ShowSetupWizard);
         Bind(AppCommands.ShowSettings, ShowSettingsWindow);
         Bind(AppCommands.Refresh, () => { LoadVoices(); LoadSounds(); RunSetupCheck(); ShowStatusMessage("Aktualisiert."); });
         // Extras

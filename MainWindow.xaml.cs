@@ -92,6 +92,9 @@ public partial class MainWindow : Window
         RunSetupCheck();
         WatchDevices();
         _initializing = false;
+
+        Loaded += (_, _) => MaybeShowWizardOnStart();
+        ResumeWizardAfterRestart();
     }
 
     private static string BundledVoicesDir => Path.Combine(AppContext.BaseDirectory, "Voices");
@@ -289,6 +292,7 @@ public partial class MainWindow : Window
         _overlay?.Close();
         _status?.Close();
         _voiceTest?.Close();
+        _wizard?.Close();
         _setupWindow?.CloseForReal();
         _settingsWindow?.CloseForReal();
         Application.Current?.Shutdown();

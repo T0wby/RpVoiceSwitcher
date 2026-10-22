@@ -103,5 +103,10 @@ Check("Pause ohne Strg/Alt erlaubt, heisst \"Pause\"", pause.IsSafeWithoutModifi
 Check("Buchstabe ohne Strg/Alt nicht erlaubt", !new Hotkey(ModifierKeys.None, Key.W).IsSafeWithoutModifier);
 Check("Standard-Notfall-Taste ist Pause", Hotkey.Parse(new AppSettings().PanicHotkey) == pause);
 
+// ---------- Einrichtungs-Assistent: Zustand dieses PCs ----------
+var status = SetupChecker.Probe(AppSettings.Load());
+Console.WriteLine("Einrichtung hier: " + status);
+Console.WriteLine("Assistent haelt die Einrichtung fuer vollstaendig: " + SetupWizardWindow.IsComplete(status));
+
 Console.WriteLine(fails == 0 ? "ALLE PRUEFUNGEN OK" : $"{fails} FEHLER");
 return fails == 0 ? 0 : 1;

@@ -216,6 +216,107 @@ public static class SetupChecker
     private static bool Contains(string? haystack, string guid) =>
         haystack != null && haystack.Contains(guid, StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>Zustand aller Einrichtungs-Schritte auf einen Blick (für den Assistenten).</summary>
+    public sealed record Status
+    {
+        public bool CableInstalled { get; init; }
+        public bool EapoInstalled { get; init; }
+        public string? EapoConfigDir { get; init; }
+        public bool EapoOnTarget { get; init; }
+        public string? TargetName { get; init; }
+        /// <summary>Equalizer APO wurde nach dem letzten Windows-Start eingerichtet – erst ein Neustart aktiviert es.</summary>
+        public bool RestartPending { get; init; }
+        public bool ConfigWritable { get; init; }
+        public bool IncludeOk { get; init; }
+        public string? MicToCable { get; init; }
+        public string? MicDisconnected { get; init; }
+        public string? MicListensElsewhere { get; init; }
+        public string? DefaultPlayback { get; init; }
+        public bool DefaultPlaybackIsCable { get; init; }
+        public string? Graillon { get; init; }
+    }
+
+    public static Status Probe(AppSettings settings)
+    {
+        try
+        {
+            using var root = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64);
+            var capture = ReadEndpoints(root, "Capture");
+            var render = ReadEndpoints(root, "Render");
+            var cableOut = capture.FirstOrDefault(e => e.Active && e.Name.Contains("CABLE Output", StringComparison.OrdinalIgnoreCase));
+            var cableIn = render.FirstOrDefault(e => e.Active && e.Name.Contains("CABLE Input", StringComparison.OrdinalIgnoreCase));
+            var store = VoiceStore.TryCreate(settings.VoicesFolder);
+
+            var targets = capture.Where(e => e.Active && e.Name.Contains(settings.TargetDevice, StringComparison.OrdinalIgnoreCase)).ToList();
+            var target = targets.FirstOrDefault(t => t.HasEapo) ?? targets.FirstOrDefault();
+            bool restartPending = false;
+            if (target is { HasEapo: true })
+            {
+                var registered = KeyLastWriteUtc(root, $@"SOFTWARE\EqualizerAPO\Child APOs\{target.Guid}");
+                var bootTime = DateTime.UtcNow - TimeSpan.FromMilliseconds(Environment.TickCount64);
+                restartPending = registered is DateTime r && r > bootTime;
+            }
+
+            var mics = capture.Where(e => !e.Name.Contains("CABLE", StringComparison.OrdinalIgnoreCase)).ToList();
+            var toCable = cableIn == null ? null : mics.FirstOrDefault(m => m.Active && m.ListenEnabled && Contains(m.ListenTarget, cableIn.Guid));
+            var gone = cableIn == null ? null : mics.FirstOrDefault(m => !m.Active && m.ListenEnabled && Contains(m.ListenTarget, cableIn.Guid));
+            var elsewhere = mics.FirstOrDefault(m => m.Active && m.ListenEnabled && (cableIn == null || !Contains(m.ListenTarget, cableIn.Guid)));
+
+            string? playback = null;
+            try
+            {
+                using var enumerator = new MMDeviceEnumerator();
+                playback = enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia).FriendlyName;
+            }
+            catch { /* kein Ausgabegerät */ }
+
+            return new Status
+            {
+                CableInstalled = cableOut != null && cableIn != null,
+                EapoInstalled = store != null,
+                EapoConfigDir = store?.ConfigDir,
+                EapoOnTarget = target?.HasEapo == true,
+                TargetName = target?.Name,
+                RestartPending = restartPending,
+                ConfigWritable = store != null && CanWrite(store.ConfigDir),
+                IncludeOk = store?.IsMainConfigIncludingVoice() == true,
+                MicToCable = toCable?.Name,
+                MicDisconnected = toCable == null ? gone?.Name : null,
+                MicListensElsewhere = elsewhere?.Name,
+                DefaultPlayback = playback,
+                DefaultPlaybackIsCable = playback?.Contains("CABLE", StringComparison.OrdinalIgnoreCase) == true,
+                Graillon = FindGraillon(),
+            };
+        }
+        catch
+        {
+            return new Status();
+        }
+    }
+
+    [System.Runtime.InteropServices.DllImport("advapi32.dll")]
+    private static extern int RegQueryInfoKey(Microsoft.Win32.SafeHandles.SafeRegistryHandle hKey, IntPtr cls, IntPtr clsLen, IntPtr reserved,
+        IntPtr subKeys, IntPtr maxSubKeyLen, IntPtr maxClassLen, IntPtr values, IntPtr maxValueNameLen, IntPtr maxValueLen,
+        IntPtr securityDescriptor, out long lastWriteTime);
+
+    /// <summary>Wann ein Registry-Schlüssel zuletzt geändert wurde (= wann Equalizer APO am Gerät eingerichtet wurde).</summary>
+    private static DateTime? KeyLastWriteUtc(RegistryKey root, string path)
+    {
+        try
+        {
+            using var key = root.OpenSubKey(path);
+            if (key == null) return null;
+            return RegQueryInfoKey(key.Handle, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero,
+                                   IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, out long ft) == 0
+                ? DateTime.FromFileTimeUtc(ft) : null;
+        }
+        catch { return null; }
+    }
+
+    /// <summary>Startet Windows neu (nach Rückfrage durch den Aufrufer).</summary>
+    public static void RestartWindows() =>
+        Process.Start(new ProcessStartInfo("shutdown.exe", "/r /t 5 /c \"RP Voice Switcher: Neustart fuer Equalizer APO\"") { UseShellExecute = false, CreateNoWindow = true });
+
     private static bool CanWrite(string dir)
     {
         try
@@ -236,7 +337,7 @@ public static class SetupChecker
     }
 
     /// <summary>Gibt der Gruppe "Benutzer" Änderungsrechte am Config-Ordner (einmalige UAC-Abfrage).</summary>
-    private static void GrantWriteAccess(string dir)
+    public static void GrantWriteAccess(string dir)
     {
         var p = Process.Start(new ProcessStartInfo("icacls.exe", $"\"{dir}\" /grant *S-1-5-32-545:(OI)(CI)M")
         {
