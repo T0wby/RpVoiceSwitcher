@@ -12,6 +12,24 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        DispatcherUnhandledException += (_, ex) =>
+        {
+            // Festhalten (für "Problem melden") und weiterlaufen – die Shortcuts sollen im Spiel nicht plötzlich wegfallen.
+            ErrorLog.Write("Unbehandelter Fehler", ex.Exception);
+            ex.Handled = true;
+            MessageBox.Show("Da ist etwas schiefgegangen:\n\n" + ex.Exception.Message +
+                            "\n\nDie App läuft weiter. Details stehen unter Hilfe → Problem melden.",
+                "RP Voice Switcher", MessageBoxButton.OK, MessageBoxImage.Warning);
+        };
+        AppDomain.CurrentDomain.UnhandledException += (_, ex) => ErrorLog.Write("Absturz", ex.ExceptionObject as Exception);
+
+        // Hilfsaufruf mit Administratorrechten (Exklusivmodus abschalten) – läuft neben der eigentlichen App, ohne Fenster.
+        int helper = Array.FindIndex(e.Args, a => a.Equals(ExclusiveMode.Argument, StringComparison.OrdinalIgnoreCase));
+        if (helper >= 0 && helper + 1 < e.Args.Length)
+        {
+            Shutdown(ExclusiveMode.DisableElevatedWorker(e.Args[helper + 1]));
+            return;
+        }
 
         _singleInstance = new Mutex(true, "RpVoiceSwitcher_SingleInstance", out bool isNew);
         if (!isNew)

@@ -1,0 +1,30 @@
+name: Problem melden
+description: Etwas klappt nicht – z. B. kein Effekt im Spiel, Einrichtung hängt, Fehlermeldung
+title: "[Problem] "
+labels: ["problem"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Danke fürs Melden! In der App unter **Hilfe → Problem melden** wird die Diagnose automatisch in die Zwischenablage kopiert – unten einfach mit Strg+V einfügen.
+  - type: textarea
+    id: was
+    attributes:
+      label: Was ist passiert?
+      description: Was hast du gemacht, was hast du erwartet, was ist stattdessen passiert?
+      placeholder: "z. B. Im Spiel hören die anderen meine normale Stimme, obwohl „Maske“ aktiv ist."
+    validations:
+      required: true
+  - type: input
+    id: wo
+    attributes:
+      label: Wo tritt es auf?
+      description: Spiel, Discord, Probehören, Einrichtungs-Assistent …
+  - type: textarea
+    id: diagnose
+    attributes:
+      label: Diagnose
+      description: Aus der App (Hilfe → Problem melden oder Diagnose kopieren). Bitte vorher kurz durchlesen.
+      render: text
+    validations:
+      required: true

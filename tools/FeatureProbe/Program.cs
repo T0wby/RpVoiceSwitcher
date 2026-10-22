@@ -108,5 +108,16 @@ var status = SetupChecker.Probe(AppSettings.Load());
 Console.WriteLine("Einrichtung hier: " + status);
 Console.WriteLine("Assistent haelt die Einrichtung fuer vollstaendig: " + SetupWizardWindow.IsComplete(status));
 
+// ---------- Diagnose ----------
+var diagSettings = AppSettings.Load();
+var diagStore = VoiceStore.TryCreate(diagSettings.VoicesFolder);
+string diag = Diagnostics.Build(diagSettings, diagStore, SetupChecker.Run(diagStore, diagSettings, () => { }, _ => { }), "Test");
+Check("Diagnose: enthaelt Pruefung, Geraete und voice.txt",
+    diag.Contains("== Einrichtungs-Prüfung ==") && diag.Contains("== Geräte ==") && diag.Contains("== voice.txt =="));
+Check("Diagnose: kein Windows-Benutzername in Pfaden", !diag.Contains(@"\" + Environment.UserName + @"\", StringComparison.OrdinalIgnoreCase));
+Check("Diagnose: keine Charakternamen", diagSettings.Profiles.All(p => p.Name.Length < 3 || p.Name == "Standard" || !diag.Contains(p.Name, StringComparison.OrdinalIgnoreCase)));
+Check($"Diagnose: handliche Laenge ({diag.Length} Zeichen)", diag.Length is > 500 and < 60000);
+File.WriteAllText(Path.Combine(Path.GetTempPath(), "rpvs-diagnose.txt"), diag);
+
 Console.WriteLine(fails == 0 ? "ALLE PRUEFUNGEN OK" : $"{fails} FEHLER");
 return fails == 0 ? 0 : 1;

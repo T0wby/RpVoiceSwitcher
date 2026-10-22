@@ -129,6 +129,44 @@ public partial class MainWindow
         Process.Start("explorer.exe", $"\"{dir}\"");
     }
 
+    // ---------- Diagnose / Problem melden ----------
+
+    private string BuildDiagnostics()
+    {
+        RunSetupCheck();
+        return Diagnostics.Build(_settings, _store, _checks.Select(c => c.Result), CurrentVoice()?.Name ?? "keine");
+    }
+
+    private static bool CopyToClipboard(string text)
+    {
+        // Die Zwischenablage ist manchmal kurz von einem anderen Programm belegt.
+        for (int i = 0; i < 10; i++)
+        {
+            try { Clipboard.SetDataObject(text, true); return true; }
+            catch (System.Runtime.InteropServices.COMException) { System.Threading.Thread.Sleep(100); }
+        }
+        return false;
+    }
+
+    private void CopyDiagnostics()
+    {
+        if (CopyToClipboard(BuildDiagnostics()))
+            ShowStatusMessage("Diagnose in die Zwischenablage kopiert – mit Strg+V einfügen.");
+        else
+            MessageBox.Show(this, "Die Zwischenablage ist gerade belegt. Bitte gleich nochmal versuchen.", "Diagnose kopieren");
+    }
+
+    private void ReportProblem()
+    {
+        bool copied = CopyToClipboard(BuildDiagnostics());
+        var answer = MessageBox.Show(_setupWindow is { IsVisible: true } ? _setupWindow : this,
+            (copied ? "Die Diagnose liegt in der Zwischenablage.\n\n" : "") +
+            "Gleich öffnet sich GitHub (Anmeldung nötig). Dort kurz beschreiben, was nicht klappt, und die Diagnose ins Feld „Diagnose“ einfügen (Strg+V).\n\n" +
+            "Die Diagnose enthält Geräte- und Einrichtungsinfos, aber keine Charakternamen und nicht deinen Windows-Benutzernamen. Lies sie trotzdem kurz durch, bevor du sie veröffentlichst.",
+            "Problem melden", MessageBoxButton.OKCancel, MessageBoxImage.Information);
+        if (answer == MessageBoxResult.OK) SetupChecker.OpenUrl(Diagnostics.IssueUrl);
+    }
+
     // ---------- Probehören ----------
 
     private void ShowVoiceTest()

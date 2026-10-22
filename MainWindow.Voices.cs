@@ -129,6 +129,7 @@ public partial class MainWindow
         }
         catch (Exception ex)
         {
+            ErrorLog.Write("Umschalten auf " + item.FileName, ex);
             ShowStatusMessage("Umschalten fehlgeschlagen: " + ex.Message);
             return;
         }

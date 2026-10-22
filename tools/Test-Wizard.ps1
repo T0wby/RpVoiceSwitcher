@@ -57,7 +57,7 @@ try {
     $wiz = FindWin $p.Id 'Einrichtungs-Assistent*'
     Check 'Assistent beim ersten Start geoeffnet' ($null -ne $wiz)
     if ($wiz) {
-        Check 'Startet bei Schritt 1 (Willkommen)' ((Texts $wiz) -contains 'Schritt 1 von 10')
+        Check 'Startet bei Schritt 1 (Willkommen)' ((Texts $wiz) -contains 'Schritt 1 von 11')
         Click (Btn $wiz 'Schritt 3:*')
         Check ("Schritt 3 (Equalizer APO) noch offen ({0})" -f (BadgeOf $wiz)) ((BadgeOf $wiz) -eq 'Noch offen')
         Click (Btn $wiz 'Schritt 5:*')
@@ -73,23 +73,32 @@ try {
     Stop-Process -Id $p.Id
 
     "=== Vollstaendig: Assistent bleibt zu, alle Schritte durchgehen ==="
+    $exclusiveOff = [bool]((& (Join-Path $PSScriptRoot 'Check-Exclusive.ps1')) -match 'Eigenschaft Exklusiv erlaubt: 0')
+    "   (Exklusivmodus an CABLE Output: $(if ($exclusiveOff) { 'aus' } else { 'noch an' }))"
     Write-TestSettings @{}
     $p = Start-App
-    Check 'Assistent oeffnet sich NICHT, wenn alles eingerichtet ist' ($null -eq (FindWin $p.Id 'Einrichtungs-Assistent*' 5))
-    Check 'Als erledigt gemerkt' ((Settings).SetupWizardDone)
+    $auto = FindWin $p.Id 'Einrichtungs-Assistent*' 5
+    if ($exclusiveOff) {
+        Check 'Assistent oeffnet sich NICHT, wenn alles eingerichtet ist' ($null -eq $auto)
+        Check 'Als erledigt gemerkt' ((Settings).SetupWizardDone)
+    } else {
+        Check 'Exklusivmodus noch an -> Assistent oeffnet sich (richtig so)' ($null -ne $auto)
+        if ($auto) { Click (Btn $auto 'Sp*ter weitermachen') }
+    }
     $win = FindWin $p.Id 'RP Voice Switcher'
     $help = All $win ([Windows.Automation.ControlType]::MenuItem) | Where-Object { $_.Current.Name -eq 'Hilfe' } | Select-Object -First 1
     $help.GetCurrentPattern([Windows.Automation.ExpandCollapsePattern]::Pattern).Expand(); Start-Sleep -m 500
     Click (@($AE::RootElement.FindAll('Descendants', (Cond $AE::ControlTypeProperty ([Windows.Automation.ControlType]::MenuItem)))) | Where-Object { $_.Current.Name -like 'Einrichtungs-Assistent*' } | Select-Object -First 1)
     $wiz = FindWin $p.Id 'Einrichtungs-Assistent*'
     Check 'Ueber Hilfe -> Einrichtungs-Assistent geoeffnet' ($null -ne $wiz)
-    $expected = @{ 2 = '✓ Erledigt'; 3 = '✓ Erledigt'; 4 = '✓ Erledigt'; 5 = '✓ Erledigt'; 6 = '✓ Erledigt'; 7 = '✓ Erledigt' }
-    for ($i = 1; $i -le 10; $i++) {
+    Click (Btn $wiz 'Schritt 1:*')
+    $expected = @{ 2 = '✓ Erledigt'; 3 = '✓ Erledigt'; 4 = '✓ Erledigt'; 5 = '✓ Erledigt'; 6 = '✓ Erledigt'
+                   7 = $(if ($exclusiveOff) { '✓ Erledigt' } else { 'Noch offen' }); 8 = '✓ Erledigt' }
+    for ($i = 1; $i -le 11; $i++) {
         $badge = BadgeOf $wiz
-        $title = (Texts $wiz) | Where-Object { $_ -like "Schritt $i von 10" }
         if ($expected.ContainsKey($i)) { Check ("Schritt {0}: {1}" -f $i, $badge) ($badge -eq $expected[$i]) }
         Shot $wiz (Join-Path $shots ("assistent-{0:00}.png" -f $i))
-        if ($i -lt 10) { Click (Btn $wiz 'Weiter') }
+        if ($i -lt 11) { Click (Btn $wiz 'Weiter') }
     }
     Check 'Letzter Schritt hat "Fertig"' ($null -ne (Btn $wiz 'Fertig'))
     Click (Btn $wiz 'Fertig')

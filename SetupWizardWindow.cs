@@ -235,6 +235,22 @@ public sealed class SetupWizardWindow : Window
             [new("Aufnahmegeräte öffnen", () => SetupChecker.OpenSoundPanel(1))],
             "Hörst du dich danach doppelt in den Kopfhörern? Dann ist beim Abhören versehentlich der Kopfhörer statt „CABLE Input“ gewählt."),
 
+        new("Exklusivmodus abschalten",
+            "Manche Spiele und Voice-Programme übernehmen das Mikrofon „exklusiv“. Dann umgeht Windows Equalizer APO – und der Stimmeffekt ist plötzlich weg. Das verhindert ein Haken an „CABLE Output“.",
+            [
+                "„Automatisch abschalten“ klicken und die Windows-Abfrage mit „Ja“ bestätigen.",
+                "Oder von Hand: „Aufnahmegeräte öffnen“ → „CABLE Output“ doppelklicken → Reiter „Erweitert“ → beide Haken unter „Exklusiver Modus“ entfernen → OK.",
+            ],
+            s => s.Exclusive == null
+                    ? (StepState.Open, "„CABLE Output“ wurde nicht gefunden – erst Schritt 2.")
+                : s.Exclusive.Allowed
+                    ? (StepState.Open, $"An „{s.Exclusive.Name}“ dürfen Programme noch die alleinige Kontrolle übernehmen.")
+                    : (StepState.Done, "Aus – kein Programm kann den Effekt mehr umgehen."),
+            [
+                new("Automatisch abschalten", DisableExclusive),
+                new("Aufnahmegeräte öffnen", () => SetupChecker.OpenSoundPanel(1)),
+            ]),
+
         new("Wiedergabegerät prüfen",
             "Nach der Installation von VB-CABLE stellt Windows manchmal „CABLE Input“ als Lautsprecher ein. Dann hörst du nichts mehr – und die anderen hören deine PC-Sounds.",
             [
@@ -299,6 +315,20 @@ public sealed class SetupWizardWindow : Window
         Refresh();
         if (error != null)
             MessageBox.Show(this, error, "Zugriff freigeben", MessageBoxButton.OK, MessageBoxImage.Warning);
+    }
+
+    private void DisableExclusive()
+    {
+        var info = _host.Probe().Exclusive;
+        if (info == null)
+        {
+            MessageBox.Show(this, "„CABLE Output“ wurde nicht gefunden – bitte zuerst VB-CABLE installieren (Schritt 2).", "Exklusivmodus");
+            return;
+        }
+        if (!info.Allowed) return;
+        if (ExclusiveMode.Disable(info.DeviceId) is string error)
+            MessageBox.Show(this, error, "Exklusivmodus", MessageBoxButton.OK, MessageBoxImage.Warning);
+        Refresh();
     }
 
     private void Restart()
@@ -449,5 +479,5 @@ public sealed class SetupWizardWindow : Window
     /// <summary>Ist alles Wichtige erledigt? (Dann muss der Assistent beim ersten Start nicht aufgehen.)</summary>
     public static bool IsComplete(SetupChecker.Status s) =>
         s.CableInstalled && s.EapoInstalled && s.EapoOnTarget && !s.RestartPending && s.ConfigWritable && s.IncludeOk &&
-        s.MicToCable != null && s.DefaultPlayback != null && !s.DefaultPlaybackIsCable;
+        s.MicToCable != null && s.DefaultPlayback != null && !s.DefaultPlaybackIsCable && s.Exclusive is { Allowed: false };
 }

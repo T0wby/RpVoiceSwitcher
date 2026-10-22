@@ -61,6 +61,9 @@
                 <MenuItem Command="{x:Static local:AppCommands.Help}"/>
                 <MenuItem Command="{x:Static local:AppCommands.SetupWizard}"/>
                 <Separator/>
+                <MenuItem Command="{x:Static local:AppCommands.ReportProblem}"/>
+                <MenuItem Command="{x:Static local:AppCommands.CopyDiagnostics}"/>
+                <Separator/>
                 <MenuItem Command="{x:Static local:AppCommands.CheckUpdates}"/>
                 <MenuItem Command="{x:Static local:AppCommands.About}"/>
             </MenuItem>
@@ -124,6 +127,8 @@
                         <Border DockPanel.Dock="Top" Padding="20,12,20,6">
                             <DockPanel>
                                 <Button DockPanel.Dock="Right" Content="Erneut prüfen" Click="RunSetupCheck_Click" Padding="12,5"/>
+                                <Button DockPanel.Dock="Right" Content="Diagnose kopieren" Command="{x:Static local:AppCommands.CopyDiagnostics}" Padding="12,5" Margin="0,0,8,0"
+                                        ToolTip="Alle Prüfergebnisse und Einstellungen als Text in die Zwischenablage – zum Weitergeben, wenn etwas nicht klappt"/>
                                 <Button DockPanel.Dock="Right" Content="Schritt für Schritt …" Command="{x:Static local:AppCommands.SetupWizard}" Padding="12,5" Margin="0,0,8,0"
                                         ToolTip="Einrichtungs-Assistent: führt von null durch Downloads, Installation und Windows-Einstellungen"/>
                                 <TextBlock x:Name="SetupSummary" TextWrapping="Wrap" VerticalAlignment="Center" Foreground="{StaticResource FgDim}"

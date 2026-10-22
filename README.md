@@ -7,11 +7,19 @@ Windows-Desktop-App (WPF, .NET 10). Die Effekte macht [Equalizer APO](https://so
 ## Installieren
 
 1. Den neuesten Installer unter **[Releases](https://github.com/T0wby/RpVoiceSwitcher/releases/latest)** herunterladen (`RpVoiceSwitcher-Setup-x.y.z.exe`) und starten. Keine Administratorrechte nötig, .NET muss nicht installiert sein.
+
+   > **„Der Computer wurde durch Windows geschützt“?** Der Installer ist (noch) nicht digital signiert, deshalb warnt Windows SmartScreen bei neuen Programmen. Auf **„Weitere Informationen“** klicken und dann **„Trotzdem ausführen“**. Wer sichergehen will, kann den Quellcode hier selbst prüfen und bauen (siehe unten).
 2. Beim ersten Start öffnet sich der **Einrichtungs-Assistent**. Er führt Schritt für Schritt durch alles Weitere – auch wenn noch gar nichts eingerichtet ist:
    VB-CABLE installieren → Equalizer APO installieren und an „CABLE Output“ hängen → Zugriff freigeben → Neustart → Mikrofon per „Abhören“ ins Kabel leiten → Wiedergabegerät prüfen → ausprobieren → im Spiel und in Discord „CABLE Output“ als Mikrofon wählen.
    Jeder Schritt prüft selbst, ob er erledigt ist. Später jederzeit wieder unter *Hilfe → Einrichtungs-Assistent*.
 
 Updates findet die App selbst (abschaltbar) – oder *Hilfe → Nach Updates suchen*.
+
+## Hilfe, wenn etwas nicht klappt
+
+- *Extras → Einrichtung* prüft die ganze Kette und behebt vieles per Klick.
+- Kein Effekt im Spiel, obwohl die Stimme aktiv ist? Meist hat das Spiel das Mikrofon „exklusiv“ geöffnet – die Einrichtung schaltet den Exklusivmodus an „CABLE Output“ ab.
+- Sonst: *Hilfe → Problem melden* kopiert eine Diagnose und öffnet ein [GitHub-Issue](https://github.com/T0wby/RpVoiceSwitcher/issues/new?template=problem.yml) zum Einfügen.
 
 ## Funktionen
 

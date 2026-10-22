@@ -54,6 +54,8 @@ public partial class MainWindow
         // Hilfe
         Bind(AppCommands.Help, () => HelpWindow.ShowFor(this));
         Bind(AppCommands.CheckUpdates, () => _ = CheckForUpdatesAsync(manual: true));
+        Bind(AppCommands.ReportProblem, ReportProblem);
+        Bind(AppCommands.CopyDiagnostics, CopyDiagnostics);
         Bind(AppCommands.About, ShowAbout);
 
         _statusMessageTimer.Tick += (_, _) => { _statusMessageTimer.Stop(); _statusMessage = null; UpdateStatusBar(); };

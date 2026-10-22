@@ -128,6 +128,21 @@ public static class SetupChecker
             });
         }
 
+        // 3b) Exklusivmodus am Zielgerät – sonst kann ein Spiel den Effekt umgehen
+        if (targets.Count > 0 && ExclusiveMode.Probe(settings.TargetDevice) is { } exclusive)
+        {
+            results.Add(new CheckResult
+            {
+                Title = "Exklusivmodus am Zielgerät",
+                State = exclusive.Allowed ? CheckState.Warning : CheckState.Ok,
+                Detail = exclusive.Allowed
+                    ? $"An „{exclusive.Name}“ dürfen Programme die alleinige Kontrolle übernehmen. Tut ein Spiel oder Voice-Client das, ist der Stimmeffekt weg. Besser abschalten (Windows fragt nach Administratorrechten)."
+                    : "Aus – kein Programm kann den Stimmeffekt umgehen.",
+                FixLabel = exclusive.Allowed ? "Abschalten …" : null,
+                Fix = exclusive.Allowed ? () => { if (ExclusiveMode.Disable(exclusive.DeviceId) is string error) throw new InvalidOperationException(error); } : null,
+            });
+        }
+
         // 4) Mikrofon → Kabel weiterleiten
         if (cableIn != null)
         {
@@ -234,6 +249,8 @@ public static class SetupChecker
         public string? DefaultPlayback { get; init; }
         public bool DefaultPlaybackIsCable { get; init; }
         public string? Graillon { get; init; }
+        /// <summary>null = Zielgerät nicht gefunden.</summary>
+        public ExclusiveMode.Info? Exclusive { get; init; }
     }
 
     public static Status Probe(AppSettings settings)
@@ -286,6 +303,7 @@ public static class SetupChecker
                 DefaultPlayback = playback,
                 DefaultPlaybackIsCable = playback?.Contains("CABLE", StringComparison.OrdinalIgnoreCase) == true,
                 Graillon = FindGraillon(),
+                Exclusive = target != null ? ExclusiveMode.Probe(settings.TargetDevice) : null,
             };
         }
         catch
@@ -311,6 +329,15 @@ public static class SetupChecker
                 ? DateTime.FromFileTimeUtc(ft) : null;
         }
         catch { return null; }
+    }
+
+    /// <summary>Alle aktiven Audiogeräte als Textzeilen (für die Diagnose).</summary>
+    public static IEnumerable<string> DescribeEndpoints()
+    {
+        using var root = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64);
+        foreach (var (flow, label) in new[] { ("Capture", "Aufnahme"), ("Render", "Wiedergabe") })
+            foreach (var e in ReadEndpoints(root, flow).Where(e => e.Active).OrderBy(e => e.Name))
+                yield return $"{label}: {e.Name}" + (e.HasEapo ? " [Equalizer APO]" : "") + (e.ListenEnabled ? " [Abhören → " + (e.ListenTarget ?? "?") + "]" : "");
     }
 
     /// <summary>Startet Windows neu (nach Rückfrage durch den Aufrufer).</summary>

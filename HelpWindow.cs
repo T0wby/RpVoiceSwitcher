@@ -52,6 +52,8 @@ public sealed class HelpWindow : Window
             "Updates: Die App sucht beim Start nach neuen Versionen (abschaltbar). Von Hand: Hilfe → Nach Updates suchen.",
             "Fenster schließen (Strg+W) lässt die App im Infobereich weiterlaufen – die Shortcuts bleiben aktiv. Beenden: Strg+Q.",
             "Starke Rauschunterdrückung (z. B. Krisp in Discord) kann Effekte abschwächen.",
+            "Kein Effekt im Spiel, obwohl die Stimme aktiv ist? Dann hat das Spiel das Kabel vermutlich „exklusiv“ geöffnet – Extras → Einrichtung schaltet den Exklusivmodus ab.",
+            "Klappt etwas nicht: Hilfe → Problem melden kopiert eine Diagnose und öffnet GitHub zum Einfügen.",
         ]),
     ];
 
