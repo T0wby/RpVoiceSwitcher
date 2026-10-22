@@ -97,7 +97,7 @@ try {
     $cond = New-Object Windows.Automation.PropertyCondition([Windows.Automation.AutomationElement]::ProcessIdProperty, $p.Id)
     $win = $root.FindAll('Children', $cond) | Where-Object { $_.Current.Name -eq 'RP Voice Switcher' } | Select-Object -First 1
     $hwnd = [IntPtr]$win.Current.NativeWindowHandle
-    foreach ($tab in 'Stimmen', 'Soundboard', 'Einrichtung', 'Einstellungen') {
+    foreach ($tab in 'Stimmen', 'Soundboard') {
         $tc = New-Object Windows.Automation.AndCondition(
             (New-Object Windows.Automation.PropertyCondition([Windows.Automation.AutomationElement]::ControlTypeProperty, [Windows.Automation.ControlType]::TabItem)),
             (New-Object Windows.Automation.PropertyCondition([Windows.Automation.AutomationElement]::NameProperty, $tab)))

@@ -59,7 +59,6 @@ public partial class MainWindow : Window
 
         _tray = CreateTrayIcon();
         Deactivated += (_, _) => CancelCapture();
-        Activated += (_, _) => { if (Tabs.SelectedIndex == SetupTabIndex) RunSetupCheck(); };
 
         SoundLibrary.Folder = string.IsNullOrWhiteSpace(_settings.SoundFolder) ? SoundLibrary.DefaultFolder : _settings.SoundFolder;
         _store = VoiceStore.TryCreate(_settings.VoicesFolder);
@@ -101,12 +100,8 @@ public partial class MainWindow : Window
 
     private void Tabs_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (!ReferenceEquals(e.Source, Tabs)) return;
-        // Einrichtung und Einstellungen gelten für alle Charaktere – dort die Charakter-Leiste ausblenden.
-        ProfileBar.Visibility = Tabs.SelectedIndex <= 1 ? Visibility.Visible : Visibility.Collapsed;
-        if (_initializing) return;
+        if (!ReferenceEquals(e.Source, Tabs) || _initializing) return;
         CancelCapture();
-        if (Tabs.SelectedIndex == SetupTabIndex) RunSetupCheck();
     }
 
     // ---------- Optionen ----------
@@ -285,6 +280,8 @@ public partial class MainWindow : Window
         _tray.Dispose();
         _overlay?.Close();
         _status?.Close();
+        _setupWindow?.CloseForReal();
+        _settingsWindow?.CloseForReal();
         Application.Current?.Shutdown();
     }
 }

@@ -34,8 +34,6 @@
             <MenuItem x:Name="ViewMenu" Header="_Ansicht" SubmenuOpened="ViewMenu_SubmenuOpened">
                 <MenuItem Command="{x:Static local:AppCommands.ShowVoices}"/>
                 <MenuItem Command="{x:Static local:AppCommands.ShowSoundboard}"/>
-                <MenuItem Command="{x:Static local:AppCommands.ShowSetup}"/>
-                <MenuItem Command="{x:Static local:AppCommands.ShowSettings}"/>
                 <Separator/>
                 <MenuItem x:Name="StatusOverlayMenuItem" Header="Status-_Anzeige auf dem Bildschirm" IsCheckable="True" Click="StatusOverlayMenu_Click"/>
                 <MenuItem x:Name="FlashMenuItem" Header="_Einblendung beim Wechsel" IsCheckable="True" Click="FlashMenu_Click"/>
@@ -44,6 +42,9 @@
                 <MenuItem Command="{x:Static local:AppCommands.Refresh}"/>
             </MenuItem>
             <MenuItem Header="E_xtras">
+                <MenuItem Command="{x:Static local:AppCommands.ShowSetup}"/>
+                <MenuItem Command="{x:Static local:AppCommands.ShowSettings}"/>
+                <Separator/>
                 <MenuItem Command="{x:Static local:AppCommands.StopSounds}"/>
                 <Separator/>
                 <MenuItem Command="{x:Static local:AppCommands.OpenEditor}"/>
@@ -102,6 +103,121 @@
                 </ItemsControl>
             </DockPanel>
         </StackPanel>
+
+        <!-- Inhalte der Fenster „Einrichtung“ und „Einstellungen“ (Menü Extras). Die App hängt sie beim Start in eigene Fenster um. -->
+        <Grid x:Name="DetachedPanels" DockPanel.Dock="Top" Visibility="Collapsed">
+                    <DockPanel x:Name="SetupPanel">
+                        <Border DockPanel.Dock="Top" Padding="20,12,20,6">
+                            <DockPanel>
+                                <Button DockPanel.Dock="Right" Content="Erneut prüfen" Click="RunSetupCheck_Click" Padding="12,5"/>
+                                <TextBlock x:Name="SetupSummary" TextWrapping="Wrap" VerticalAlignment="Center" Foreground="{StaticResource FgDim}"
+                                           Text="Prüft, ob die ganze Kette Mikrofon → Kabel → Equalizer APO → Spiel richtig eingerichtet ist."/>
+                            </DockPanel>
+                        </Border>
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20,4,20,12">
+                            <ItemsControl x:Name="CheckList">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="{StaticResource Card}" CornerRadius="8" Padding="14,10" Margin="0,0,0,8">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="{Binding Icon}" FontFamily="Segoe MDL2 Assets" FontSize="18" Foreground="{Binding IconBrush}"
+                                                           VerticalAlignment="Center" Margin="0,0,14,0"/>
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding Title}" FontSize="14" FontWeight="SemiBold"/>
+                                                    <TextBlock Text="{Binding Detail}" Foreground="{StaticResource FgDim}" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                                                </StackPanel>
+                                                <Button Grid.Column="2" Content="{Binding FixLabel}" Visibility="{Binding FixVisibility}" Click="Fix_Click"
+                                                        VerticalAlignment="Center" Margin="12,0,0,0"/>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </DockPanel>
+                    <ScrollViewer x:Name="SettingsPanel" VerticalScrollBarVisibility="Auto" Padding="20,14,20,12">
+                        <StackPanel>
+                            <TextBlock Text="Allgemein" FontSize="15" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                            <WrapPanel>
+                                <CheckBox x:Name="SoundCheck" Content="Ton beim Umschalten" Click="Option_Changed"/>
+                                <CheckBox x:Name="OverlayCheck" Content="Einblendung beim Wechsel" Click="Option_Changed"/>
+                                <CheckBox x:Name="TrayCheck" Content="Schließen = in den Tray" Click="Option_Changed"/>
+                                <CheckBox x:Name="AutostartCheck" Content="Mit Windows starten" Click="Autostart_Changed"/>
+                            </WrapPanel>
+    
+                            <TextBlock Text="Status-Anzeige" FontSize="15" FontWeight="SemiBold" Margin="0,16,0,8"/>
+                            <WrapPanel>
+                                <CheckBox x:Name="StatusCheck" Content="Auf dem Bildschirm anzeigen" Click="StatusOverlay_Changed" VerticalAlignment="Center"
+                                          ToolTip="Zeigt dauerhaft an, welcher Charakter und welche Stimme aktiv ist"/>
+                                <Button x:Name="MoveStatusButton" Content="Position anpassen" Click="MoveStatus_Click" Padding="10,3" Margin="0,0,8,6"
+                                        ToolTip="Anzeige mit der Maus verschieben. Doppelklick auf die Anzeige oder 'Fertig' zum Speichern."/>
+                                <Button Content="Position zurücksetzen" Click="ResetStatusPosition_Click" Padding="10,3" Margin="0,0,0,6"/>
+                            </WrapPanel>
+    
+                            <TextBlock Text="Geräte" FontSize="15" FontWeight="SemiBold" Margin="0,16,0,8"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition/>
+                                    <RowDefinition/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Text="Stimmen wirken auf:" Foreground="{StaticResource FgDim}" VerticalAlignment="Center" Margin="0,0,10,8"/>
+                                <TextBox x:Name="DeviceBox" Grid.Column="1" Margin="0,0,0,8" LostFocus="DeviceBox_LostFocus"
+                                         ToolTip="Aufnahmegerät, auf das die Stimmen wirken (wie in Windows angezeigt), z. B. CABLE Output"/>
+                                <TextBlock Grid.Row="1" Text="Soundboard spielt auf:" Foreground="{StaticResource FgDim}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                <TextBox x:Name="SoundDeviceBox" Grid.Row="1" Grid.Column="1" LostFocus="SoundDeviceBox_LostFocus"
+                                         ToolTip="Wiedergabegerät, das ins Mikrofon der anderen geht, z. B. CABLE Input"/>
+                            </Grid>
+                            <TextBlock Foreground="{StaticResource FgDim}" TextWrapping="Wrap" Margin="0,10,0,0" FontSize="12"
+                                       Text="Ein Teil des Gerätenamens reicht. Ob alles zusammenpasst, zeigt Extras → Einrichtung (Strg+Umschalt+E)."/>
+    
+                            <TextBlock Text="Ordner" FontSize="15" FontWeight="SemiBold" Margin="0,16,0,8"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition/>
+                                    <RowDefinition/>
+                                </Grid.RowDefinitions>
+    
+                                <TextBlock Text="Stimmen:" Foreground="{StaticResource FgDim}" VerticalAlignment="Top" Margin="0,4,10,10"/>
+                                <StackPanel Grid.Column="1" Margin="0,0,10,10">
+                                    <TextBlock x:Name="VoicesFolderText" TextWrapping="Wrap"/>
+                                    <TextBlock x:Name="VoicesFolderHint" Foreground="{StaticResource FgDim}" FontSize="12"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top" Margin="0,0,0,10">
+                                    <Button Content="Ändern …" Click="ChangeVoicesFolder_Click" Padding="10,3" Margin="0,0,6,0"/>
+                                    <Button Content="Öffnen" Click="OpenFolder_Click" Padding="10,3" Margin="0,0,6,0"/>
+                                    <Button Content="Standard" Click="ResetVoicesFolder_Click" Padding="10,3" ToolTip="Zurück zum Equalizer-APO-Ordner"/>
+                                </StackPanel>
+    
+                                <TextBlock Grid.Row="1" Text="Sounds:" Foreground="{StaticResource FgDim}" VerticalAlignment="Top" Margin="0,4,10,0"/>
+                                <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,10,0">
+                                    <TextBlock x:Name="SoundFolderText" TextWrapping="Wrap"/>
+                                    <TextBlock x:Name="SoundFolderHint" Foreground="{StaticResource FgDim}" FontSize="12"/>
+                                </StackPanel>
+                                <StackPanel Grid.Row="1" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top">
+                                    <Button Content="Ändern …" Click="ChangeSoundFolder_Click" Padding="10,3" Margin="0,0,6,0"/>
+                                    <Button Content="Öffnen" Click="OpenSoundFolder_Click" Padding="10,3" Margin="0,0,6,0"/>
+                                    <Button Content="Standard" Click="ResetSoundFolder_Click" Padding="10,3" ToolTip="Zurück zu Dokumente\RP Voice Switcher\Sounds"/>
+                                </StackPanel>
+                            </Grid>
+                            <TextBlock Foreground="{StaticResource FgDim}" TextWrapping="Wrap" Margin="0,10,0,0" FontSize="12"
+                                       Text="Beim Wechsel kannst du deine Dateien mitnehmen. Einstellungen, Einrichtung und Ordner gelten für alle Charaktere."/>
+                        </StackPanel>
+                    </ScrollViewer>
+        </Grid>
 
         <TabControl x:Name="Tabs" SelectionChanged="Tabs_SelectionChanged">
             <!-- ===== Stimmen ===== -->
@@ -246,124 +362,6 @@
                 </DockPanel>
             </TabItem>
 
-            <!-- ===== Einrichtung ===== -->
-            <TabItem Header="Einrichtung">
-                <DockPanel>
-                    <Border DockPanel.Dock="Top" Padding="20,12,20,6">
-                        <DockPanel>
-                            <Button DockPanel.Dock="Right" Content="Erneut prüfen" Click="RunSetupCheck_Click" Padding="12,5"/>
-                            <TextBlock x:Name="SetupSummary" TextWrapping="Wrap" VerticalAlignment="Center" Foreground="{StaticResource FgDim}"
-                                       Text="Prüft, ob die ganze Kette Mikrofon → Kabel → Equalizer APO → Spiel richtig eingerichtet ist."/>
-                        </DockPanel>
-                    </Border>
-                    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20,4,20,12">
-                        <ItemsControl x:Name="CheckList">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Border Background="{StaticResource Card}" CornerRadius="8" Padding="14,10" Margin="0,0,0,8">
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-                                            <TextBlock Text="{Binding Icon}" FontFamily="Segoe MDL2 Assets" FontSize="18" Foreground="{Binding IconBrush}"
-                                                       VerticalAlignment="Center" Margin="0,0,14,0"/>
-                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding Title}" FontSize="14" FontWeight="SemiBold"/>
-                                                <TextBlock Text="{Binding Detail}" Foreground="{StaticResource FgDim}" TextWrapping="Wrap" Margin="0,2,0,0"/>
-                                            </StackPanel>
-                                            <Button Grid.Column="2" Content="{Binding FixLabel}" Visibility="{Binding FixVisibility}" Click="Fix_Click"
-                                                    VerticalAlignment="Center" Margin="12,0,0,0"/>
-                                        </Grid>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </ScrollViewer>
-                </DockPanel>
-            </TabItem>
-
-            <!-- ===== Einstellungen ===== -->
-            <TabItem Header="Einstellungen">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20,14,20,12">
-                    <StackPanel>
-                        <TextBlock Text="Allgemein" FontSize="15" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                        <WrapPanel>
-                            <CheckBox x:Name="SoundCheck" Content="Ton beim Umschalten" Click="Option_Changed"/>
-                            <CheckBox x:Name="OverlayCheck" Content="Einblendung beim Wechsel" Click="Option_Changed"/>
-                            <CheckBox x:Name="TrayCheck" Content="Schließen = in den Tray" Click="Option_Changed"/>
-                            <CheckBox x:Name="AutostartCheck" Content="Mit Windows starten" Click="Autostart_Changed"/>
-                        </WrapPanel>
-
-                        <TextBlock Text="Status-Anzeige" FontSize="15" FontWeight="SemiBold" Margin="0,16,0,8"/>
-                        <WrapPanel>
-                            <CheckBox x:Name="StatusCheck" Content="Auf dem Bildschirm anzeigen" Click="StatusOverlay_Changed" VerticalAlignment="Center"
-                                      ToolTip="Zeigt dauerhaft an, welcher Charakter und welche Stimme aktiv ist"/>
-                            <Button x:Name="MoveStatusButton" Content="Position anpassen" Click="MoveStatus_Click" Padding="10,3" Margin="0,0,8,6"
-                                    ToolTip="Anzeige mit der Maus verschieben. Doppelklick auf die Anzeige oder 'Fertig' zum Speichern."/>
-                            <Button Content="Position zurücksetzen" Click="ResetStatusPosition_Click" Padding="10,3" Margin="0,0,0,6"/>
-                        </WrapPanel>
-
-                        <TextBlock Text="Geräte" FontSize="15" FontWeight="SemiBold" Margin="0,16,0,8"/>
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition/>
-                                <RowDefinition/>
-                            </Grid.RowDefinitions>
-                            <TextBlock Text="Stimmen wirken auf:" Foreground="{StaticResource FgDim}" VerticalAlignment="Center" Margin="0,0,10,8"/>
-                            <TextBox x:Name="DeviceBox" Grid.Column="1" Margin="0,0,0,8" LostFocus="DeviceBox_LostFocus"
-                                     ToolTip="Aufnahmegerät, auf das die Stimmen wirken (wie in Windows angezeigt), z. B. CABLE Output"/>
-                            <TextBlock Grid.Row="1" Text="Soundboard spielt auf:" Foreground="{StaticResource FgDim}" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                            <TextBox x:Name="SoundDeviceBox" Grid.Row="1" Grid.Column="1" LostFocus="SoundDeviceBox_LostFocus"
-                                     ToolTip="Wiedergabegerät, das ins Mikrofon der anderen geht, z. B. CABLE Input"/>
-                        </Grid>
-                        <TextBlock Foreground="{StaticResource FgDim}" TextWrapping="Wrap" Margin="0,10,0,0" FontSize="12"
-                                   Text="Ein Teil des Gerätenamens reicht. Ob alles zusammenpasst, zeigt der Tab „Einrichtung“."/>
-
-                        <TextBlock Text="Ordner" FontSize="15" FontWeight="SemiBold" Margin="0,16,0,8"/>
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition/>
-                                <RowDefinition/>
-                            </Grid.RowDefinitions>
-
-                            <TextBlock Text="Stimmen:" Foreground="{StaticResource FgDim}" VerticalAlignment="Top" Margin="0,4,10,10"/>
-                            <StackPanel Grid.Column="1" Margin="0,0,10,10">
-                                <TextBlock x:Name="VoicesFolderText" TextWrapping="Wrap"/>
-                                <TextBlock x:Name="VoicesFolderHint" Foreground="{StaticResource FgDim}" FontSize="12"/>
-                            </StackPanel>
-                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top" Margin="0,0,0,10">
-                                <Button Content="Ändern …" Click="ChangeVoicesFolder_Click" Padding="10,3" Margin="0,0,6,0"/>
-                                <Button Content="Öffnen" Click="OpenFolder_Click" Padding="10,3" Margin="0,0,6,0"/>
-                                <Button Content="Standard" Click="ResetVoicesFolder_Click" Padding="10,3" ToolTip="Zurück zum Equalizer-APO-Ordner"/>
-                            </StackPanel>
-
-                            <TextBlock Grid.Row="1" Text="Sounds:" Foreground="{StaticResource FgDim}" VerticalAlignment="Top" Margin="0,4,10,0"/>
-                            <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,10,0">
-                                <TextBlock x:Name="SoundFolderText" TextWrapping="Wrap"/>
-                                <TextBlock x:Name="SoundFolderHint" Foreground="{StaticResource FgDim}" FontSize="12"/>
-                            </StackPanel>
-                            <StackPanel Grid.Row="1" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top">
-                                <Button Content="Ändern …" Click="ChangeSoundFolder_Click" Padding="10,3" Margin="0,0,6,0"/>
-                                <Button Content="Öffnen" Click="OpenSoundFolder_Click" Padding="10,3" Margin="0,0,6,0"/>
-                                <Button Content="Standard" Click="ResetSoundFolder_Click" Padding="10,3" ToolTip="Zurück zu Dokumente\RP Voice Switcher\Sounds"/>
-                            </StackPanel>
-                        </Grid>
-                        <TextBlock Foreground="{StaticResource FgDim}" TextWrapping="Wrap" Margin="0,10,0,0" FontSize="12"
-                                   Text="Beim Wechsel kannst du deine Dateien mitnehmen. Einstellungen, Einrichtung und Ordner gelten für alle Charaktere."/>
-                    </StackPanel>
-                </ScrollViewer>
-            </TabItem>
         </TabControl>
     </DockPanel>
 </Window>

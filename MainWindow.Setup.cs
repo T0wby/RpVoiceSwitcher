@@ -8,8 +8,31 @@ namespace RpVoiceSwitcher;
 // Einrichtungs-Check
 public partial class MainWindow
 {
-    private const int SetupTabIndex = 2;
     private readonly ObservableCollection<CheckItem> _checks = new();
+    private PanelWindow? _setupWindow;
+    private PanelWindow? _settingsWindow;
+
+    /// <summary>Hängt Einrichtung und Einstellungen aus dem Hauptfenster in eigene Fenster um (Menü Extras).</summary>
+    private void CreatePanelWindows()
+    {
+        DetachedPanels.Children.Remove(SetupPanel);
+        DetachedPanels.Children.Remove(SettingsPanel);
+        _setupWindow = new PanelWindow(this, "Einrichtung – RP Voice Switcher", SetupPanel, 720, 720);
+        _setupWindow.Activated += (_, _) => RunSetupCheck(); // z. B. nach Änderungen in den Windows-Soundeinstellungen
+        _settingsWindow = new PanelWindow(this, "Einstellungen – RP Voice Switcher", SettingsPanel, 720, 640);
+    }
+
+    private void ShowSetupWindow()
+    {
+        RunSetupCheck();
+        _setupWindow?.ShowAndActivate();
+    }
+
+    private void ShowSettingsWindow()
+    {
+        RefreshFolderTexts();
+        _settingsWindow?.ShowAndActivate();
+    }
     private DeviceWatcher? _deviceWatcher;
     private readonly System.Windows.Threading.DispatcherTimer _deviceDebounce = new() { Interval = TimeSpan.FromMilliseconds(1200) };
 
@@ -62,7 +85,7 @@ public partial class MainWindow
 
     private void RunSetupCheck_Click(object sender, RoutedEventArgs e) => RunSetupCheck();
 
-    private void SetupWarning_Click(object sender, RoutedEventArgs e) => Tabs.SelectedIndex = SetupTabIndex;
+    private void SetupWarning_Click(object sender, RoutedEventArgs e) => ShowSetupWindow();
 
     private void Fix_Click(object sender, RoutedEventArgs e)
     {

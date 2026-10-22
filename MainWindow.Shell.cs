@@ -38,8 +38,8 @@ public partial class MainWindow
         // Ansicht
         Bind(AppCommands.ShowVoices, () => Tabs.SelectedIndex = 0);
         Bind(AppCommands.ShowSoundboard, () => Tabs.SelectedIndex = 1);
-        Bind(AppCommands.ShowSetup, () => Tabs.SelectedIndex = SetupTabIndex);
-        Bind(AppCommands.ShowSettings, () => Tabs.SelectedIndex = 3);
+        Bind(AppCommands.ShowSetup, ShowSetupWindow);
+        Bind(AppCommands.ShowSettings, ShowSettingsWindow);
         Bind(AppCommands.Refresh, () => { LoadVoices(); LoadSounds(); RunSetupCheck(); ShowStatusMessage("Aktualisiert."); });
         // Extras
         Bind(AppCommands.StopSounds, () => _soundEngine.StopAll());
@@ -53,6 +53,7 @@ public partial class MainWindow
 
         _statusMessageTimer.Tick += (_, _) => { _statusMessageTimer.Stop(); _statusMessage = null; UpdateStatusBar(); };
         RestoreWindowPlacement();
+        CreatePanelWindows(); // nach den Befehlen, damit die Fenster sie übernehmen
     }
 
     // ---------- Menüs ----------
