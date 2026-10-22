@@ -39,10 +39,12 @@
         <TabControl x:Name="Tabs" SelectionChanged="Tabs_SelectionChanged">
             <!-- ===== Stimmen ===== -->
             <TabItem Header="Stimmen">
-                <DockPanel>
+                <DockPanel AllowDrop="True" Drop="Voices_Drop" DragOver="Voices_DragOver" Background="Transparent">
                     <Border DockPanel.Dock="Top" Padding="20,12,20,6">
                         <StackPanel>
                             <WrapPanel>
+                                <Button Content="+ Neue Stimme" Click="NewVoice_Click" Padding="10,4" Margin="0,0,6,6"
+                                        ToolTip="Leere Stimme anlegen. Stimmen-Dateien (.txt) kannst du auch einfach hierher ziehen."/>
                                 <Button x:Name="SelectVoicesButton" Content="Stimmen auswählen" Click="SelectVoices_Click" Padding="10,4" Margin="0,0,6,6"
                                         ToolTip="Festlegen, welche Stimmen zu diesem Charakter gehören"/>
                                 <Button Content="Shortcuts zurücksetzen" Click="ResetHotkeys_Click" Padding="10,4" Margin="0,0,6,6"/>
@@ -95,8 +97,17 @@
                                                         ToolTip="Solange diese Taste gedrückt ist, ist die Stimme aktiv – beim Loslassen geht es zurück. Ideal: Ziffernblock oder F-Tasten."/>
                                                 <Button Grid.Row="1" Grid.Column="2" Content="✕" Click="ClearHold_Click" Padding="8,4" ToolTip="Halte-Taste entfernen"/>
                                             </Grid>
-                                            <Button Grid.Column="3" Content="Aktivieren" Click="Activate_Click" VerticalAlignment="Center"
-                                                    Visibility="{Binding ControlsVisibility}"/>
+                                            <StackPanel Grid.Column="3" VerticalAlignment="Center" Visibility="{Binding ControlsVisibility}">
+                                                <Button Content="Aktivieren" Click="Activate_Click" Margin="0,0,0,4"/>
+                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                                    <Button Content="&#xE70F;" FontFamily="Segoe MDL2 Assets" Click="EditVoice_Click" Padding="7,4" Margin="0,0,3,0"
+                                                            ToolTip="Name, Beschreibung und Graillon-Hinweis bearbeiten"/>
+                                                    <Button Content="&#xE8C8;" FontFamily="Segoe MDL2 Assets" Click="CopyVoice_Click" Padding="7,4" Margin="0,0,3,0"
+                                                            ToolTip="Kopieren – als Vorlage für eine neue Stimme"/>
+                                                    <Button Content="&#xE74D;" FontFamily="Segoe MDL2 Assets" Click="DeleteVoice_Click" Padding="7,4"
+                                                            Visibility="{Binding DeleteVisibility}" ToolTip="Stimme löschen"/>
+                                                </StackPanel>
+                                            </StackPanel>
                                         </Grid>
                                     </Border>
                                     <DataTemplate.Triggers>

@@ -52,6 +52,7 @@ public sealed class VoiceItem : ViewModel
     }
 
     public bool CanToggleProfile => !IsNormal;
+    public Visibility DeleteVisibility => IsNormal ? Visibility.Collapsed : Visibility.Visible;
     public Visibility SelectorVisibility => Selecting ? Visibility.Visible : Visibility.Collapsed;
     public Visibility ControlsVisibility => Selecting ? Visibility.Collapsed : Visibility.Visible;
 }

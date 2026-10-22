@@ -30,9 +30,10 @@ public partial class MainWindow
         if (profile == null) return;
 
         CancelCapture();
+        bool changed = profile != _settings.Current;
+        if (changed && _selectingVoices) SetSelectingVoices(false); // Auswahl gilt nur für den bisherigen Charakter
         _holdHook.ReleaseHeld();
         _holdVoice = null;
-        bool changed = profile != _settings.Current;
         _settings.ActiveProfile = profile.Name;
         _settings.Save();
 
