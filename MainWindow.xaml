@@ -212,7 +212,7 @@
                                       ToolTip="Die App drückt die Sprachtaste kurz vor jedem Sound und lässt sie kurz danach wieder los – sonst hört im Spiel niemand den Sound."/>
                             <TextBlock x:Name="PttHint" Foreground="#E5C07A" TextWrapping="Wrap" Margin="0,2,0,0" Visibility="Collapsed"/>
                             <TextBlock Foreground="{StaticResource FgDim}" TextWrapping="Wrap" Margin="0,4,0,0" FontSize="12"
-                                       Text="Dauersenden hält die Sprachtaste gedrückt, bis du es wieder ausschaltest – wie ein offenes Mikrofon. Währenddessen die Sprachtaste nicht selbst drücken. Als Umschalt-Taste eignet sich z. B. Strg + Alt + eine F-Taste."/>
+                                       Text="Dauersenden hält die Sprachtaste gedrückt, bis du es wieder ausschaltest – wie ein offenes Mikrofon. Drückst du die Sprachtaste zwischendurch selbst, läuft es nach dem Loslassen einfach weiter – aus geht es nur mit der Umschalt- oder der Notfall-Taste. Als Umschalt-Taste eignet sich z. B. Strg + Alt + eine F-Taste."/>
 
                             <TextBlock Text="Status-Anzeige" FontSize="15" FontWeight="SemiBold" Margin="0,16,0,8"/>
                             <WrapPanel>

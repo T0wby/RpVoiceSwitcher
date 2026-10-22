@@ -149,6 +149,11 @@ try {
     Check ("An: F13 gedrueckt, Knopf zeigt '{0}'" -f $toggle.Current.Name) ($on -and $toggle.Current.Name -like '*AN*')
     Press; Start-Sleep 3   # Sound laeuft durch - Taste muss gedrueckt bleiben
     Check 'Nach einem Sound bleibt F13 bei Dauersenden gedrueckt' (F13Down)
+    # Selbst kurz drücken und loslassen (echte Eingabe, nicht von der App) -> App drückt sofort wieder
+    Key 0x7C; Start-Sleep -m 150; Key 0x7C -Up; Start-Sleep -m 250
+    Check 'Selbst gedrueckt und losgelassen: Dauersenden laeuft weiter' (F13Down)
+    Key 0x7C -Up; Start-Sleep -m 250
+    Check '... auch beim zweiten Mal' (F13Down)
     Combo 0x79; Start-Sleep -m 500
     Check 'Aus: F13 wieder losgelassen' (-not (F13Down))
     Combo 0x79; Start-Sleep -m 500

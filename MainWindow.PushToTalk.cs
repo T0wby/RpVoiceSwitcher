@@ -110,15 +110,29 @@ public partial class MainWindow
         if (wasLatched) UpdatePttLatchUi();
     }
 
+    /// <summary>
+    /// Wacht, solange die App die Sprachtaste hält: Lässt du sie selbst los (kurz selbst gedrückt), drückt die App
+    /// sie sofort wieder – Dauersenden bzw. der laufende Sound reißt so nicht ab.
+    /// </summary>
+    private readonly DispatcherTimer _pttKeepDown = new() { Interval = TimeSpan.FromMilliseconds(25) };
+    private bool _pttKeepDownWired;
+
     private void PressPtt(PushToTalk.Binding b, string why)
     {
         if (_ptt.IsHeld) return;
         _ptt.Press(b);
         PttLog($"gedrückt ({b}, {why})");
+        if (!_pttKeepDownWired)
+        {
+            _pttKeepDownWired = true;
+            _pttKeepDown.Tick += (_, _) => { if (_ptt.KeepDown()) PttLog("wieder gedrückt (war selbst losgelassen)"); };
+        }
+        _pttKeepDown.Start();
     }
 
     private void ReleasePtt(string why)
     {
+        _pttKeepDown.Stop();
         if (!_ptt.IsHeld) return;
         _ptt.Release();
         PttLog($"losgelassen ({why})");

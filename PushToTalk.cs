@@ -86,7 +86,33 @@ public sealed class PushToTalk : IDisposable
         if (_held != null) return;
         Send(binding, down: true);
         _held = binding;
+        _repressPending = _keepDownBroken = false;
     }
+
+    [DllImport("user32.dll")] private static extern short GetAsyncKeyState(int vKey);
+
+    /// <summary>
+    /// Hat jemand die Taste losgelassen, während wir sie halten (z. B. selbst kurz gedrückt und wieder los)?
+    /// Dann sofort wieder drücken. Liefert true, wenn neu gedrückt wurde.
+    /// </summary>
+    public bool KeepDown()
+    {
+        if (_held is not Binding b || _keepDownBroken) return false;
+        int vk = b.IsMouse ? (b.MouseButton == 1 ? 0x05 : 0x06) : KeyInterop.VirtualKeyFromKey(b.Key);
+        if ((GetAsyncKeyState(vk) & 0x8000) != 0) { _repressPending = false; return false; }
+        if (_repressPending)
+        {
+            // Schon neu gedrückt, aber Windows meldet weiter "oben" (z. B. Spiel läuft als Administrator) –
+            // dann nicht dauernd weiterdrücken, bis zum nächsten Drücken aufgeben.
+            _keepDownBroken = true;
+            return false;
+        }
+        Send(b, down: true);
+        _repressPending = true;
+        return true;
+    }
+
+    private bool _repressPending, _keepDownBroken;
 
     /// <summary>Taste wieder los – nur wenn wir sie gedrückt haben.</summary>
     public void Release()
