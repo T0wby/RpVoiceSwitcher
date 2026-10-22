@@ -1,0 +1,9 @@
+# Name: Hoehle
+# Beschreibung: Deutliches Echo wie in einer Hoehle, einem Tunnel oder Kerker.
+Preamp: -4 dB
+Copy: R=L
+Channel: R
+Delay: 220 ms
+Filter: ON LP Fc 2500 Hz
+Channel: all
+Copy: L=L+0.45*R R=L+0.45*R

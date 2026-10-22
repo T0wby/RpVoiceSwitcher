@@ -1,0 +1,11 @@
+# Name: Geist
+# Beschreibung: Duenn und doppelt, wie eine Stimme aus dem Jenseits oder ein Genjutsu.
+# Graillon: Pitch +1, Formant +2 (optional, wirkt unheimlicher)
+Preamp: -6 dB
+Filter: ON HP Fc 300 Hz
+Filter: ON LP Fc 3000 Hz
+Copy: R=L
+Channel: R
+Delay: 90 ms
+Channel: all
+Copy: L=0.7*L+0.6*R R=0.7*L+0.6*R

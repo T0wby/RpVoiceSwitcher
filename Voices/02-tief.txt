@@ -1,0 +1,7 @@
+# Name: Tief
+# Beschreibung: Dunkler, mehr Bauch. Fuer eine wirklich tiefere Stimme Graillon dazuschalten.
+# Graillon: Pitch -2, Formant -2
+Preamp: -4 dB
+Filter: ON LS Fc 180 Hz Gain 5 dB
+Filter: ON PK Fc 3000 Hz Gain -3 dB Q 1.0
+Filter: ON HS Fc 6000 Hz Gain -4 dB

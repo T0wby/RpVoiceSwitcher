@@ -1,0 +1,8 @@
+# Name: Megafon
+# Beschreibung: Laut, hart und mittig wie ein Ausrufer oder eine Lautsprecherdurchsage.
+Preamp: -6 dB
+Filter: ON HP Fc 600 Hz
+Filter: ON HP Fc 600 Hz
+Filter: ON PK Fc 1000 Hz Gain 3 dB Q 1.0
+Filter: ON PK Fc 2000 Hz Gain 9 dB Q 1.0
+Filter: ON LP Fc 4500 Hz

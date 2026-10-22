@@ -1,0 +1,10 @@
+# Name: Metallhelm
+# Beschreibung: Blechern und hohl, als traegst du einen Metallhelm oder sprichst durch eine Ruestung.
+Preamp: -6 dB
+Copy: R=L
+Channel: R
+Delay: 4 ms
+Channel: all
+Copy: L=0.6*L+0.6*R R=0.6*L+0.6*R
+Filter: ON PK Fc 1200 Hz Gain 4 dB Q 1.5
+Filter: ON LP Fc 6000 Hz

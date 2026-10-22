@@ -1,0 +1,2 @@
+# Name: Normal
+# Beschreibung: Deine echte Stimme, keine Effekte.

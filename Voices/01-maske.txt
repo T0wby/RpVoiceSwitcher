@@ -1,0 +1,9 @@
+# Name: Maske
+# Beschreibung: Gedaempft, als sprichst du durch Stoff oder eine Holzmaske. Gut fuer Anbu, Attentaeter, Unbekannte.
+# Graillon: Pitch -1, Formant -1 (optional)
+Preamp: -2 dB
+Filter: ON HP Fc 150 Hz
+Filter: ON PK Fc 700 Hz Gain 4 dB Q 1.0
+Filter: ON PK Fc 2800 Hz Gain -6 dB Q 1.2
+Filter: ON LP Fc 3500 Hz
+Filter: ON LP Fc 3500 Hz
