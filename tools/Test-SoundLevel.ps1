@@ -34,7 +34,8 @@ function Cond($prop, $val) { New-Object Windows.Automation.PropertyCondition($pr
 
 # Leiser Testton: 1,5 s, 440 Hz, Spitze 0,2 (-14 dBFS), 16 bit mono
 New-Item -ItemType Directory $soundDir -Force | Out-Null
-$rate = 44100; $n = [int](1.5 * $rate)
+# Krumme Laenge (1,537 s) mit Absicht: Sounds, deren Laenge nicht genau in die Audio-Bloecke passt, blieben frueher "haengen"
+$rate = 44100; $n = [int](1.537 * $rate)
 $ms = New-Object IO.MemoryStream; $w = New-Object IO.BinaryWriter($ms)
 $w.Write([Text.Encoding]::ASCII.GetBytes('RIFF')); $w.Write([int](36 + 2 * $n)); $w.Write([Text.Encoding]::ASCII.GetBytes('WAVEfmt '))
 $w.Write([int]16); $w.Write([int16]1); $w.Write([int16]1); $w.Write([int]$rate); $w.Write([int](2 * $rate)); $w.Write([int16]2); $w.Write([int16]16)
@@ -49,7 +50,8 @@ function Write-TestSettings([bool]$normalize, [double]$volume, [string]$ptt) {
     $p0.Hotkeys = [pscustomobject]@{ '99-teststumm.txt' = 'Control, Alt|F8' }; $p0.HoldHotkeys = [pscustomobject]@{}
     $p0.SoundHotkeys = [pscustomobject]@{ 'Testton.wav' = 'Control, Alt|F11' }
     $j.Profiles = @($p0); $j.ActiveProfile = $p0.Name
-    $extra = @{ SoundMonitor = $false; SoundVolume = $volume; SoundNormalize = $normalize; SoundFolder = $soundDir
+    # Mithoeren an (aber stumm), damit auch der zweite Ausgang mitlaeuft
+    $extra = @{ SoundMonitor = $true; SoundMonitorVolume = 0.0; SoundVolume = $volume; SoundNormalize = $normalize; SoundFolder = $soundDir
                 PushToTalkEnabled = [bool]$ptt; PushToTalkKey = $(if ($ptt) { $ptt } else { $null })
                 PttLatchHotkey = 'Control, Alt|F10'; PanicHotkey = 'None|Pause'
                 ShowOverlay = $false; PlaySound = $false; CheckForUpdates = $false; ShowStatusOverlay = $false
@@ -134,6 +136,8 @@ try {
     Check 'Vorher nicht gedrueckt' (-not $before)
     Check 'Waehrend der Sound laeuft: F13 gedrueckt' $script:during
     Check 'Nach dem Sound (+ Nachlauf) wieder losgelassen' (-not $script:after)
+    $playBtn = @($win.FindAll('Descendants', (Cond $AE::ControlTypeProperty ([Windows.Automation.ControlType]::Button)))) | Where-Object { $_.Current.Name -like '*Abspielen*' -or ($_.Current.Name -like '*Stoppen*' -and $_.Current.Name -notlike '*Alle*') } | Select-Object -First 1
+    Check ("Sound mit krummer Laenge endet von selbst (Knopf: '{0}')" -f $playBtn.Current.Name) ($playBtn.Current.Name -like '*Abspielen*')
     Check ("Sound kam trotzdem an (Pegel {0:N3})" -f (MaxLevel $l)) ((MaxLevel $l) -gt 0.05)
 
     # Abbrechen mit demselben Shortcut -> Taste wieder los

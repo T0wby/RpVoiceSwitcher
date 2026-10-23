@@ -50,14 +50,32 @@ public sealed class SoundEngine : IDisposable
             if (StopRequested) { Close(); return 0; }
             int n = _source.Read(buffer, offset, count);
             System.Threading.Interlocked.Add(ref _samplesRead, n);
-            if (n == 0) Close();
+            // Weniger als verlangt = Ende. Der Mixer wirft den Sound dann sofort raus und fragt nie wieder nach –
+            // deshalb hier schon als fertig markieren (sonst "läuft" er ewig, wenn die Länge nicht genau aufgeht).
+            if (n < count) Close();
             return n;
         }
         private volatile bool _stopRequested;
         public bool StopRequested => _stopRequested;
         public void RequestStop() => _stopRequested = true;
         public bool IsDone => System.Threading.Volatile.Read(ref _owner) == null;
-        public void Close() => System.Threading.Interlocked.Exchange(ref _owner, null)?.Dispose();
+        public void Close()
+        {
+            System.Threading.Interlocked.Exchange(ref _owner, null)?.Dispose();
+            Partner?.RequestStop(); // Mithören endet mit dem Kabel-Ausgang
+        }
+
+        /// <summary>Das Gegenstück auf dem Mithör-Ausgang (nur beim Kabel-Ausgang gesetzt).</summary>
+        public AutoDisposeProvider? Partner { get; set; }
+
+        private readonly DateTime _started = DateTime.UtcNow;
+
+        /// <summary>
+        /// Notbremse: Ein Sound mit fester Anzahl Durchgänge, der deutlich länger "läuft", als er dauert
+        /// (z. B. weil ein Ausgabegerät nicht mehr nachfragt), gilt als fertig.
+        /// </summary>
+        public bool Overdue => Repeat > 0 && FileDuration > TimeSpan.Zero
+                               && DateTime.UtcNow - _started > FileDuration * Repeat + TimeSpan.FromSeconds(5);
     }
 
     private Output? _remote;
@@ -188,8 +206,8 @@ public sealed class SoundEngine : IDisposable
         if (_remote == null) return false;
         try
         {
-            AddTo(_remote, path, repeat, sp => new MidSideProvider(Gain(sp, gain), bypassEffect), primary: true);
-            if (_monitor != null) AddTo(_monitor, path, repeat, sp => Gain(sp, gain), primary: false);
+            var main = AddTo(_remote, path, repeat, sp => new MidSideProvider(Gain(sp, gain), bypassEffect), primary: true);
+            if (_monitor != null) main.Partner = AddTo(_monitor, path, repeat, sp => Gain(sp, gain), primary: false);
             return true;
         }
         catch (Exception ex)
@@ -258,7 +276,7 @@ public sealed class SoundEngine : IDisposable
         return peak;
     }
 
-    private void AddTo(Output output, string path, int repeat, Func<ISampleProvider, ISampleProvider>? transform, bool primary)
+    private AutoDisposeProvider AddTo(Output output, string path, int repeat, Func<ISampleProvider, ISampleProvider>? transform, bool primary)
     {
         var reader = new AudioFileReader(path);
         ISampleProvider sp = repeat == 1 ? reader : new LoopProvider(reader, repeat);
@@ -282,6 +300,18 @@ public sealed class SoundEngine : IDisposable
             _playing.Add(tracked);
         }
         output.Mixer.AddMixerInput(tracked);
+        return tracked;
+    }
+
+    /// <summary>Fertige Sounds austragen – auch solche, die überfällig sind (Notbremse, siehe <see cref="AutoDisposeProvider.Overdue"/>).</summary>
+    private void Prune()
+    {
+        foreach (var p in _playing.Where(p => !p.IsDone && p.Overdue).ToList())
+        {
+            p.RequestStop();
+            p.Close();
+        }
+        _playing.RemoveAll(p => p.IsDone);
     }
 
     /// <summary>Fortschritt eines laufenden Sounds.</summary>
@@ -304,7 +334,7 @@ public sealed class SoundEngine : IDisposable
     {
         lock (_lock)
         {
-            _playing.RemoveAll(p => p.IsDone);
+            Prune();
             return _playing.Where(p => p.IsPrimary && !p.StopRequested)
                            .GroupBy(p => p.Key, StringComparer.OrdinalIgnoreCase)
                            .Select(g => g.OrderBy(p => p.Elapsed).First())
@@ -313,19 +343,22 @@ public sealed class SoundEngine : IDisposable
         }
     }
 
-    /// <summary>Läuft diese Datei gerade (auf irgendeinem Ausgang)?</summary>
+    /// <summary>
+    /// Läuft diese Datei gerade? Maßgeblich ist der Kabel-Ausgang (das, was die anderen hören) –
+    /// ein hängender Mithör-Ausgang (z. B. Bluetooth-Kopfhörer) hält den Sound nicht künstlich am Leben.
+    /// </summary>
     public bool IsPlaying(string path)
     {
         lock (_lock)
         {
-            _playing.RemoveAll(p => p.IsDone);
-            return _playing.Any(p => !p.StopRequested && p.Key.Equals(path, StringComparison.OrdinalIgnoreCase));
+            Prune();
+            return _playing.Any(p => p.IsPrimary && !p.StopRequested && p.Key.Equals(path, StringComparison.OrdinalIgnoreCase));
         }
     }
 
     public bool AnyPlaying
     {
-        get { lock (_lock) { _playing.RemoveAll(p => p.IsDone); return _playing.Any(p => !p.StopRequested); } }
+        get { lock (_lock) { Prune(); return _playing.Any(p => p.IsPrimary && !p.StopRequested); } }
     }
 
     /// <summary>Stoppt nur diesen Sound (alle laufenden Durchgänge davon).</summary>

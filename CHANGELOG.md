@@ -2,6 +2,11 @@
 
 Neueste Version oben. Die App zeigt diese Liste nach einem Update („Was ist neu“) und jederzeit unter *Hilfe → Was ist neu*.
 
+## 1.9.1 – 23.10.2026
+- **Sounds enden wieder von selbst:** Manche Sounds galten nach dem Abspielen weiter als „laufend“ – dann musste man sie einmal „stoppen“, bevor sie wieder starteten. Betroffen waren Sounds, deren Länge nicht genau in die Audio-Blöcke von Windows passt, und vor allem das Mithören auf den Kopfhörern.
+- Damit blieb in solchen Fällen auch die **Sprachtaste** nach dem Sound gedrückt. Behoben.
+- Notbremse: Ein Sound, der deutlich länger „läuft“, als er dauert, wird automatisch beendet.
+
 ## 1.9.0 – 23.10.2026
 - **Was ist neu:** Nach einem Update zeigt die App einmal, was sich seit deiner letzten Version geändert hat – auch wenn du mehrere Versionen übersprungen hast.
 - **Alle Änderungen nachlesen:** *Hilfe → Was ist neu (alle Versionen)* listet jede Version mit ihren Änderungen.
