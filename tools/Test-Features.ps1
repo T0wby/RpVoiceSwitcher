@@ -148,7 +148,7 @@ try {
     if ($popup) { Shot $popup (Join-Path $env:TEMP 'rpvs-screens\menue-extras.png') }
     Click ($menuItems | Where-Object { $_.Current.Name -like 'Einstellungen*' } | Select-Object -First 1)
     $set = Win $p.Id 'Einstellungen*'
-    $pb = All $set ([Windows.Automation.ControlType]::Button) | Where-Object { $_.Current.Name -eq 'Notfall-Taste' } | Select-Object -First 1
+    $pb = All $set ([Windows.Automation.ControlType]::Button) | Where-Object { $_.Current.AutomationId -eq 'PanicButton' } | Select-Object -First 1
     $pbText = (All $pb ([Windows.Automation.ControlType]::Text) | Select-Object -First 1).Current.Name
     Check ("Einstellungen: Notfall-Taste angezeigt ({0})" -f $pbText) ($pbText -eq 'Strg + Alt + F10')
     $slider = All $set ([Windows.Automation.ControlType]::Slider) | Where-Object { $_.Current.Name -like 'Gr*e der Status-Anzeige' } | Select-Object -First 1

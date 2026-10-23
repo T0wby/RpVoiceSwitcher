@@ -2,6 +2,10 @@
 
 Neueste Version oben. Die App zeigt diese Liste nach einem Update („Was ist neu“) und jederzeit unter *Hilfe → Was ist neu*.
 
+## 1.11.0 – 23.10.2026
+- **Einstellungen neu geordnet:** Links eine Navigation zu allen Bereichen (markiert, wo du gerade bist), rechts je Bereich eine eigene Karte mit Symbol, kurzer Erklärung und sauber ausgerichteten Feldern – Allgemein, Notfall-Taste, Sprachtaste im Spiel, Status-Anzeige, Geräte, Ordner, Stream (OBS) und Updates.
+- Unter Updates gibt es jetzt auch „Was ist neu“.
+
 ## 1.10.1 – 23.10.2026
 - Tasten werden ohne den Zusatz „(auch Num)“ bzw. „(auch 1)“ angezeigt. Ziffern-Shortcuts funktionieren weiterhin auf beiden Zahlenreihen.
 

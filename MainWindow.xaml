@@ -163,188 +163,311 @@
                             </ItemsControl>
                         </ScrollViewer>
                     </DockPanel>
-                    <ScrollViewer x:Name="SettingsPanel" VerticalScrollBarVisibility="Auto" Padding="20,14,20,12">
-                        <StackPanel>
-                            <TextBlock Text="Allgemein" FontSize="15" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                            <WrapPanel>
-                                <CheckBox x:Name="SoundCheck" Content="Ton beim Umschalten" Click="Option_Changed"/>
-                                <CheckBox x:Name="OverlayCheck" Content="Einblendung beim Wechsel" Click="Option_Changed"/>
-                                <CheckBox x:Name="TrayCheck" Content="Schließen = in den Tray" Click="Option_Changed"/>
-                                <CheckBox x:Name="AutostartCheck" Content="Mit Windows starten" Click="Autostart_Changed"/>
-                            </WrapPanel>
-
-                            <TextBlock Text="Notfall-Taste" FontSize="15" FontWeight="SemiBold" Margin="0,16,0,8"/>
-                            <StackPanel Orientation="Horizontal">
-                                <Button x:Name="PanicButton" Content="Keine Taste" Click="PanicKey_Click" MinWidth="170" Padding="10,4" Margin="0,0,4,0"
-                                        AutomationProperties.Name="Notfall-Taste"
-                                        ToolTip="Klicken und Taste drücken. Entf = keine Notfall-Taste, Esc = abbrechen."/>
-                                <Button Content="✕" Click="ClearPanicKey_Click" Padding="8,4" ToolTip="Notfall-Taste entfernen" AutomationProperties.Name="Notfall-Taste entfernen"/>
+                    <!-- ===== Einstellungen: links Navigation, rechts Karten je Bereich ===== -->
+                    <DockPanel x:Name="SettingsPanel">
+                        <Border DockPanel.Dock="Left" Width="184" Background="{StaticResource Bar}" BorderBrush="{StaticResource Line}" BorderThickness="0,0,1,0">
+                            <StackPanel x:Name="SettingsNav" Margin="10,14,10,10">
+                                <TextBlock Text="EINSTELLUNGEN" Foreground="{StaticResource FgDim}" FontSize="11" FontWeight="SemiBold" Margin="10,0,0,10"/>
+                                <Button Style="{StaticResource SettingsNavButton}" Content="Allgemein" CommandParameter="SetGeneral" Click="SettingsNav_Click"/>
+                                <Button Style="{StaticResource SettingsNavButton}" Content="Notfall-Taste" CommandParameter="SetPanic" Click="SettingsNav_Click"/>
+                                <Button Style="{StaticResource SettingsNavButton}" Content="Sprachtaste im Spiel" CommandParameter="PttSection" Click="SettingsNav_Click"/>
+                                <Button Style="{StaticResource SettingsNavButton}" Content="Status-Anzeige" CommandParameter="SetStatus" Click="SettingsNav_Click"/>
+                                <Button Style="{StaticResource SettingsNavButton}" Content="Geräte" CommandParameter="SetDevices" Click="SettingsNav_Click"/>
+                                <Button Style="{StaticResource SettingsNavButton}" Content="Ordner" CommandParameter="SetFolders" Click="SettingsNav_Click"/>
+                                <Button Style="{StaticResource SettingsNavButton}" Content="Stream (OBS)" CommandParameter="SetObs" Click="SettingsNav_Click"/>
+                                <Button Style="{StaticResource SettingsNavButton}" Content="Updates" CommandParameter="SetUpdates" Click="SettingsNav_Click"/>
                             </StackPanel>
-                            <TextBlock Foreground="{StaticResource FgDim}" TextWrapping="Wrap" Margin="0,6,0,0" FontSize="12"
-                                       Text="Gilt in jedem Charakter: schaltet sofort auf „Normal“, stoppt alle Sounds und beendet eine gehaltene Stimme. Ideal: Pause, Rollen oder eine F-Taste."/>
+                        </Border>
 
-                            <TextBlock x:Name="PttSection" Text="Sprachtaste im Spiel (Push-to-Talk)" FontSize="15" FontWeight="SemiBold" Margin="0,16,0,4"/>
-                            <TextBlock Foreground="{StaticResource FgDim}" TextWrapping="Wrap" Margin="0,0,0,8" FontSize="12"
-                                       Text="Für Spiele, die nur mit gedrückter Sprechtaste senden (z. B. nanos world). Die App kann die Taste nicht aus dem Spiel auslesen – stell hier dieselbe ein wie in den Steuerungs- bzw. Sprachchat-Einstellungen des Spiels."/>
-                            <Grid Margin="0,0,0,6">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
-                                <TextBlock Text="Sprachtaste des Spiels" VerticalAlignment="Center" Margin="0,0,12,6"/>
-                                <Button x:Name="PttKeyButton" Grid.Column="1" Content="Taste wählen …" Click="PttKey_Click" MinWidth="200" Padding="10,4" Margin="0,0,4,6"
-                                        AutomationProperties.AutomationId="PttKeyButton"
-                                        ToolTip="Klicken und dann die Sprechtaste aus dem Spiel drücken – Taste oder Maus 4/5. Entf = keine, Esc = abbrechen."/>
-                                <Button Grid.Column="2" Content="✕" Click="ClearPttKey_Click" Padding="8,4" Margin="0,0,0,6"
-                                        ToolTip="Sprachtaste entfernen" AutomationProperties.Name="Sprachtaste entfernen"/>
-                                <TextBlock Grid.Row="1" Text="Dauersenden an/aus" VerticalAlignment="Center" Margin="0,0,12,6"/>
-                                <Button x:Name="PttLatchButton" Grid.Row="1" Grid.Column="1" Content="Keine Taste" Click="PttLatchKey_Click" MinWidth="200" Padding="10,4" Margin="0,0,4,6"
-                                        AutomationProperties.AutomationId="PttLatchButton"
-                                        ToolTip="Shortcut, mit dem du zwischen Dauersenden und Push-to-Talk umschaltest – gilt in allen Charakteren, auch im Spiel. Klicken und Kombination drücken; Entf = keine, Esc = abbrechen."/>
-                                <Button Grid.Row="1" Grid.Column="2" Content="✕" Click="ClearPttLatchKey_Click" Padding="8,4" Margin="0,0,0,6"
-                                        ToolTip="Dauersenden-Taste entfernen" AutomationProperties.Name="Dauersenden-Taste entfernen"/>
-                            </Grid>
-                            <CheckBox x:Name="PttCheck" Content="Beim Abspielen von Sounds automatisch drücken" Click="PttCheck_Click" Margin="0,0,0,4"
-                                      ToolTip="Die App drückt die Sprachtaste kurz vor jedem Sound und lässt sie kurz danach wieder los – sonst hört im Spiel niemand den Sound."/>
-                            <TextBlock x:Name="PttHint" Foreground="#E5C07A" TextWrapping="Wrap" Margin="0,2,0,0" Visibility="Collapsed"/>
-                            <TextBlock Foreground="{StaticResource FgDim}" TextWrapping="Wrap" Margin="0,4,0,0" FontSize="12"
-                                       Text="Dauersenden hält die Sprachtaste gedrückt, bis du es wieder ausschaltest – wie ein offenes Mikrofon. Drückst du die Sprachtaste zwischendurch selbst, läuft es nach dem Loslassen einfach weiter – aus geht es nur mit der Umschalt- oder der Notfall-Taste. Als Umschalt-Taste eignet sich z. B. Strg + Alt + eine F-Taste."/>
+                        <ScrollViewer x:Name="SettingsScroll" VerticalScrollBarVisibility="Auto" ScrollChanged="SettingsScroll_ScrollChanged" Focusable="False">
+                            <StackPanel x:Name="SettingsCards" Margin="20,16,20,12" Grid.IsSharedSizeScope="True">
 
-                            <TextBlock Text="Status-Anzeige" FontSize="15" FontWeight="SemiBold" Margin="0,16,0,8"/>
-                            <WrapPanel>
-                                <CheckBox x:Name="StatusCheck" Content="Auf dem Bildschirm anzeigen" Click="StatusOverlay_Changed" VerticalAlignment="Center"
-                                          ToolTip="Zeigt dauerhaft an, welcher Charakter und welche Stimme aktiv ist"/>
-                                <Button x:Name="MoveStatusButton" Content="Position anpassen" Click="MoveStatus_Click" Padding="10,3" Margin="0,0,8,6"
-                                        ToolTip="Anzeige mit der Maus verschieben. Doppelklick auf die Anzeige oder 'Fertig' zum Speichern."/>
-                                <Button Content="Position zurücksetzen" Click="ResetStatusPosition_Click" Padding="10,3" Margin="0,0,0,6"/>
-                            </WrapPanel>
-                            <CheckBox x:Name="StatusHideNormalCheck" Content="Nur zeigen, wenn eine Effekt-Stimme aktiv ist (bei „Normal“ ausblenden)"
-                                      Click="StatusHideNormal_Changed" Margin="0,2,0,4"/>
-                            <CheckBox x:Name="StatusSoundsCheck" Content="Laufende Sounds mit Fortschritt und Zeit anzeigen"
-                                      Click="StatusSounds_Changed" Margin="0,2,0,8"/>
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*" MaxWidth="320"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition/>
-                                    <RowDefinition/>
-                                </Grid.RowDefinitions>
-                                <TextBlock Text="Größe:" Foreground="{StaticResource FgDim}" VerticalAlignment="Center" Margin="0,0,10,6"/>
-                                <Slider x:Name="StatusScaleSlider" Grid.Column="1" Minimum="0.7" Maximum="2" SmallChange="0.05" LargeChange="0.1"
-                                        TickFrequency="0.05" IsSnapToTickEnabled="True" Value="1" VerticalAlignment="Center" Margin="0,0,0,6"
-                                        AutomationProperties.Name="Größe der Status-Anzeige" ValueChanged="StatusLook_Changed"/>
-                                <TextBlock x:Name="StatusScaleText" Grid.Column="2" Text="100 %" MinWidth="48" TextAlignment="Right" VerticalAlignment="Center" Margin="10,0,0,6"/>
-                                <TextBlock Grid.Row="1" Text="Deckkraft:" Foreground="{StaticResource FgDim}" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                                <Slider x:Name="StatusOpacitySlider" Grid.Row="1" Grid.Column="1" Minimum="0.3" Maximum="1" SmallChange="0.05" LargeChange="0.1"
-                                        TickFrequency="0.05" IsSnapToTickEnabled="True" Value="1" VerticalAlignment="Center"
-                                        AutomationProperties.Name="Deckkraft der Status-Anzeige" ValueChanged="StatusLook_Changed"/>
-                                <TextBlock x:Name="StatusOpacityText" Grid.Row="1" Grid.Column="2" Text="100 %" MinWidth="48" TextAlignment="Right" VerticalAlignment="Center" Margin="10,0,0,0"/>
-                            </Grid>
-    
-                            <TextBlock Text="Geräte" FontSize="15" FontWeight="SemiBold" Margin="0,16,0,8"/>
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition/>
-                                    <RowDefinition/>
-                                </Grid.RowDefinitions>
-                                <TextBlock Text="Stimmen wirken auf:" Foreground="{StaticResource FgDim}" VerticalAlignment="Center" Margin="0,0,10,8"/>
-                                <TextBox x:Name="DeviceBox" Grid.Column="1" Margin="0,0,0,8" LostFocus="DeviceBox_LostFocus"
-                                         ToolTip="Aufnahmegerät, auf das die Stimmen wirken (wie in Windows angezeigt), z. B. CABLE Output"/>
-                                <TextBlock Grid.Row="1" Text="Soundboard spielt auf:" Foreground="{StaticResource FgDim}" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                                <TextBox x:Name="SoundDeviceBox" Grid.Row="1" Grid.Column="1" LostFocus="SoundDeviceBox_LostFocus"
-                                         ToolTip="Wiedergabegerät, das ins Mikrofon der anderen geht, z. B. CABLE Input"/>
-                            </Grid>
-                            <TextBlock Foreground="{StaticResource FgDim}" TextWrapping="Wrap" Margin="0,10,0,0" FontSize="12"
-                                       Text="Ein Teil des Gerätenamens reicht. Ob alles zusammenpasst, zeigt Extras → Einrichtung (Strg+Umschalt+E)."/>
-                            <CheckBox x:Name="KeepDefaultMicCheck" Content="Kabel als Windows-Standardmikrofon halten" Click="KeepDefaultMic_Click" Margin="0,10,0,0"
-                                      AutomationProperties.AutomationId="KeepDefaultMicCheck"
-                                      ToolTip="Stellt ein anderes Programm (z. B. Shure MOTIV Mix, NVIDIA Broadcast) sein Mikrofon als Windows-Standard ein, setzt die App sofort wieder das Kabel. Wichtig für Spiele ohne eigene Mikrofon-Auswahl, z. B. Steam-Sprachchat / nanos world."/>
-                            <TextBlock x:Name="DefaultMicText" Foreground="{StaticResource FgDim}" TextWrapping="Wrap" Margin="24,2,0,0" FontSize="12"/>
-    
-                            <TextBlock Text="Ordner" FontSize="15" FontWeight="SemiBold" Margin="0,16,0,8"/>
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition/>
-                                    <RowDefinition/>
-                                </Grid.RowDefinitions>
-    
-                                <TextBlock Text="Stimmen:" Foreground="{StaticResource FgDim}" VerticalAlignment="Top" Margin="0,4,10,10"/>
-                                <StackPanel Grid.Column="1" Margin="0,0,10,10">
-                                    <TextBlock x:Name="VoicesFolderText" TextWrapping="Wrap"/>
-                                    <TextBlock x:Name="VoicesFolderHint" Foreground="{StaticResource FgDim}" FontSize="12"/>
-                                </StackPanel>
-                                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top" Margin="0,0,0,10">
-                                    <Button Content="Ändern …" Click="ChangeVoicesFolder_Click" Padding="10,3" Margin="0,0,6,0"/>
-                                    <Button Content="Öffnen" Click="OpenFolder_Click" Padding="10,3" Margin="0,0,6,0"/>
-                                    <Button Content="Standard" Click="ResetVoicesFolder_Click" Padding="10,3" ToolTip="Zurück zum Equalizer-APO-Ordner"/>
-                                </StackPanel>
-    
-                                <TextBlock Grid.Row="1" Text="Sounds:" Foreground="{StaticResource FgDim}" VerticalAlignment="Top" Margin="0,4,10,0"/>
-                                <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,10,0">
-                                    <TextBlock x:Name="SoundFolderText" TextWrapping="Wrap"/>
-                                    <TextBlock x:Name="SoundFolderHint" Foreground="{StaticResource FgDim}" FontSize="12"/>
-                                </StackPanel>
-                                <StackPanel Grid.Row="1" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top">
-                                    <Button Content="Ändern …" Click="ChangeSoundFolder_Click" Padding="10,3" Margin="0,0,6,0"/>
-                                    <Button Content="Öffnen" Click="OpenSoundFolder_Click" Padding="10,3" Margin="0,0,6,0"/>
-                                    <Button Content="Standard" Click="ResetSoundFolder_Click" Padding="10,3" ToolTip="Zurück zu Dokumente\RP Voice Switcher\Sounds"/>
-                                </StackPanel>
-                            </Grid>
-                            <TextBlock Foreground="{StaticResource FgDim}" TextWrapping="Wrap" Margin="0,10,0,0" FontSize="12"
-                                       Text="Beim Wechsel kannst du deine Dateien mitnehmen. Einstellungen, Einrichtung und Ordner gelten für alle Charaktere."/>
+                                <!-- ===== Allgemein ===== -->
+                                <Border x:Name="SetGeneral" Style="{StaticResource SettingsCard}">
+                                    <StackPanel>
+                                        <DockPanel>
+                                            <TextBlock Text="&#xE713;" Style="{StaticResource SettingsIcon}" Width="28" DockPanel.Dock="Left"/>
+                                            <StackPanel Margin="8,0,0,0">
+                                                <TextBlock Text="Allgemein" Style="{StaticResource SettingsTitle}"/>
+                                                <TextBlock Text="Rückmeldung beim Umschalten und Verhalten des Fensters." Style="{StaticResource SettingsSubtitle}"/>
+                                            </StackPanel>
+                                        </DockPanel>
+                                        <Border Style="{StaticResource SettingsDivider}"/>
+                                        <UniformGrid Columns="2">
+                                            <CheckBox x:Name="SoundCheck" Content="Ton beim Umschalten" Click="Option_Changed" Margin="0,0,12,8"/>
+                                            <CheckBox x:Name="OverlayCheck" Content="Einblendung beim Wechsel" Click="Option_Changed" Margin="0,0,12,8"/>
+                                            <CheckBox x:Name="TrayCheck" Content="Schließen = in den Tray" Click="Option_Changed" Margin="0,0,12,0"
+                                                      ToolTip="Das Fenster schließen lässt die App im Infobereich weiterlaufen – die Shortcuts bleiben aktiv."/>
+                                            <CheckBox x:Name="AutostartCheck" Content="Mit Windows starten" Click="Autostart_Changed" Margin="0,0,12,0"/>
+                                        </UniformGrid>
+                                    </StackPanel>
+                                </Border>
 
-                            <TextBlock Text="Stream (OBS)" FontSize="15" FontWeight="SemiBold" Margin="0,16,0,8"/>
-                            <CheckBox x:Name="ObsCheck" Content="Aktive Stimme in eine Textdatei schreiben" Click="Obs_Changed" Margin="0,0,0,8"
-                                      ToolTip="In OBS: Quelle „Text (GDI+)“ → „Aus Datei lesen“ → diese Datei wählen"/>
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition/>
-                                    <RowDefinition/>
-                                </Grid.RowDefinitions>
-                                <TextBlock Text="Datei:" Foreground="{StaticResource FgDim}" VerticalAlignment="Center" Margin="0,0,10,8"/>
-                                <TextBlock x:Name="ObsFileText" Grid.Column="1" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,10,8"/>
-                                <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="0,0,0,8">
-                                    <Button Content="Ändern …" Click="ChangeObsFile_Click" Padding="10,3" Margin="0,0,6,0"/>
-                                    <Button Content="Ordner öffnen" Click="OpenObsFolder_Click" Padding="10,3"/>
-                                </StackPanel>
-                                <TextBlock Grid.Row="1" Text="Text:" Foreground="{StaticResource FgDim}" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                                <TextBox x:Name="ObsTemplateBox" Grid.Row="1" Grid.Column="1" LostFocus="ObsTemplate_LostFocus" Margin="0,0,10,0"
-                                         AutomationProperties.Name="Text für OBS"/>
-                                <TextBlock x:Name="ObsPreviewText" Grid.Row="1" Grid.Column="2" Foreground="{StaticResource FgDim}" VerticalAlignment="Center" MaxWidth="200" TextTrimming="CharacterEllipsis"/>
-                            </Grid>
-                            <TextBlock Foreground="{StaticResource FgDim}" TextWrapping="Wrap" Margin="0,8,0,0" FontSize="12"
-                                       Text="Platzhalter: {stimme}, {charakter} und {effekt} (wie {stimme}, aber leer bei „Normal“). In OBS: Quelle „Text (GDI+)“ → „Aus Datei lesen“."/>
+                                <!-- ===== Notfall-Taste ===== -->
+                                <Border x:Name="SetPanic" Style="{StaticResource SettingsCard}">
+                                    <StackPanel>
+                                        <DockPanel>
+                                            <TextBlock Text="&#xE7BA;" Style="{StaticResource SettingsIcon}" Width="28" DockPanel.Dock="Left"/>
+                                            <StackPanel Margin="8,0,0,0">
+                                                <TextBlock Text="Notfall-Taste" Style="{StaticResource SettingsTitle}"/>
+                                                <TextBlock Text="Sofort zurück auf „Normal“, alle Sounds aus, Halten und Dauersenden beendet – in jedem Charakter." Style="{StaticResource SettingsSubtitle}"/>
+                                            </StackPanel>
+                                        </DockPanel>
+                                        <Border Style="{StaticResource SettingsDivider}"/>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" SharedSizeGroup="Label"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Taste" Style="{StaticResource SettingsLabel}" Margin="0,0,14,0"/>
+                                            <Button x:Name="PanicButton" Grid.Column="1" Content="Keine Taste" Click="PanicKey_Click" MinWidth="220" Padding="10,5" Margin="0,0,4,0"
+                                                    AutomationProperties.Name="Notfall-Taste"
+                                                    ToolTip="Klicken und Taste drücken. Entf = keine Notfall-Taste, Esc = abbrechen."/>
+                                            <Button Grid.Column="2" Content="✕" Click="ClearPanicKey_Click" Padding="8,5" ToolTip="Notfall-Taste entfernen" AutomationProperties.Name="Notfall-Taste entfernen"/>
+                                        </Grid>
+                                        <TextBlock Style="{StaticResource SettingsHint}" Margin="0,10,0,0" Text="Ideal: Pause, Rollen oder eine F-Taste – etwas, das du im Spiel nicht versehentlich drückst."/>
+                                    </StackPanel>
+                                </Border>
 
-                            <TextBlock Text="Updates" FontSize="15" FontWeight="SemiBold" Margin="0,16,0,8"/>
-                            <WrapPanel>
-                                <CheckBox x:Name="UpdateCheck" Content="Beim Start nach Updates suchen" Click="UpdateCheck_Changed" VerticalAlignment="Center"/>
-                                <Button Content="Jetzt suchen" Command="{x:Static local:AppCommands.CheckUpdates}" Padding="10,3" Margin="0,0,0,6"/>
-                            </WrapPanel>
-                            <TextBlock x:Name="VersionText" Foreground="{StaticResource FgDim}" FontSize="12" Margin="0,4,0,0"/>
-                        </StackPanel>
-                    </ScrollViewer>
+                                <!-- ===== Sprachtaste im Spiel ===== -->
+                                <Border x:Name="PttSection" Style="{StaticResource SettingsCard}">
+                                    <StackPanel>
+                                        <DockPanel>
+                                            <TextBlock Text="&#xE720;" Style="{StaticResource SettingsIcon}" Width="28" DockPanel.Dock="Left"/>
+                                            <StackPanel Margin="8,0,0,0">
+                                                <TextBlock Text="Sprachtaste im Spiel (Push-to-Talk)" Style="{StaticResource SettingsTitle}"/>
+                                                <TextBlock Style="{StaticResource SettingsSubtitle}"
+                                                           Text="Für Spiele, die nur mit gedrückter Sprechtaste senden (z. B. nanos world). Die App kann die Taste nicht aus dem Spiel auslesen – stell dieselbe ein wie in den Sprachchat-Einstellungen des Spiels."/>
+                                            </StackPanel>
+                                        </DockPanel>
+                                        <Border Style="{StaticResource SettingsDivider}"/>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" SharedSizeGroup="Label"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+                                            <TextBlock Text="Sprachtaste des Spiels" Style="{StaticResource SettingsLabel}"/>
+                                            <Button x:Name="PttKeyButton" Grid.Column="1" Content="Taste wählen …" Click="PttKey_Click" MinWidth="220" Padding="10,5" Margin="0,0,4,8"
+                                                    AutomationProperties.AutomationId="PttKeyButton"
+                                                    ToolTip="Klicken und dann die Sprechtaste aus dem Spiel drücken – Taste oder Maus 4/5. Entf = keine, Esc = abbrechen."/>
+                                            <Button Grid.Column="2" Content="✕" Click="ClearPttKey_Click" Padding="8,5" Margin="0,0,0,8"
+                                                    ToolTip="Sprachtaste entfernen" AutomationProperties.Name="Sprachtaste entfernen"/>
+                                            <TextBlock Grid.Row="1" Text="Dauersenden an/aus" Style="{StaticResource SettingsLabel}"/>
+                                            <Button x:Name="PttLatchButton" Grid.Row="1" Grid.Column="1" Content="Keine Taste" Click="PttLatchKey_Click" MinWidth="220" Padding="10,5" Margin="0,0,4,8"
+                                                    AutomationProperties.AutomationId="PttLatchButton"
+                                                    ToolTip="Shortcut, mit dem du zwischen Dauersenden und Push-to-Talk umschaltest – gilt in allen Charakteren, auch im Spiel. Klicken und Kombination drücken; Entf = keine, Esc = abbrechen."/>
+                                            <Button Grid.Row="1" Grid.Column="2" Content="✕" Click="ClearPttLatchKey_Click" Padding="8,5" Margin="0,0,0,8"
+                                                    ToolTip="Dauersenden-Taste entfernen" AutomationProperties.Name="Dauersenden-Taste entfernen"/>
+                                        </Grid>
+                                        <CheckBox x:Name="PttCheck" Content="Beim Abspielen von Sounds automatisch drücken" Click="PttCheck_Click" Margin="0,4,0,0"
+                                                  ToolTip="Die App drückt die Sprachtaste kurz vor jedem Sound und lässt sie kurz danach wieder los – sonst hört im Spiel niemand den Sound."/>
+                                        <TextBlock x:Name="PttHint" Foreground="#E5C07A" TextWrapping="Wrap" Margin="0,6,0,0" Visibility="Collapsed"/>
+                                        <TextBlock Style="{StaticResource SettingsHint}" Margin="0,10,0,0"
+                                                   Text="Dauersenden hält die Sprachtaste gedrückt, bis du es wieder ausschaltest – wie ein offenes Mikrofon. Drückst du die Sprachtaste zwischendurch selbst, läuft es einfach weiter. Als Umschalt-Taste eignet sich z. B. Strg + Alt + eine F-Taste."/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- ===== Status-Anzeige ===== -->
+                                <Border x:Name="SetStatus" Style="{StaticResource SettingsCard}">
+                                    <StackPanel>
+                                        <DockPanel>
+                                            <TextBlock Text="&#xE7F4;" Style="{StaticResource SettingsIcon}" Width="28" DockPanel.Dock="Left"/>
+                                            <StackPanel Margin="8,0,0,0">
+                                                <TextBlock Text="Status-Anzeige" Style="{StaticResource SettingsTitle}"/>
+                                                <TextBlock Text="Kleines Fenster über dem Spiel mit Charakter, Stimme und laufenden Sounds (im Fenster- oder Randlos-Modus)." Style="{StaticResource SettingsSubtitle}"/>
+                                            </StackPanel>
+                                        </DockPanel>
+                                        <Border Style="{StaticResource SettingsDivider}"/>
+                                        <DockPanel Margin="0,0,0,6">
+                                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                                <Button x:Name="MoveStatusButton" Content="Position anpassen" Click="MoveStatus_Click" Padding="10,4" Margin="0,0,6,0"
+                                                        ToolTip="Anzeige mit der Maus verschieben. Doppelklick auf die Anzeige oder 'Fertig' zum Speichern."/>
+                                                <Button Content="Zurücksetzen" Click="ResetStatusPosition_Click" Padding="10,4" ToolTip="Position zurücksetzen"/>
+                                            </StackPanel>
+                                            <CheckBox x:Name="StatusCheck" Content="Auf dem Bildschirm anzeigen" Click="StatusOverlay_Changed" VerticalAlignment="Center" Margin="0"
+                                                      ToolTip="Zeigt dauerhaft an, welcher Charakter und welche Stimme aktiv ist"/>
+                                        </DockPanel>
+                                        <CheckBox x:Name="StatusHideNormalCheck" Content="Nur zeigen, wenn eine Effekt-Stimme aktiv ist (bei „Normal“ ausblenden)"
+                                                  Click="StatusHideNormal_Changed" Margin="0,4,0,4"/>
+                                        <CheckBox x:Name="StatusSoundsCheck" Content="Laufende Sounds mit Fortschritt und Zeit anzeigen"
+                                                  Click="StatusSounds_Changed" Margin="0,2,0,10"/>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" SharedSizeGroup="Label"/>
+                                                <ColumnDefinition Width="*" MaxWidth="320"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition/>
+                                                <RowDefinition/>
+                                            </Grid.RowDefinitions>
+                                            <TextBlock Text="Größe" Style="{StaticResource SettingsLabel}"/>
+                                            <Slider x:Name="StatusScaleSlider" Grid.Column="1" Minimum="0.7" Maximum="2" SmallChange="0.05" LargeChange="0.1"
+                                                    TickFrequency="0.05" IsSnapToTickEnabled="True" Value="1" VerticalAlignment="Center" Margin="0,0,0,8"
+                                                    AutomationProperties.Name="Größe der Status-Anzeige" ValueChanged="StatusLook_Changed"/>
+                                            <TextBlock x:Name="StatusScaleText" Grid.Column="2" Text="100 %" MinWidth="48" TextAlignment="Right" VerticalAlignment="Center" Margin="10,0,0,8"/>
+                                            <TextBlock Grid.Row="1" Text="Deckkraft" Style="{StaticResource SettingsLabel}" Margin="0,0,14,0"/>
+                                            <Slider x:Name="StatusOpacitySlider" Grid.Row="1" Grid.Column="1" Minimum="0.3" Maximum="1" SmallChange="0.05" LargeChange="0.1"
+                                                    TickFrequency="0.05" IsSnapToTickEnabled="True" Value="1" VerticalAlignment="Center"
+                                                    AutomationProperties.Name="Deckkraft der Status-Anzeige" ValueChanged="StatusLook_Changed"/>
+                                            <TextBlock x:Name="StatusOpacityText" Grid.Row="1" Grid.Column="2" Text="100 %" MinWidth="48" TextAlignment="Right" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- ===== Geräte ===== -->
+                                <Border x:Name="SetDevices" Style="{StaticResource SettingsCard}">
+                                    <StackPanel>
+                                        <DockPanel>
+                                            <TextBlock Text="&#xE7F5;" Style="{StaticResource SettingsIcon}" Width="28" DockPanel.Dock="Left"/>
+                                            <StackPanel Margin="8,0,0,0">
+                                                <TextBlock Text="Geräte" Style="{StaticResource SettingsTitle}"/>
+                                                <TextBlock Text="Über welche Geräte Stimme und Sounds zu den anderen gehen. Ob alles zusammenpasst, zeigt Extras → Einrichtung." Style="{StaticResource SettingsSubtitle}"/>
+                                            </StackPanel>
+                                        </DockPanel>
+                                        <Border Style="{StaticResource SettingsDivider}"/>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" SharedSizeGroup="Label"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition/>
+                                                <RowDefinition/>
+                                            </Grid.RowDefinitions>
+                                            <TextBlock Text="Stimmen wirken auf" Style="{StaticResource SettingsLabel}"/>
+                                            <TextBox x:Name="DeviceBox" Grid.Column="1" Margin="0,0,0,8" LostFocus="DeviceBox_LostFocus"
+                                                     ToolTip="Aufnahmegerät, auf das die Stimmen wirken (wie in Windows angezeigt), z. B. CABLE Output. Ein Teil des Namens reicht."/>
+                                            <TextBlock Grid.Row="1" Text="Soundboard spielt auf" Style="{StaticResource SettingsLabel}"/>
+                                            <TextBox x:Name="SoundDeviceBox" Grid.Row="1" Grid.Column="1" Margin="0,0,0,8" LostFocus="SoundDeviceBox_LostFocus"
+                                                     ToolTip="Wiedergabegerät, das ins Mikrofon der anderen geht, z. B. CABLE Input. Ein Teil des Namens reicht."/>
+                                        </Grid>
+                                        <Border Style="{StaticResource SettingsDivider}" Margin="0,6,0,12"/>
+                                        <CheckBox x:Name="KeepDefaultMicCheck" Content="Kabel als Windows-Standardmikrofon halten" Click="KeepDefaultMic_Click" Margin="0"
+                                                  AutomationProperties.AutomationId="KeepDefaultMicCheck"
+                                                  ToolTip="Stellt ein anderes Programm (z. B. Shure MOTIV Mix, NVIDIA Broadcast) sein Mikrofon als Windows-Standard ein, setzt die App sofort wieder das Kabel. Wichtig für Spiele ohne eigene Mikrofon-Auswahl, z. B. Steam-Sprachchat / nanos world."/>
+                                        <TextBlock Style="{StaticResource SettingsHint}" Margin="24,3,0,0"
+                                                   Text="Für Spiele ohne eigene Mikrofon-Auswahl (z. B. Steam-Sprachchat, nanos world) – die nehmen einfach den Windows-Standard."/>
+                                        <TextBlock x:Name="DefaultMicText" Style="{StaticResource SettingsHint}" Margin="24,2,0,0"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- ===== Ordner ===== -->
+                                <Border x:Name="SetFolders" Style="{StaticResource SettingsCard}">
+                                    <StackPanel>
+                                        <DockPanel>
+                                            <TextBlock Text="&#xE8B7;" Style="{StaticResource SettingsIcon}" Width="28" DockPanel.Dock="Left"/>
+                                            <StackPanel Margin="8,0,0,0">
+                                                <TextBlock Text="Ordner" Style="{StaticResource SettingsTitle}"/>
+                                                <TextBlock Text="Wo Stimmen und Sounds liegen. Beim Wechsel kannst du deine Dateien mitnehmen; gilt für alle Charaktere." Style="{StaticResource SettingsSubtitle}"/>
+                                            </StackPanel>
+                                        </DockPanel>
+                                        <Border Style="{StaticResource SettingsDivider}"/>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" SharedSizeGroup="Label"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition/>
+                                                <RowDefinition/>
+                                            </Grid.RowDefinitions>
+
+                                            <TextBlock Text="Stimmen" Style="{StaticResource SettingsLabel}" VerticalAlignment="Top" Margin="0,1,14,14"/>
+                                            <StackPanel Grid.Column="1" Margin="0,0,0,14">
+                                                <TextBlock x:Name="VoicesFolderText" TextWrapping="Wrap"/>
+                                                <TextBlock x:Name="VoicesFolderHint" Style="{StaticResource SettingsHint}"/>
+                                                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                                    <Button Content="Ändern …" Click="ChangeVoicesFolder_Click" Padding="10,3" Margin="0,0,6,0"/>
+                                                    <Button Content="Öffnen" Click="OpenFolder_Click" Padding="10,3" Margin="0,0,6,0"/>
+                                                    <Button Content="Standard" Click="ResetVoicesFolder_Click" Padding="10,3" ToolTip="Zurück zum Equalizer-APO-Ordner"/>
+                                                </StackPanel>
+                                            </StackPanel>
+
+                                            <TextBlock Grid.Row="1" Text="Sounds" Style="{StaticResource SettingsLabel}" VerticalAlignment="Top" Margin="0,1,14,0"/>
+                                            <StackPanel Grid.Row="1" Grid.Column="1">
+                                                <TextBlock x:Name="SoundFolderText" TextWrapping="Wrap"/>
+                                                <TextBlock x:Name="SoundFolderHint" Style="{StaticResource SettingsHint}"/>
+                                                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                                    <Button Content="Ändern …" Click="ChangeSoundFolder_Click" Padding="10,3" Margin="0,0,6,0"/>
+                                                    <Button Content="Öffnen" Click="OpenSoundFolder_Click" Padding="10,3" Margin="0,0,6,0"/>
+                                                    <Button Content="Standard" Click="ResetSoundFolder_Click" Padding="10,3" ToolTip="Zurück zu Dokumente\RP Voice Switcher\Sounds"/>
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- ===== Stream (OBS) ===== -->
+                                <Border x:Name="SetObs" Style="{StaticResource SettingsCard}">
+                                    <StackPanel>
+                                        <DockPanel>
+                                            <TextBlock Text="&#xE714;" Style="{StaticResource SettingsIcon}" Width="28" DockPanel.Dock="Left"/>
+                                            <StackPanel Margin="8,0,0,0">
+                                                <TextBlock Text="Stream (OBS)" Style="{StaticResource SettingsTitle}"/>
+                                                <TextBlock Text="Schreibt die aktive Stimme in eine Textdatei – in OBS als Quelle „Text (GDI+)“ → „Aus Datei lesen“ einbinden." Style="{StaticResource SettingsSubtitle}"/>
+                                            </StackPanel>
+                                        </DockPanel>
+                                        <Border Style="{StaticResource SettingsDivider}"/>
+                                        <CheckBox x:Name="ObsCheck" Content="Aktive Stimme in eine Textdatei schreiben" Click="Obs_Changed" Margin="0,0,0,10"
+                                                  ToolTip="In OBS: Quelle „Text (GDI+)“ → „Aus Datei lesen“ → diese Datei wählen"/>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" SharedSizeGroup="Label"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition/>
+                                                <RowDefinition/>
+                                            </Grid.RowDefinitions>
+                                            <TextBlock Text="Datei" Style="{StaticResource SettingsLabel}" VerticalAlignment="Top" Margin="0,1,14,12"/>
+                                            <StackPanel Grid.Column="1" Margin="0,0,0,12">
+                                                <TextBlock x:Name="ObsFileText" TextWrapping="Wrap"/>
+                                                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                                    <Button Content="Ändern …" Click="ChangeObsFile_Click" Padding="10,3" Margin="0,0,6,0"/>
+                                                    <Button Content="Ordner öffnen" Click="OpenObsFolder_Click" Padding="10,3"/>
+                                                </StackPanel>
+                                            </StackPanel>
+                                            <TextBlock Grid.Row="1" Text="Text" Style="{StaticResource SettingsLabel}" VerticalAlignment="Top" Margin="0,4,14,0"/>
+                                            <StackPanel Grid.Row="1" Grid.Column="1">
+                                                <TextBox x:Name="ObsTemplateBox" LostFocus="ObsTemplate_LostFocus" AutomationProperties.Name="Text für OBS"/>
+                                                <TextBlock x:Name="ObsPreviewText" Style="{StaticResource SettingsHint}" Margin="0,4,0,0" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
+                                                <TextBlock Style="{StaticResource SettingsHint}" Margin="0,4,0,0"
+                                                           Text="Platzhalter: {stimme}, {charakter} und {effekt} (wie {stimme}, aber leer bei „Normal“)."/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- ===== Updates ===== -->
+                                <Border x:Name="SetUpdates" Style="{StaticResource SettingsCard}">
+                                    <StackPanel>
+                                        <DockPanel>
+                                            <TextBlock Text="&#xE895;" Style="{StaticResource SettingsIcon}" Width="28" DockPanel.Dock="Left"/>
+                                            <StackPanel Margin="8,0,0,0">
+                                                <TextBlock Text="Updates" Style="{StaticResource SettingsTitle}"/>
+                                                <TextBlock x:Name="VersionText" Style="{StaticResource SettingsSubtitle}"/>
+                                            </StackPanel>
+                                        </DockPanel>
+                                        <Border Style="{StaticResource SettingsDivider}"/>
+                                        <DockPanel>
+                                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                                <Button Content="Was ist neu" Command="{x:Static local:AppCommands.WhatsNew}" Padding="10,4" Margin="0,0,6,0"/>
+                                                <Button Content="Jetzt suchen" Command="{x:Static local:AppCommands.CheckUpdates}" Padding="10,4"/>
+                                            </StackPanel>
+                                            <CheckBox x:Name="UpdateCheck" Content="Beim Start nach Updates suchen" Click="UpdateCheck_Changed" VerticalAlignment="Center" Margin="0"/>
+                                        </DockPanel>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </DockPanel>
         </Grid>
 
         <TabControl x:Name="Tabs" SelectionChanged="Tabs_SelectionChanged">

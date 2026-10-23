@@ -223,7 +223,7 @@ public partial class MainWindow
     private void OpenPttSettings()
     {
         ShowSettingsWindow();
-        Dispatcher.InvokeAsync(() => PttSection.BringIntoView(), DispatcherPriority.Loaded);
+        Dispatcher.InvokeAsync(() => ScrollToSettingsSection(nameof(PttSection)), DispatcherPriority.Loaded);
     }
 
     private void ClearPttKey_Click(object sender, RoutedEventArgs e)
