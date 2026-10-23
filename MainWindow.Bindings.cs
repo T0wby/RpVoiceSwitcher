@@ -53,8 +53,7 @@ public partial class MainWindow
             if (hold is Hotkey h)
             {
                 _holdHook.Add(h, () => BeginHold(voice), () => EndHold(voice));
-                voice.HoldText = !_holdHook.IsInstalled ? h + " (geht nicht!)"
-                    : h + (h.NumberAlias != null ? " (auch Num)" : "");
+                voice.HoldText = !_holdHook.IsInstalled ? h + " (geht nicht!)" : h.ToString();
             }
             else voice.HoldText = "Keine Taste";
         }
@@ -73,10 +72,8 @@ public partial class MainWindow
         bool ok = _hotkeys.Register(hk, action);
         // Zahlen gelten für beide Tastenreihen: Strg+Alt+1 oben = Strg+Alt+Num 1 (NumLock muss an sein).
         bool aliasOk = hk.NumberAlias is Hotkey alias && _hotkeys.Register(alias, action);
-        if (!ok && !aliasOk) return hk + " (belegt!)";
-        // Hinweis auf die jeweils andere Zahlenreihe
-        bool onNumpad = hk.Key is >= Key.NumPad0 and <= Key.NumPad9;
-        return hk + (aliasOk ? (onNumpad ? $" (auch {(int)(hk.Key - Key.NumPad0)})" : " (auch Num)") : "");
+        // Die andere Zahlenreihe funktioniert weiterhin mit, wird aber nicht mehr extra angezeigt.
+        return !ok && !aliasOk ? hk + " (belegt!)" : hk.ToString();
     }
 
     // ---------- Aufnahme einer neuen Taste ----------

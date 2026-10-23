@@ -2,6 +2,9 @@
 
 Neueste Version oben. Die App zeigt diese Liste nach einem Update („Was ist neu“) und jederzeit unter *Hilfe → Was ist neu*.
 
+## 1.10.1 – 23.10.2026
+- Tasten werden ohne den Zusatz „(auch Num)“ bzw. „(auch 1)“ angezeigt. Ziffern-Shortcuts funktionieren weiterhin auf beiden Zahlenreihen.
+
 ## 1.10.0 – 23.10.2026
 - **Einrichtung prüft das Windows-Standardmikrofon:** Programme ohne eigene Mikrofon-Auswahl – z. B. der Steam-Sprachchat und damit nanos world – nehmen einfach den Windows-Standard. Steht dort das echte Mikrofon, hören die anderen dich ohne Effekt. Die Einrichtung warnt jetzt und stellt per Klick „CABLE Output“ als Standard- und Kommunikationsgerät ein; der Einrichtungs-Assistent hat dafür einen Knopf im letzten Schritt.
 - **„Kabel als Windows-Standardmikrofon halten“** (Einstellungen → Geräte): Stellt ein anderes Programm (z. B. Shure MOTIV Mix, NVIDIA Broadcast) sein Mikrofon wieder als Standard ein, setzt die App sofort das Kabel zurück. Bei einem ständigen Hin und Her hört sie nach drei Versuchen pro Minute auf.
