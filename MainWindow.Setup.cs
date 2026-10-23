@@ -45,11 +45,21 @@ public partial class MainWindow
     /// <summary>Bei An-/Abstecken von Geräten neu prüfen und das Soundboard auf das (neue) Standardgerät setzen.</summary>
     private void WatchDevices()
     {
+        _lastRenderSignature = RenderSignature();
         _deviceDebounce.Tick += (_, _) =>
         {
             _deviceDebounce.Stop();
+            EnforceDefaultMic();
+            UpdateDefaultMicText();
             RunSetupCheck();
-            RestartSoundEngine();
+            // Soundboard nur neu starten, wenn sich bei den Wiedergabegeräten etwas getan hat –
+            // ein umgestelltes Standardmikrofon soll keinen laufenden Sound abbrechen.
+            string signature = RenderSignature();
+            if (signature != _lastRenderSignature)
+            {
+                _lastRenderSignature = signature;
+                RestartSoundEngine();
+            }
         };
         _deviceWatcher = new DeviceWatcher(() => Dispatcher.InvokeAsync(() =>
         {
@@ -57,6 +67,22 @@ public partial class MainWindow
             _deviceDebounce.Stop();
             _deviceDebounce.Start();
         }));
+    }
+
+    private string? _lastRenderSignature;
+
+    /// <summary>Aktive Wiedergabegeräte + Standard-Wiedergabegerät – ändert sich das, muss das Soundboard neu verbinden.</summary>
+    private static string RenderSignature()
+    {
+        try
+        {
+            using var en = new NAudio.CoreAudioApi.MMDeviceEnumerator();
+            var ids = en.EnumerateAudioEndPoints(NAudio.CoreAudioApi.DataFlow.Render, NAudio.CoreAudioApi.DeviceState.Active).Select(d => d.ID).OrderBy(x => x);
+            string def;
+            try { def = en.GetDefaultAudioEndpoint(NAudio.CoreAudioApi.DataFlow.Render, NAudio.CoreAudioApi.Role.Multimedia).ID; } catch { def = ""; }
+            return def + "|" + string.Join(",", ids);
+        }
+        catch { return Guid.NewGuid().ToString(); } // im Zweifel neu starten
     }
 
     private void RunSetupCheck()

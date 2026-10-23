@@ -93,6 +93,7 @@ public partial class MainWindow : Window
         RefreshFolderTexts();
         RunSetupCheck();
         WatchDevices();
+        InitDefaultMic();
         _initializing = false;
 
         Loaded += (_, _) => { MaybeShowWizardOnStart(); MaybeShowWhatsNew(); };

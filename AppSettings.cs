@@ -90,6 +90,9 @@ public sealed class AppSettings
     public int SetupWizardStep { get; set; }
     public bool OpenWizardAfterRestart { get; set; }
 
+    /// <summary>Kabel als Windows-Standardmikrofon halten (stellt es zurück, wenn ein anderes Programm umstellt).</summary>
+    public bool KeepCableDefaultMic { get; set; }
+
     // Updates
     public bool CheckForUpdates { get; set; } = true;
     public string? SkippedUpdateVersion { get; set; }

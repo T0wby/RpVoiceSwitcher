@@ -285,10 +285,22 @@ public sealed class SetupWizardWindow : Window
                 "Discord: Einstellungen → Sprache & Video → Eingabegerät „CABLE Output (VB-Audio Virtual Cable)“.",
                 "Discord: Rauschunterdrückung auf „Standard“ oder „Keine“ stellen – „Krisp“ bügelt die Effekte sonst glatt.",
                 "Im Spiel bzw. RP-Client in den Spracheinstellungen ebenfalls „CABLE Output“ als Mikrofon wählen.",
-                "Push-to-Talk funktioniert wie gewohnt – nur das Gerät ist ein anderes.",
+                "Kann man im Spiel kein Mikrofon wählen (z. B. Steam-Sprachchat, nanos world), nimmt es das Windows-Standardmikrofon – „Kabel als Windows-Standard setzen“ klicken.",
+                "Sendet das Spiel nur mit gedrückter Sprechtaste: unter Einstellungen → „Sprachtaste im Spiel“ dieselbe Taste einstellen, dann drückt die App sie auch für Sounds.",
             ],
-            _ => (StepState.Info, ""),
-            []),
+            s => s.DefaultMic is not { CableId: not null } mic
+                    ? (StepState.Info, "")
+                : mic.Ok
+                    ? (StepState.Done, $"„{mic.CableName}“ ist Windows-Standardmikrofon.")
+                    : (StepState.Open, $"Windows-Standardmikrofon ist gerade „{(mic.DefaultIsCable ? mic.CommsName : mic.DefaultName)}“ – Steam & Co. hören dich dann ohne Effekt."),
+            [
+                new("Kabel als Windows-Standard setzen", () =>
+                {
+                    if (DefaultMic.SetCableAsDefault() is string error)
+                        MessageBox.Show(this, "Umstellen hat nicht geklappt: " + error, "Einrichtungs-Assistent");
+                }),
+                new("Aufnahmegeräte öffnen", () => SetupChecker.OpenSoundPanel(1)),
+            ]),
 
         new("Optional: Graillon für die Tonhöhe",
             "Für deutlich tiefere oder höhere Stimmen (Riese, Kobold …) gibt es das kostenlose Plugin Graillon. Für Maske, Funkgerät & Co. brauchst du es nicht.",

@@ -31,6 +31,9 @@ public static class Diagnostics
         sb.AppendLine($"Charaktere: {settings.Profiles.Count}, Stimmen im aktiven: {(settings.Current.IncludeAllVoices ? "alle" : settings.Current.Voices.Count.ToString())}");
         sb.AppendLine($"Aktive Stimme: {activeVoice}");
         sb.AppendLine($"Notfall-Taste: {Hotkey.Parse(settings.PanicHotkey)?.ToString() ?? "keine"}");
+        var mic = DefaultMic.Read(settings.TargetDevice);
+        sb.AppendLine($"Windows-Standardmikrofon: {mic.DefaultName ?? "?"} / Kommunikation: {mic.CommsName ?? "?"} (Kabel halten: {(settings.KeepCableDefaultMic ? "an" : "aus")})");
+        sb.AppendLine($"Sprachtaste: {PushToTalk.Binding.Parse(settings.PushToTalkKey)?.ToString() ?? "keine"} (bei Sounds: {(settings.PushToTalkEnabled ? "an" : "aus")}), Dauersenden-Taste: {Hotkey.Parse(settings.PttLatchHotkey)?.ToString() ?? "keine"}");
         sb.AppendLine($"Stimmen-Ordner: {store?.VoicesDir ?? "(Equalizer APO nicht gefunden)"}");
         sb.AppendLine($"Sound-Ordner: {SoundLibrary.Folder}");
         sb.AppendLine($"Assistent abgeschlossen: {(settings.SetupWizardDone ? "ja" : "nein")}");

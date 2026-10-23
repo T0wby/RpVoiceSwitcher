@@ -143,6 +143,29 @@ public static class SetupChecker
             });
         }
 
+        // 3c) Windows-Standardmikrofon – Steam (und damit z. B. nanos world) fragt nicht, sondern nimmt den Standard
+        if (cableOk)
+        {
+            var mic = DefaultMic.Read(settings.TargetDevice);
+            if (mic.CableId != null)
+            {
+                string Others() => string.Join(" / ", new[] { mic.DefaultIsCable ? null : mic.DefaultName, mic.CommsIsCable ? null : mic.CommsName }
+                                                      .Where(n => n != null).Distinct());
+                results.Add(new CheckResult
+                {
+                    Title = "Windows-Standardmikrofon",
+                    State = mic.Ok ? CheckState.Ok : CheckState.Warning,
+                    Detail = mic.Ok
+                        ? $"„{mic.CableName}“ ist Standard- und Kommunikationsgerät – Programme ohne eigene Auswahl (z. B. Steam-Sprachchat) bekommen die Effekte."
+                        : $"Standard ist gerade „{Others()}“. Programme, die einfach das Standardmikrofon nehmen – z. B. der Steam-Sprachchat und damit nanos world –, " +
+                          "hören dich dann ohne Effekt und ohne Sounds. Springt das immer wieder zurück, stellt meist ein anderes Programm sein Gerät als Standard ein " +
+                          "(z. B. Shure MOTIV Mix, NVIDIA Broadcast, Realtek/Sonic Studio) – dann in den Einstellungen „Kabel als Standardmikrofon halten“ anhaken.",
+                    FixLabel = mic.Ok ? null : "Kabel als Standard setzen",
+                    Fix = mic.Ok ? null : () => { if (DefaultMic.SetCableAsDefault(settings.TargetDevice) is string error) throw new InvalidOperationException(error); },
+                });
+            }
+        }
+
         // 4) Mikrofon → Kabel weiterleiten
         if (cableIn != null)
         {
@@ -217,12 +240,25 @@ public static class SetupChecker
             Fix = graillon != null ? null : () => OpenUrl("https://www.auburnsounds.com/products/Graillon.html"),
         });
 
-        // 7) Hinweis Spiel/Discord – lässt sich nicht von außen prüfen
+        // 7) Sprachtaste (Push-to-Talk) – nur ein Hinweis, das Spiel selbst lässt sich nicht abfragen
+        var ptt = PushToTalk.Binding.Parse(settings.PushToTalkKey);
+        results.Add(new CheckResult
+        {
+            Title = "Sprachtaste im Spiel (Push-to-Talk)",
+            State = CheckState.Info,
+            Detail = ptt is PushToTalk.Binding b
+                ? $"Eingestellt: {b}" + (settings.PushToTalkEnabled ? " – wird beim Abspielen von Sounds automatisch gedrückt." : " – beim Abspielen von Sounds aus (nur Dauersenden).") +
+                  " Muss dieselbe Taste sein wie im Spiel."
+                : "Nicht eingestellt. Nur nötig, wenn das Spiel nur mit gedrückter Sprechtaste sendet (z. B. nanos world): Einstellungen → Sprachtaste im Spiel.",
+        });
+
+        // 8) Hinweis Spiel/Discord – lässt sich nicht von außen prüfen
         results.Add(new CheckResult
         {
             Title = "Im Spiel und in Discord",
             State = CheckState.Info,
-            Detail = "Als Mikrofon \"CABLE Output\" auswählen. Starke Rauschunterdrückung (z. B. Krisp) kann Effekte abschwächen.",
+            Detail = "Als Mikrofon \"CABLE Output\" auswählen. Wo man kein Gerät wählen kann (z. B. Steam-Sprachchat), zählt das Windows-Standardmikrofon. " +
+                     "Starke Rauschunterdrückung (z. B. Krisp) kann Effekte abschwächen.",
         });
 
         return results;
@@ -249,6 +285,8 @@ public static class SetupChecker
         public string? DefaultPlayback { get; init; }
         public bool DefaultPlaybackIsCable { get; init; }
         public string? Graillon { get; init; }
+        /// <summary>Windows-Standardmikrofon (Standard- und Kommunikationsgerät).</summary>
+        public DefaultMic.State? DefaultMic { get; init; }
         /// <summary>null = Zielgerät nicht gefunden.</summary>
         public ExclusiveMode.Info? Exclusive { get; init; }
     }
@@ -303,6 +341,7 @@ public static class SetupChecker
                 DefaultPlayback = playback,
                 DefaultPlaybackIsCable = playback?.Contains("CABLE", StringComparison.OrdinalIgnoreCase) == true,
                 Graillon = FindGraillon(),
+                DefaultMic = cableOut != null ? RpVoiceSwitcher.DefaultMic.Read(settings.TargetDevice) : null,
                 Exclusive = target != null ? ExclusiveMode.Probe(settings.TargetDevice) : null,
             };
         }

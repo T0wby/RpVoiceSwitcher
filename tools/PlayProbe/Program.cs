@@ -4,6 +4,12 @@ using System.Diagnostics;
 using System.IO;
 using RpVoiceSwitcher;
 
+if (args.Length > 0 && args[0] == "defaultmic")
+{
+    Console.WriteLine("Vorher:  " + DefaultMic.Read());
+    if (args.Length > 1 && args[1] == "set") { Console.WriteLine("Setzen: " + (DefaultMic.SetCableAsDefault() ?? "ok")); Console.WriteLine("Nachher: " + DefaultMic.Read()); }
+    return;
+}
 if (args.Length > 0 && args[0] == "phase") { Phase.Run(side: false); Phase.Run(side: true); return; }
 if (args.Length > 1 && args[0] == "read")
 {

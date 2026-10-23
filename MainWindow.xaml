@@ -268,6 +268,10 @@
                             </Grid>
                             <TextBlock Foreground="{StaticResource FgDim}" TextWrapping="Wrap" Margin="0,10,0,0" FontSize="12"
                                        Text="Ein Teil des Gerätenamens reicht. Ob alles zusammenpasst, zeigt Extras → Einrichtung (Strg+Umschalt+E)."/>
+                            <CheckBox x:Name="KeepDefaultMicCheck" Content="Kabel als Windows-Standardmikrofon halten" Click="KeepDefaultMic_Click" Margin="0,10,0,0"
+                                      AutomationProperties.AutomationId="KeepDefaultMicCheck"
+                                      ToolTip="Stellt ein anderes Programm (z. B. Shure MOTIV Mix, NVIDIA Broadcast) sein Mikrofon als Windows-Standard ein, setzt die App sofort wieder das Kabel. Wichtig für Spiele ohne eigene Mikrofon-Auswahl, z. B. Steam-Sprachchat / nanos world."/>
+                            <TextBlock x:Name="DefaultMicText" Foreground="{StaticResource FgDim}" TextWrapping="Wrap" Margin="24,2,0,0" FontSize="12"/>
     
                             <TextBlock Text="Ordner" FontSize="15" FontWeight="SemiBold" Margin="0,16,0,8"/>
                             <Grid>

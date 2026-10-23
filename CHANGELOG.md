@@ -2,6 +2,13 @@
 
 Neueste Version oben. Die App zeigt diese Liste nach einem Update („Was ist neu“) und jederzeit unter *Hilfe → Was ist neu*.
 
+## 1.10.0 – 23.10.2026
+- **Einrichtung prüft das Windows-Standardmikrofon:** Programme ohne eigene Mikrofon-Auswahl – z. B. der Steam-Sprachchat und damit nanos world – nehmen einfach den Windows-Standard. Steht dort das echte Mikrofon, hören die anderen dich ohne Effekt. Die Einrichtung warnt jetzt und stellt per Klick „CABLE Output“ als Standard- und Kommunikationsgerät ein; der Einrichtungs-Assistent hat dafür einen Knopf im letzten Schritt.
+- **„Kabel als Windows-Standardmikrofon halten“** (Einstellungen → Geräte): Stellt ein anderes Programm (z. B. Shure MOTIV Mix, NVIDIA Broadcast) sein Mikrofon wieder als Standard ein, setzt die App sofort das Kabel zurück. Bei einem ständigen Hin und Her hört sie nach drei Versuchen pro Minute auf.
+- Die Einrichtung zeigt außerdem, welche Sprachtaste fürs Spiel eingestellt ist.
+- Ein umgestelltes Standardmikrofon bricht keine laufenden Sounds mehr ab.
+- Die Diagnose („Problem melden“) enthält Standardmikrofon und Sprachtaste.
+
 ## 1.9.1 – 23.10.2026
 - **Sounds enden wieder von selbst:** Manche Sounds galten nach dem Abspielen weiter als „laufend“ – dann musste man sie einmal „stoppen“, bevor sie wieder starteten. Betroffen waren Sounds, deren Länge nicht genau in die Audio-Blöcke von Windows passt, und vor allem das Mithören auf den Kopfhörern.
 - Damit blieb in solchen Fällen auch die **Sprachtaste** nach dem Sound gedrückt. Behoben.
