@@ -29,7 +29,10 @@ function Active { ((Get-Content $voiceTxt) | Where-Object { $_ -like '# Aktiv:*'
 function Tone($mode) {
     $log = Join-Path $tmp 'probe.txt'
     & $probe 'CABLE Output' 1200 $mode 'CABLE Input' > $log
-    [double](((Get-Content $log | Select-Object -Last 1) -replace '^MAX ([\d,\.]+).*', '$1') -replace ',', '.')
+    # Die ersten 300 ms nicht werten: Dort steckt oft noch der vorige Ton im Kabel-Puffer (vor allem, wenn ein Spiel
+    # oder Steam das Kabel gerade offen hat) - sonst misst "Seite" direkt nach "Mitte" noch den Mitte-Ton.
+    (Get-Content $log | Where-Object { $_ -match '^\s*(\d+) ms\s+([\d,\.]+)' -and [int]$Matches[1] -gt 300 } |
+        ForEach-Object { [double]($Matches[2] -replace ',', '.') } | Measure-Object -Maximum).Maximum
 }
 function Cond($prop, $val) { New-Object Windows.Automation.PropertyCondition($prop, $val) }
 function All($root, $type) { @($root.FindAll('Descendants', (Cond $AE::ControlTypeProperty $type))) }

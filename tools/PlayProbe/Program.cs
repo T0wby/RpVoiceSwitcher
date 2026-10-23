@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using RpVoiceSwitcher;
 
+if (args.Length > 0 && args[0] == "phase") { Phase.Run(side: false); Phase.Run(side: true); return; }
 if (args.Length > 1 && args[0] == "read")
 {
     using var r = new NAudio.Wave.AudioFileReader(args[1]);
