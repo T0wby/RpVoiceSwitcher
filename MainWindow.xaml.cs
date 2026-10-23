@@ -95,7 +95,7 @@ public partial class MainWindow : Window
         WatchDevices();
         _initializing = false;
 
-        Loaded += (_, _) => MaybeShowWizardOnStart();
+        Loaded += (_, _) => { MaybeShowWizardOnStart(); MaybeShowWhatsNew(); };
         ResumeWizardAfterRestart();
     }
 

@@ -56,6 +56,7 @@ public partial class MainWindow
         Bind(AppCommands.Help, () => HelpWindow.ShowFor(this));
         Bind(AppCommands.CheckUpdates, () => _ = CheckForUpdatesAsync(manual: true));
         Bind(AppCommands.ReportProblem, ReportProblem);
+        Bind(AppCommands.WhatsNew, () => ChangelogWindow.ShowAll(this));
         Bind(AppCommands.CopyDiagnostics, CopyDiagnostics);
         Bind(AppCommands.About, ShowAbout);
 

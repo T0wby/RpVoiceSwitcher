@@ -65,6 +65,7 @@
                 <MenuItem Command="{x:Static local:AppCommands.ReportProblem}"/>
                 <MenuItem Command="{x:Static local:AppCommands.CopyDiagnostics}"/>
                 <Separator/>
+                <MenuItem Command="{x:Static local:AppCommands.WhatsNew}"/>
                 <MenuItem Command="{x:Static local:AppCommands.CheckUpdates}"/>
                 <MenuItem Command="{x:Static local:AppCommands.About}"/>
             </MenuItem>

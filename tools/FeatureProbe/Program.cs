@@ -47,6 +47,17 @@ Check("FormatGain +2,5 dB", VoiceStore.FormatGain(2.5) == "+2,5 dB");
         }
 }
 
+// ---------- Changelog ----------
+{
+    var all = Changelog.All;
+    Check($"Changelog eingebettet ({all.Count} Versionen, neueste {all.FirstOrDefault()?.Title})", all.Count >= 13 && all[0].Version == UpdateChecker.CurrentVersion);
+    var since = Changelog.Since(new Version(1, 8, 2), UpdateChecker.CurrentVersion);
+    Check("Seit 1.8.2: nur neuere Versionen", since.Count >= 3 && since.All(e => e.Version > new Version(1, 8, 2)));
+    Check("Ohne Vorversion: nur die aktuelle", Changelog.Since(null, UpdateChecker.CurrentVersion).Count == 1);
+    string plain = Changelog.ToPlainText("**Neu in 1.8**\n- **Dauersenden:** hält `Maus 5` – Push-to-Talk - ok\n\n**Installieren:** `x.exe`\n\n> **Windows-Warnung**");
+    Check("Update-Text ohne Markdown und ohne Installationshinweis", plain == "Neu in 1.8\n• Dauersenden: hält Maus 5 – Push-to-Talk - ok");
+}
+
 string dir = Path.Combine(Path.GetTempPath(), "rpvs-probe-" + Guid.NewGuid().ToString("N"));
 string dir2 = dir + "-import";
 string zip = dir + ".zip";

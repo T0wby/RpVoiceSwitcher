@@ -93,6 +93,8 @@ public sealed class AppSettings
     // Updates
     public bool CheckForUpdates { get; set; } = true;
     public string? SkippedUpdateVersion { get; set; }
+    /// <summary>Version, deren "Was ist neu" zuletzt gezeigt wurde (null = noch nie, z. B. vor 1.9).</summary>
+    public string? LastSeenVersion { get; set; }
 
     // Soundboard
     public string SoundOutputDevice { get; set; } = "CABLE Input";

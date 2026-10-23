@@ -246,12 +246,56 @@ public partial class MainWindow
 
     private void UpdateLink_Click(object sender, RoutedEventArgs e) => OfferUpdate(this);
 
+    // ---------- Was ist neu (nach einem Update) ----------
+
+    /// <summary>
+    /// Einmal nach einem Update zeigen, was sich seit der zuletzt benutzten Version geändert hat.
+    /// Frische Installation: nichts zeigen (da läuft der Einrichtungs-Assistent), nur merken.
+    /// </summary>
+    private void MaybeShowWhatsNew()
+    {
+        var current = UpdateChecker.CurrentVersion;
+        Version? last = UpdateChecker.TryParseVersion(_settings.LastSeenVersion, out var v) ? v : null;
+        if (last != null && last >= current) return;
+
+        if (last == null)
+        {
+            // Testläufe (--settings) ohne ausdrücklich gesetzte Vorversion nicht stören
+            if (AppSettings.OverridePath != null) return;
+            if (!_settings.SetupWizardDone)
+            {
+                _settings.LastSeenVersion = UpdateChecker.CurrentVersionText;
+                _settings.Save();
+                return;
+            }
+        }
+
+        _settings.LastSeenVersion = UpdateChecker.CurrentVersionText;
+        _settings.Save();
+        var entries = Changelog.Since(last, current);
+        if (entries.Count == 0) return;
+
+        if (IsVisible) ChangelogWindow.ShowWhatsNew(this, entries, last);
+        else
+        {
+            // Im Hintergrund gestartet (Autostart): zeigen, sobald das Fenster das erste Mal aufgeht
+            DependencyPropertyChangedEventHandler? handler = null;
+            handler = (_, _) =>
+            {
+                if (!IsVisible) return;
+                IsVisibleChanged -= handler;
+                ChangelogWindow.ShowWhatsNew(this, entries, last);
+            };
+            IsVisibleChanged += handler;
+        }
+    }
+
     private async void OfferUpdate(Window owner)
     {
         var release = _availableUpdate;
         if (release == null) return;
         string v = UpdateChecker.Format(release.Version);
-        string notes = release.Notes.Trim();
+        string notes = Changelog.ToPlainText(release.Notes);
         if (notes.Length > 700) notes = notes[..700].TrimEnd() + " …";
 
         var answer = MessageBox.Show(owner,

@@ -51,6 +51,7 @@ public static class AppCommands
 
     // Hilfe
     public static readonly RoutedUICommand Help = C("_Kurzanleitung", nameof(Help), K(Key.F1, None, "F1"));
+    public static readonly RoutedUICommand WhatsNew = C("_Was ist neu (alle Versionen) …", nameof(WhatsNew));
     public static readonly RoutedUICommand ReportProblem = C("_Problem melden …", nameof(ReportProblem));
     public static readonly RoutedUICommand CopyDiagnostics = C("_Diagnose kopieren", nameof(CopyDiagnostics));
     public static readonly RoutedUICommand CheckUpdates = C("Nach _Updates suchen …", nameof(CheckUpdates));

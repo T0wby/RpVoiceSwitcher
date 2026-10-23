@@ -13,7 +13,7 @@ Windows-Desktop-App (WPF, .NET 10). Die Effekte macht [Equalizer APO](https://so
    VB-CABLE installieren → Equalizer APO installieren und an „CABLE Output“ hängen → Zugriff freigeben → Neustart → Mikrofon per „Abhören“ ins Kabel leiten → Wiedergabegerät prüfen → ausprobieren → im Spiel und in Discord „CABLE Output“ als Mikrofon wählen.
    Jeder Schritt prüft selbst, ob er erledigt ist. Später jederzeit wieder unter *Hilfe → Einrichtungs-Assistent*.
 
-Updates findet die App selbst (abschaltbar) – oder *Hilfe → Nach Updates suchen*.
+Updates findet die App selbst (abschaltbar) – oder *Hilfe → Nach Updates suchen*. Nach einem Update zeigt sie einmal, was neu ist; alle Änderungen stehen unter *Hilfe → Was ist neu* und in der [CHANGELOG.md](CHANGELOG.md).
 
 ## Hilfe, wenn etwas nicht klappt
 
