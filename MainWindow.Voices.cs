@@ -206,6 +206,7 @@ public partial class MainWindow
         _status.SetSounds(sounds);
         bool openMicKnown = OpenMicMode && PttKey != null;
         if (openMicKnown) _status.SetTransmitting(_openMicMuted ? "Stumm im Spiel" : "● Mikro im Spiel an", live: !_openMicMuted);
+        else if (_pttLatched && PttActive && !_ptt.IsHeld) _status.SetTransmitting("Dauersenden pausiert – Spiel nicht im Vordergrund", live: false);
         else _status.SetTransmitting(_pttLatched ? "● Dauersenden" : null);
         bool noteworthy = _pttLatched || (openMicKnown && _openMicMuted);
 

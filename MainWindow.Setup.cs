@@ -38,6 +38,7 @@ public partial class MainWindow
     {
         RefreshFolderTexts();
         _settingsWindow?.ShowAndActivate();
+        UpdateGameStatusText();
     }
     private DeviceWatcher? _deviceWatcher;
     private readonly System.Windows.Threading.DispatcherTimer _deviceDebounce = new() { Interval = TimeSpan.FromMilliseconds(1200) };

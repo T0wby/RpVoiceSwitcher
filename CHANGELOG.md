@@ -2,6 +2,12 @@
 
 Neueste Version oben. Die App zeigt diese Liste nach einem Update („Was ist neu“) und jederzeit unter *Hilfe → Was ist neu*.
 
+## 1.13.0 – 24.10.2026
+- **Sprachtaste nur, solange das Spiel vorne ist:** Dauersenden und das automatische Drücken bei Sounds halten die Taste nur noch, während nanos world im Vordergrund ist. Wechselst du per Alt+Tab in Discord oder den Browser, lässt die App die Taste los und drückt sie beim Zurückwechseln sofort wieder. So landet z. B. Maus 5 nie mehr im Browser, und Windows bleibt bedienbar.
+- Schaltest du Dauersenden in der App selbst ein, zeigt der Knopf „wartet aufs Spiel“ – gedrückt wird, sobald du ins Spiel wechselst. Beim offenen Mikrofon wird das Antippen ebenso nachgeholt, und eigene Tastendrücke zählen nur noch, wenn sie im Spiel landen.
+- Einstellungen → Sprachtaste im Spiel: Haken „Taste nur drücken, solange das Spiel im Vordergrund ist“ (Standard: an) und das Spiel als Programmname – „Erkennen …“ übernimmt es, wenn du innerhalb von 5 Sekunden ins Spiel wechselst. Daneben steht, ob das Spiel gerade läuft.
+- **Warnung bei Administratorrechten:** Läuft das Spiel als Administrator, die App aber nicht, blockiert Windows die Sprachtaste. Die App erkennt das jetzt und sagt, dass sie dann ebenfalls als Administrator gestartet werden muss.
+
 ## 1.12.0 – 24.10.2026
 - **Neu: Modus „Offenes Mikrofon im Spiel“** als zweiter Weg zum Dauersenden (Einstellungen → Sprachtaste im Spiel). Stellst du im Spiel den Sprachchat auf offenes Mikrofon (nanos world: Einstellungen → Audio → „Open Mic“), sendet das Spiel selbst dauerhaft – auch alle Sounds. Die App hält dann keine Taste mehr gedrückt: Die Umschalt-Taste tippt die Sprachtaste nur kurz an und schaltet dich damit im Spiel stumm bzw. wieder an.
 - Soundboard, Status-Anzeige, Extras- und Tray-Menü zeigen in diesem Modus „Mikro im Spiel: AN“ bzw. „stumm“. Drückst du die Sprachtaste im Spiel selbst, zählt die App mit; stimmt die Anzeige trotzdem einmal nicht, dreht ⇄ sie um, ohne eine Taste zu drücken.

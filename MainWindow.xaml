@@ -278,6 +278,27 @@
                                             <Button Grid.Row="1" Grid.Column="2" Content="✕" Click="ClearPttLatchKey_Click" Padding="8,5" Margin="0,0,0,8"
                                                     ToolTip="Dauersenden-Taste entfernen" AutomationProperties.Name="Dauersenden-Taste entfernen"/>
                                         </Grid>
+                                        <CheckBox x:Name="PttOnlyInGameCheck" Content="Taste nur drücken, solange das Spiel im Vordergrund ist" Checked="PttOnlyInGame_Click" Unchecked="PttOnlyInGame_Click" Margin="0,4,0,6"
+                                                  AutomationProperties.AutomationId="PttOnlyInGameCheck"
+                                                  ToolTip="Wechselst du aus dem Spiel raus (Alt+Tab, Discord, Browser), lässt die App die Sprachtaste los und drückt sie beim Zurückwechseln wieder. So landet z. B. Maus 5 nie im Browser und Windows bleibt bedienbar."/>
+                                        <Grid Margin="0,0,0,8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" SharedSizeGroup="Label"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Spiel (Programm)" Style="{StaticResource SettingsLabel}"/>
+                                            <TextBox x:Name="PttGameBox" Grid.Column="1" Width="220" Padding="6,4" VerticalContentAlignment="Center" Margin="0,0,4,0"
+                                                     LostFocus="PttGameBox_LostFocus" KeyDown="PttGameBox_KeyDown"
+                                                     AutomationProperties.AutomationId="PttGameBox" AutomationProperties.Name="Spiel (Programm)"
+                                                     ToolTip="Programmname des Spiels ohne .exe – nanos world: NanosWorld-Win64-Shipping. Leer = nanos world."/>
+                                            <Button x:Name="PttGameDetect" Grid.Column="2" Content="Erkennen …" Click="PttGameDetect_Click" Padding="10,4"
+                                                    AutomationProperties.AutomationId="PttGameDetect"
+                                                    ToolTip="Klicken und dann innerhalb von 5 Sekunden ins Spiel wechseln – die App übernimmt das Programm im Vordergrund."/>
+                                            <TextBlock x:Name="PttGameStatus" Grid.Column="3" Foreground="{StaticResource FgDim}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="10,0,0,0"
+                                                       AutomationProperties.AutomationId="PttGameStatus"/>
+                                        </Grid>
                                         <CheckBox x:Name="PttCheck" Content="Beim Abspielen von Sounds automatisch drücken" Click="PttCheck_Click" Margin="0,4,0,0"
                                                   ToolTip="Die App drückt die Sprachtaste kurz vor jedem Sound und lässt sie kurz danach wieder los – sonst hört im Spiel niemand den Sound."/>
                                         <TextBlock x:Name="PttHint" Foreground="#E5C07A" TextWrapping="Wrap" Margin="0,6,0,0" Visibility="Collapsed"/>

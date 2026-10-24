@@ -62,7 +62,7 @@ function Write-TestSettings([bool]$openMic) {
     $p0.SoundHotkeys = [pscustomobject]@{ 'Testton.wav' = 'Control, Alt|F11' }
     $j.Profiles = @($p0); $j.ActiveProfile = $p0.Name
     $extra = @{ SoundMonitor = $false; SoundVolume = 1.0; SoundNormalize = $true; SoundFolder = $soundDir
-                PushToTalkEnabled = $true; PushToTalkKey = 'Key|F13'; GameOpenMic = $openMic
+                PushToTalkEnabled = $true; PushToTalkKey = 'Key|F13'; GameOpenMic = $openMic; PttOnlyInGame = $false
                 PttLatchHotkey = 'Control, Alt|F10'; PanicHotkey = 'None|Pause'
                 ShowOverlay = $false; PlaySound = $false; CheckForUpdates = $false; ShowStatusOverlay = $false
                 SetupWizardDone = $true; SoundsWithEffect = @(); SoundRepeat = [pscustomobject]@{}; LastSeenVersion = '99.0.0' }

@@ -29,7 +29,7 @@ Updates findet die App selbst (abschaltbar) – oder *Hilfe → Nach Updates suc
 - **Charaktere** mit eigener Stimmenauswahl und eigenen Shortcuts
 - **Notfall-Taste** (Standard: Pause): sofort normale Stimme, alle Sounds aus
 - **Soundboard** – Sounds wahlweise durch den Stimmeffekt oder unverändert; einmal, n-mal oder als Endlos-Loop, den derselbe Shortcut wieder stoppt; gleicht die Lautstärke automatisch an (Regler bis 200 % mit Begrenzer) und drückt auf Wunsch die Push-to-Talk-Taste des Spiels, solange ein Sound läuft (Taste oder Maus 4/5)
-- **Dauersenden**: hält die Push-to-Talk-Taste des Spiels per Shortcut dauerhaft gedrückt – offenes Mikrofon auch in Spielen, die nur Push-to-Talk können
+- **Dauersenden**: hält die Push-to-Talk-Taste des Spiels per Shortcut dauerhaft gedrückt – offenes Mikrofon auch in Spielen, die nur Push-to-Talk können; gedrückt wird nur, solange das Spiel im Vordergrund ist (Alt+Tab lässt los, Zurückwechseln drückt wieder)
 - **Offenes Mikrofon im Spiel** (zweiter Weg, z. B. nanos world: Audio → „Open Mic“): Das Spiel sendet selbst; die App hält keine Taste, sondern tippt die Sprachtaste zum Stummschalten/Anschalten nur kurz an und zeigt an, ob du gerade sendest
 - **Probehören**: kurz sprechen, normal und mit Effekt vergleichen; misst den Lautstärke-Unterschied und gleicht ihn auf Wunsch aus
 - **Lautstärke-Ausgleich** pro Stimme

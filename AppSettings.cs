@@ -119,6 +119,10 @@ public sealed class AppSettings
     /// stumm/an. Dann tippt die App sie nur an, statt sie zu halten, und drückt bei Sounds nichts.
     /// </summary>
     public bool GameOpenMic { get; set; }
+    /// <summary>Sprachtaste nur drücken, solange das Spiel (PttGameProcess) im Vordergrund ist.</summary>
+    public bool PttOnlyInGame { get; set; } = true;
+    /// <summary>Prozessname des Spiels ohne ".exe" (Standard: nanos world).</summary>
+    public string PttGameProcess { get; set; } = "NanosWorld-Win64-Shipping";
 
     /// <summary>Sounds, die durch den aktiven Stimmeffekt laufen sollen (Standard: ohne Effekt).</summary>
     public List<string> SoundsWithEffect { get; set; } = new();

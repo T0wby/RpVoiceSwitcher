@@ -26,10 +26,24 @@ public partial class MainWindow
     /// <summary>Sendest du gerade (Dauersenden an bzw. Mikro im Spiel nicht stumm)?</summary>
     private bool IsTransmittingLatched => OpenMicMode ? PttKey != null && !_openMicMuted : _pttLatched;
 
+    /// <summary>Umschalten wurde gewünscht, als das Spiel nicht vorne war (z. B. Klick in der App) – kommt nach.</summary>
+    private bool _openMicTapPending;
+
     private async Task ToggleOpenMic(PushToTalk.Binding b)
     {
         if (_openMicTapping) return;
         bool mute = !_openMicMuted;
+        if (!GameAllowsPtt())
+        {
+            // Im Spiel kommt der Tastendruck nur an, wenn es vorne ist → nachholen, sobald du ins Spiel wechselst
+            _openMicMuted = mute;
+            _openMicTapPending = !_openMicTapPending; // zweimal umschalten = nichts zu tun
+            PttLog(_openMicTapPending ? "Antippen vorgemerkt (Spiel nicht im Vordergrund)" : "vorgemerktes Antippen aufgehoben");
+            UpdatePttLatchUi();
+            FlashOverlay((mute ? "Mikro im Spiel: stumm" : "Mikro im Spiel: an") + (_openMicTapPending ? " – sobald du ins Spiel wechselst" : ""));
+            Beep(mute ? 520 : 880);
+            return;
+        }
         _openMicTapping = true;
         _openMicMuted = mute;
         UpdatePttLatchUi();
@@ -77,15 +91,40 @@ public partial class MainWindow
     {
         if (!OpenMicMode || PttKey is not PushToTalk.Binding b) { _openMicWatch.Stop(); return; }
         if (_openMicTapping) return;
+        if (_openMicTapPending && GameAllowsPtt())
+        {
+            _openMicTapPending = false;
+            _ = TapPending(b);
+            return;
+        }
         bool down = PushToTalk.IsDown(b);
-        // In der App selbst (z. B. beim Einstellen der Taste) landet der Druck nicht im Spiel
-        if (down && !_openMicWasDown && !OwnWindowInFront())
+        // Nur Drücke zählen, die im Spiel landen (nicht z. B. in der App beim Einstellen der Taste)
+        bool reachesGame = GameGateOn ? GameInFront() : !OwnWindowInFront();
+        if (down && !_openMicWasDown && reachesGame)
         {
             _openMicMuted = !_openMicMuted;
             PttLog($"selbst gedrückt (Mikro im Spiel jetzt {(_openMicMuted ? "stumm" : "an")})");
             UpdatePttLatchUi();
         }
         _openMicWasDown = down;
+    }
+
+    private async Task TapPending(PushToTalk.Binding b)
+    {
+        _openMicTapping = true;
+        try
+        {
+            await WaitForModifiersUp();
+            await Task.Delay(150); // Spielfenster hat gerade erst den Fokus bekommen
+            await _ptt.Tap(b, OpenMicTapMs);
+            PttLog($"vorgemerkt angetippt ({b}, Mikro im Spiel jetzt {(_openMicMuted ? "stumm" : "an")})");
+            await Task.Delay(40);
+        }
+        finally
+        {
+            _openMicWasDown = PushToTalk.IsDown(b);
+            _openMicTapping = false;
+        }
     }
 
     [DllImport("user32.dll")] private static extern IntPtr GetForegroundWindow();
@@ -105,6 +144,7 @@ public partial class MainWindow
         _settings.GameOpenMic = open;
         _settings.Save();
         _openMicMuted = false;
+        _openMicTapPending = false;
         PttLog(open ? "Modus: offenes Mikrofon im Spiel (Taste antippen)" : "Modus: Push-to-Talk (Taste halten)");
         UpdatePushToTalkUi();
         RegisterAllBindings();

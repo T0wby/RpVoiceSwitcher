@@ -52,7 +52,7 @@ function Write-TestSettings([bool]$normalize, [double]$volume, [string]$ptt) {
     $j.Profiles = @($p0); $j.ActiveProfile = $p0.Name
     # Mithoeren an (aber stumm), damit auch der zweite Ausgang mitlaeuft
     $extra = @{ SoundMonitor = $true; SoundMonitorVolume = 0.0; SoundVolume = $volume; SoundNormalize = $normalize; SoundFolder = $soundDir
-                PushToTalkEnabled = [bool]$ptt; PushToTalkKey = $(if ($ptt) { $ptt } else { $null })
+                PushToTalkEnabled = [bool]$ptt; PushToTalkKey = $(if ($ptt) { $ptt } else { $null }); PttOnlyInGame = $false
                 PttLatchHotkey = 'Control, Alt|F10'; PanicHotkey = 'None|Pause'
                 ShowOverlay = $false; PlaySound = $false; CheckForUpdates = $false; ShowStatusOverlay = $false
                 SetupWizardDone = $true; SoundsWithEffect = @(); SoundRepeat = [pscustomobject]@{} }

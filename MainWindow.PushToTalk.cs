@@ -70,7 +70,7 @@ public partial class MainWindow
     {
         _pttReleaseTimer.Stop();
         if (PttBinding is not PushToTalk.Binding b) return play();
-        if (_ptt.IsHeld) return play(); // Dauersenden oder ein anderer Sound – Taste ist schon offen
+        if (PttActive) return play(); // Dauersenden oder ein anderer Sound – Taste ist schon offen
 
         _pttPending.Add(path);
         _ = PressThenPlay(path, b, play);
@@ -81,10 +81,10 @@ public partial class MainWindow
     {
         await WaitForModifiersUp();
         if (!_pttPending.Contains(path)) { SchedulePttRelease(); return; } // inzwischen abgebrochen
-        if (!_ptt.IsHeld)
+        if (!PttActive)
         {
             PressPtt(b, "Sound");
-            await Task.Delay(PttLeadMs);
+            if (_ptt.IsHeld) await Task.Delay(PttLeadMs); // Spiel nicht vorne: Sound trotzdem gleich abspielen
         }
         if (!_pttPending.Remove(path)) { SchedulePttRelease(); return; }
         if (!play()) { ShowSoundError(_soundEngine.Error); SchedulePttRelease(); }
@@ -115,7 +115,7 @@ public partial class MainWindow
     /// <summary>Taste kurz nach dem letzten Sound loslassen (nicht bei Dauersenden).</summary>
     private void SchedulePttRelease()
     {
-        if (_pttLatched || !_ptt.IsHeld || _soundEngine.AnyPlaying || _pttPending.Count > 0) return;
+        if (_pttLatched || !PttActive || _soundEngine.AnyPlaying || _pttPending.Count > 0) return;
         if (!_pttReleaseTimer.IsEnabled) _pttReleaseTimer.Start();
     }
 
@@ -137,25 +137,64 @@ public partial class MainWindow
     private readonly DispatcherTimer _pttKeepDown = new() { Interval = TimeSpan.FromMilliseconds(25) };
     private bool _pttKeepDownWired;
 
+    /// <summary>
+    /// Die App möchte die Taste halten (Sound oder Dauersenden). Wirklich gedrückt ist sie nur, solange das Spiel
+    /// im Vordergrund ist (falls eingestellt) – wechselst du z. B. per Alt+Tab raus, lässt die App sie los und
+    /// drückt sie beim Zurückwechseln wieder. So hängt sie nie in Windows oder anderen Programmen.
+    /// </summary>
+    private PushToTalk.Binding? _pttWant;
+    private bool PttActive => _pttWant != null;
+
     private void PressPtt(PushToTalk.Binding b, string why)
     {
-        if (_ptt.IsHeld) return;
-        _ptt.Press(b);
-        PttLog($"gedrückt ({b}, {why})");
+        if (_pttWant != null) return;
+        _pttWant = b;
+        if (GameAllowsPtt())
+        {
+            _ptt.Press(b);
+            PttLog($"gedrückt ({b}, {why})");
+        }
+        else PttLog($"wartet aufs Spiel ({b}, {why}) – {GameProcessName} ist nicht im Vordergrund");
         if (!_pttKeepDownWired)
         {
             _pttKeepDownWired = true;
-            _pttKeepDown.Tick += (_, _) => { if (_ptt.KeepDown()) PttLog("wieder gedrückt (war selbst losgelassen)"); };
+            _pttKeepDown.Tick += (_, _) => PttTick();
         }
         _pttKeepDown.Start();
+        UpdatePttLatchUi();
+    }
+
+    private void PttTick()
+    {
+        if (_pttWant is not PushToTalk.Binding b) { _pttKeepDown.Stop(); return; }
+        bool ok = GameAllowsPtt();
+        if (ok && !_ptt.IsHeld)
+        {
+            _ptt.Press(b);
+            PttLog("gedrückt (Spiel wieder im Vordergrund)");
+            UpdatePttLatchUi();
+        }
+        else if (!ok && _ptt.IsHeld)
+        {
+            _ptt.Release();
+            PttLog("losgelassen (Spiel nicht mehr im Vordergrund)");
+            UpdatePttLatchUi();
+        }
+        else if (_ptt.IsHeld && _ptt.KeepDown()) PttLog("wieder gedrückt (war selbst losgelassen)");
     }
 
     private void ReleasePtt(string why)
     {
         _pttKeepDown.Stop();
-        if (!_ptt.IsHeld) return;
-        _ptt.Release();
-        PttLog($"losgelassen ({why})");
+        bool wanted = _pttWant != null;
+        _pttWant = null;
+        if (_ptt.IsHeld)
+        {
+            _ptt.Release();
+            PttLog($"losgelassen ({why})");
+        }
+        else if (wanted) PttLog($"nicht mehr gewünscht ({why})");
+        if (wanted) UpdatePttLatchUi();
     }
 
     // ---------- Dauersenden ----------
@@ -203,7 +242,7 @@ public partial class MainWindow
         bool on = IsTransmittingLatched;
         PttLatchToggle.Content = OpenMicMode
             ? (on ? "● Mikro im Spiel: AN" : "Mikro im Spiel: stumm")
-            : (on ? "● Dauersenden: AN" : "Dauersenden: aus");
+            : (on ? (PttActive && !_ptt.IsHeld ? "● Dauersenden: AN (wartet aufs Spiel)" : "● Dauersenden: AN") : "Dauersenden: aus");
         PttLatchToggle.ToolTip = OpenMicMode
             ? "Tippt die Sprachtaste kurz an – im Spiel (offenes Mikrofon) schaltet das stumm bzw. wieder an."
             : "Hält die Sprachtaste dauerhaft gedrückt, bis du wieder ausschaltest.";
@@ -224,7 +263,8 @@ public partial class MainWindow
         var latch = Hotkey.Parse(_settings.PttLatchHotkey);
         PttSummary.Text = key == null
             ? "Keine Sprachtaste eingestellt"
-            : $"Sprachtaste: {key}" + (latch != null ? $" · Umschalten: {latch}" : "") + (OpenMicMode ? " · Spiel: offenes Mikro" : "");
+            : $"Sprachtaste: {key}" + (latch != null ? $" · Umschalten: {latch}" : "") + (OpenMicMode ? " · Spiel: offenes Mikro" : "")
+              + (_gameElevated ? " · ⚠ Spiel läuft als Administrator – App auch als Administrator starten" : "");
     }
 
     private void OpenPttSettings_Click(object sender, RoutedEventArgs e) => OpenPttSettings();
@@ -283,8 +323,10 @@ public partial class MainWindow
               "Sprachtaste nur kurz an, das schaltet dich im Spiel stumm bzw. wieder an. Die App kann den Zustand im Spiel nicht auslesen; " +
               "sie zählt mit (auch wenn du die Taste selbst drückst). Zeigt sie etwas Falsches an, im Soundboard auf ⇄ klicken."
             : "Dauersenden hält die Sprachtaste gedrückt, bis du es wieder ausschaltest – wie ein offenes Mikrofon. Drückst du die " +
-              "Sprachtaste zwischendurch selbst, läuft es einfach weiter. Als Umschalt-Taste eignet sich z. B. Strg + Alt + eine F-Taste.";
+              "Sprachtaste zwischendurch selbst, läuft es einfach weiter. Wechselst du aus dem Spiel raus (Alt+Tab), lässt die App die " +
+              "Taste los und drückt sie beim Zurückwechseln wieder. Als Umschalt-Taste eignet sich z. B. Strg + Alt + eine F-Taste.";
         UpdateOpenMicWatch();
+        UpdateGameUi();
         UpdatePttLatchUi();
     }
 
