@@ -110,23 +110,26 @@ public sealed class StatusOverlayWindow : Window
 
     private TextBlock? _transmit;
 
-    /// <summary>Zeile "● Dauersenden" unter der Stimme (nur sichtbar, wenn an).</summary>
-    public void SetTransmitting(bool on)
+    /// <summary>
+    /// Zeile unter der Stimme, z. B. "● Dauersenden" (rot) oder "Stumm im Spiel" (grau); null = ausblenden.
+    /// </summary>
+    public void SetTransmitting(string? text, bool live = true)
     {
         if (_transmit == null)
         {
-            if (!on) return;
+            if (text == null) return;
             _transmit = new TextBlock
             {
-                Text = "● Dauersenden",
-                Foreground = new SolidColorBrush(Color.FromRgb(0xF0, 0x5A, 0x4E)),
                 FontSize = 12,
                 FontWeight = FontWeights.SemiBold,
                 Margin = new Thickness(1, 4, 0, 0),
             };
             ((StackPanel)_border.Child).Children.Insert(1, _transmit);
         }
-        _transmit.Visibility = on ? Visibility.Visible : Visibility.Collapsed;
+        _transmit.Visibility = text != null ? Visibility.Visible : Visibility.Collapsed;
+        if (text == null) return;
+        _transmit.Text = text;
+        _transmit.Foreground = live ? new SolidColorBrush(Color.FromRgb(0xF0, 0x5A, 0x4E)) : new SolidColorBrush(Color.FromRgb(0x9A, 0x9A, 0xA4));
     }
 
     public void SetVoice(string name, bool isNormal)

@@ -154,6 +154,11 @@
             <Setter Property="FocusVisualStyle" Value="{StaticResource DarkFocusVisual}"/>
         </Style>
 
+        <Style TargetType="RadioButton">
+            <Setter Property="Foreground" Value="{StaticResource Fg}"/>
+            <Setter Property="FocusVisualStyle" Value="{StaticResource DarkFocusVisual}"/>
+        </Style>
+
         <Style TargetType="Slider">
             <Setter Property="FocusVisualStyle" Value="{StaticResource DarkFocusVisual}"/>
             <Setter Property="IsMoveToPointEnabled" Value="True"/>

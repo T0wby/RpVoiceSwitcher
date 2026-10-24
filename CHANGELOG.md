@@ -2,6 +2,11 @@
 
 Neueste Version oben. Die App zeigt diese Liste nach einem Update („Was ist neu“) und jederzeit unter *Hilfe → Was ist neu*.
 
+## 1.12.0 – 24.10.2026
+- **Neu: Modus „Offenes Mikrofon im Spiel“** als zweiter Weg zum Dauersenden (Einstellungen → Sprachtaste im Spiel). Stellst du im Spiel den Sprachchat auf offenes Mikrofon (nanos world: Einstellungen → Audio → „Open Mic“), sendet das Spiel selbst dauerhaft – auch alle Sounds. Die App hält dann keine Taste mehr gedrückt: Die Umschalt-Taste tippt die Sprachtaste nur kurz an und schaltet dich damit im Spiel stumm bzw. wieder an.
+- Soundboard, Status-Anzeige, Extras- und Tray-Menü zeigen in diesem Modus „Mikro im Spiel: AN“ bzw. „stumm“. Drückst du die Sprachtaste im Spiel selbst, zählt die App mit; stimmt die Anzeige trotzdem einmal nicht, dreht ⇄ sie um, ohne eine Taste zu drücken.
+- Der bisherige Weg (Push-to-Talk, die App hält die Taste) bleibt Standard und funktioniert wie gehabt. Wechselst du während Dauersenden den Modus, wird die Taste sofort losgelassen.
+
 ## 1.11.0 – 23.10.2026
 - **Einstellungen neu geordnet:** Links eine Navigation zu allen Bereichen (markiert, wo du gerade bist), rechts je Bereich eine eigene Karte mit Symbol, kurzer Erklärung und sauber ausgerichteten Feldern – Allgemein, Notfall-Taste, Sprachtaste im Spiel, Status-Anzeige, Geräte, Ordner, Stream (OBS) und Updates.
 - Unter Updates gibt es jetzt auch „Was ist neu“.

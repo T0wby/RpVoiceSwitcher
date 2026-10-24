@@ -1,11 +1,12 @@
 ﻿# Screenshots (PrintWindow, ohne Fokus) von Soundboard und Einstellungen -> Sprachtaste, mit einer Kopie der Einstellungen.
+param([switch]$OpenMic)
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path $PSScriptRoot -Parent
 $exe = Join-Path $repo 'publish\RpVoiceSwitcher.exe'
 $out = Join-Path $env:TEMP 'rpvs-shots'; New-Item -ItemType Directory -Force $out | Out-Null
 $settings = Join-Path $env:TEMP "rpvs-shot-settings-$PID.json"
 $j = Get-Content "$env:APPDATA\RpVoiceSwitcher\settings.json" -Raw | ConvertFrom-Json
-$j | Add-Member PushToTalkKey 'Mouse|2' -Force; $j | Add-Member PushToTalkEnabled $true -Force
+$j | Add-Member PushToTalkKey 'Key|F13' -Force; $j | Add-Member PushToTalkEnabled $true -Force; $j | Add-Member GameOpenMic ([bool]$OpenMic) -Force
 $j | Add-Member PttLatchHotkey 'Control, Alt|F10' -Force; $j | Add-Member CheckForUpdates $false -Force
 $j | ConvertTo-Json -Depth 6 | Set-Content $settings
 Add-Type -AssemblyName UIAutomationClient, UIAutomationTypes, System.Drawing

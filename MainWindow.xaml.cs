@@ -218,9 +218,9 @@ public partial class MainWindow : Window
         };
         panic.Click += (_, _) => Panic();
         menu.Items.Add(panic);
-        var latch = new WinForms.ToolStripMenuItem("Dauersenden (Sprachtaste halten)")
+        var latch = new WinForms.ToolStripMenuItem(OpenMicMode ? "Mikro im Spiel an (Sprachtaste antippen)" : "Dauersenden (Sprachtaste halten)")
         {
-            Checked = _pttLatched,
+            Checked = IsTransmittingLatched,
             ShortcutKeyDisplayString = Hotkey.Parse(_settings.PttLatchHotkey)?.ToString() ?? "",
         };
         latch.Click += (_, _) => TogglePttLatch();

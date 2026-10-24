@@ -114,6 +114,11 @@ public sealed class AppSettings
     public string? PushToTalkKey { get; set; }
     /// <summary>Globaler Shortcut: Sprachtaste dauerhaft halten an/aus ("Dauersenden"), wie die Notfall-Taste für alle Charaktere.</summary>
     public string? PttLatchHotkey { get; set; }
+    /// <summary>
+    /// Spiel steht auf "offenes Mikrofon" (z. B. nanos world: Audio → Open Mic): Die Sprachtaste schaltet dort
+    /// stumm/an. Dann tippt die App sie nur an, statt sie zu halten, und drückt bei Sounds nichts.
+    /// </summary>
+    public bool GameOpenMic { get; set; }
 
     /// <summary>Sounds, die durch den aktiven Stimmeffekt laufen sollen (Standard: ohne Effekt).</summary>
     public List<string> SoundsWithEffect { get; set; } = new();

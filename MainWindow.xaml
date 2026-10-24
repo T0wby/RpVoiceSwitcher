@@ -238,10 +238,23 @@
                                             <StackPanel Margin="8,0,0,0">
                                                 <TextBlock Text="Sprachtaste im Spiel (Push-to-Talk)" Style="{StaticResource SettingsTitle}"/>
                                                 <TextBlock Style="{StaticResource SettingsSubtitle}"
-                                                           Text="Für Spiele, die nur mit gedrückter Sprechtaste senden (z. B. nanos world). Die App kann die Taste nicht aus dem Spiel auslesen – stell dieselbe ein wie in den Sprachchat-Einstellungen des Spiels."/>
+                                                           Text="Für Spiele mit Sprechtaste im Sprachchat (z. B. nanos world). Die App kann die Taste nicht aus dem Spiel auslesen – stell dieselbe ein wie in den Sprachchat-Einstellungen des Spiels."/>
                                             </StackPanel>
                                         </DockPanel>
                                         <Border Style="{StaticResource SettingsDivider}"/>
+                                        <TextBlock Text="Wie ist der Sprachchat im Spiel eingestellt?" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                                        <RadioButton x:Name="PttModeHold" GroupName="PttMode" Checked="PttMode_Click" Margin="0,0,0,4"
+                                                     AutomationProperties.AutomationId="PttModeHold"
+                                                     AutomationProperties.Name="Push-to-Talk"
+                                                     ToolTip="Standard in nanos world. Für Sounds und Dauersenden drückt die App die Sprachtaste und hält sie fest.">
+                                            <TextBlock TextWrapping="Wrap" Text="Push-to-Talk – sendet nur, solange die Taste gedrückt ist (die App hält die Taste)"/>
+                                        </RadioButton>
+                                        <RadioButton x:Name="PttModeOpenMic" GroupName="PttMode" Checked="PttMode_Click" Margin="0,0,0,12"
+                                                     AutomationProperties.AutomationId="PttModeOpenMic"
+                                                     AutomationProperties.Name="Offenes Mikrofon"
+                                                     ToolTip="nanos world: Einstellungen → Audio → „Open Mic“. Die App muss dann nichts gedrückt halten.">
+                                            <TextBlock TextWrapping="Wrap" Text="Offenes Mikrofon – das Spiel sendet immer, die Taste schaltet stumm/an (die App tippt sie nur kurz an)"/>
+                                        </RadioButton>
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="Auto" SharedSizeGroup="Label"/>
@@ -258,7 +271,7 @@
                                                     ToolTip="Klicken und dann die Sprechtaste aus dem Spiel drücken – Taste oder Maus 4/5. Entf = keine, Esc = abbrechen."/>
                                             <Button Grid.Column="2" Content="✕" Click="ClearPttKey_Click" Padding="8,5" Margin="0,0,0,8"
                                                     ToolTip="Sprachtaste entfernen" AutomationProperties.Name="Sprachtaste entfernen"/>
-                                            <TextBlock Grid.Row="1" Text="Dauersenden an/aus" Style="{StaticResource SettingsLabel}"/>
+                                            <TextBlock x:Name="PttLatchLabel" Grid.Row="1" Text="Dauersenden an/aus" Style="{StaticResource SettingsLabel}"/>
                                             <Button x:Name="PttLatchButton" Grid.Row="1" Grid.Column="1" Content="Keine Taste" Click="PttLatchKey_Click" MinWidth="220" Padding="10,5" Margin="0,0,4,8"
                                                     AutomationProperties.AutomationId="PttLatchButton"
                                                     ToolTip="Shortcut, mit dem du zwischen Dauersenden und Push-to-Talk umschaltest – gilt in allen Charakteren, auch im Spiel. Klicken und Kombination drücken; Entf = keine, Esc = abbrechen."/>
@@ -268,8 +281,7 @@
                                         <CheckBox x:Name="PttCheck" Content="Beim Abspielen von Sounds automatisch drücken" Click="PttCheck_Click" Margin="0,4,0,0"
                                                   ToolTip="Die App drückt die Sprachtaste kurz vor jedem Sound und lässt sie kurz danach wieder los – sonst hört im Spiel niemand den Sound."/>
                                         <TextBlock x:Name="PttHint" Foreground="#E5C07A" TextWrapping="Wrap" Margin="0,6,0,0" Visibility="Collapsed"/>
-                                        <TextBlock Style="{StaticResource SettingsHint}" Margin="0,10,0,0"
-                                                   Text="Dauersenden hält die Sprachtaste gedrückt, bis du es wieder ausschaltest – wie ein offenes Mikrofon. Drückst du die Sprachtaste zwischendurch selbst, läuft es einfach weiter. Als Umschalt-Taste eignet sich z. B. Strg + Alt + eine F-Taste."/>
+                                        <TextBlock x:Name="PttModeHint" Style="{StaticResource SettingsHint}" Margin="0,10,0,0"/>
                                     </StackPanel>
                                 </Border>
 
@@ -597,6 +609,9 @@
                                 <Button x:Name="PttLatchToggle" Content="Dauersenden: aus" Click="PttLatchToggle_Click" Padding="12,4" MinWidth="150" VerticalAlignment="Center" Margin="0,0,12,8"
                                         AutomationProperties.AutomationId="PttLatchToggle"
                                         ToolTip="Hält die Sprachtaste des Spiels dauerhaft gedrückt – du sendest dann ständig wie mit offenem Mikrofon. Nochmal = wieder Push-to-Talk. Die Notfall-Taste schaltet es auch aus."/>
+                                <Button x:Name="PttStateFlip" Content="⇄" Click="PttStateFlip_Click" Padding="8,4" VerticalAlignment="Center" Margin="-8,0,12,8" Visibility="Collapsed"
+                                        AutomationProperties.AutomationId="PttStateFlip" AutomationProperties.Name="Anzeige umdrehen"
+                                        ToolTip="Anzeige stimmt nicht mit dem Spiel überein? Hier nur die Anzeige umdrehen (stumm ↔ an) – die App drückt dabei keine Taste."/>
                                 <TextBlock x:Name="PttSummary" Foreground="{StaticResource FgDim}" VerticalAlignment="Center" Margin="0,0,10,8" TextWrapping="Wrap"
                                            AutomationProperties.AutomationId="PttSummary"/>
                                 <Button Content="Sprachtaste einstellen …" Click="OpenPttSettings_Click" Padding="10,4" VerticalAlignment="Center" Margin="0,0,0,8"

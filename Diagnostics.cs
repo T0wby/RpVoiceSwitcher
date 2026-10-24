@@ -33,7 +33,7 @@ public static class Diagnostics
         sb.AppendLine($"Notfall-Taste: {Hotkey.Parse(settings.PanicHotkey)?.ToString() ?? "keine"}");
         var mic = DefaultMic.Read(settings.TargetDevice);
         sb.AppendLine($"Windows-Standardmikrofon: {mic.DefaultName ?? "?"} / Kommunikation: {mic.CommsName ?? "?"} (Kabel halten: {(settings.KeepCableDefaultMic ? "an" : "aus")})");
-        sb.AppendLine($"Sprachtaste: {PushToTalk.Binding.Parse(settings.PushToTalkKey)?.ToString() ?? "keine"} (bei Sounds: {(settings.PushToTalkEnabled ? "an" : "aus")}), Dauersenden-Taste: {Hotkey.Parse(settings.PttLatchHotkey)?.ToString() ?? "keine"}");
+        sb.AppendLine($"Sprachtaste: {PushToTalk.Binding.Parse(settings.PushToTalkKey)?.ToString() ?? "keine"} (bei Sounds: {(settings.PushToTalkEnabled ? "an" : "aus")}), Dauersenden-Taste: {Hotkey.Parse(settings.PttLatchHotkey)?.ToString() ?? "keine"}, Spiel: {(settings.GameOpenMic ? "offenes Mikrofon (Taste antippen)" : "Push-to-Talk (Taste halten)")}");
         sb.AppendLine($"Stimmen-Ordner: {store?.VoicesDir ?? "(Equalizer APO nicht gefunden)"}");
         sb.AppendLine($"Sound-Ordner: {SoundLibrary.Folder}");
         sb.AppendLine($"Assistent abgeschlossen: {(settings.SetupWizardDone ? "ja" : "nein")}");

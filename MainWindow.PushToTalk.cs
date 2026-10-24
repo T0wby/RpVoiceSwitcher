@@ -39,7 +39,8 @@ public partial class MainWindow
         AppSettings.OverridePath == null || b is { IsMouse: false, Key: >= Key.F13 and <= Key.F24 } ? b : null;
 
     private static bool IsTestRun => AppSettings.OverridePath != null;
-    private PushToTalk.Binding? PttBinding => _settings.PushToTalkEnabled ? PttKey : null;
+    /// <summary>Taste, die bei Sounds gedrückt wird – nicht bei offenem Mikrofon im Spiel (da sendet es ohnehin).</summary>
+    private PushToTalk.Binding? PttBinding => _settings.PushToTalkEnabled && !OpenMicMode ? PttKey : null;
 
     private void InitPushToTalk()
     {
@@ -169,6 +170,7 @@ public partial class MainWindow
             PttHint.Visibility = Visibility.Visible;
             return;
         }
+        if (OpenMicMode) { await ToggleOpenMic(b); return; }
 
         _pttLatched = !_pttLatched;
         UpdatePttLatchUi();
@@ -198,11 +200,19 @@ public partial class MainWindow
 
     private void UpdatePttLatchUi()
     {
-        PttLatchToggle.Content = _pttLatched ? "● Dauersenden: AN" : "Dauersenden: aus";
-        PttLatchToggle.Foreground = _pttLatched ? System.Windows.Media.Brushes.White : (System.Windows.Media.Brush)FindResource("Fg");
-        PttLatchToggle.Background = _pttLatched
+        bool on = IsTransmittingLatched;
+        PttLatchToggle.Content = OpenMicMode
+            ? (on ? "● Mikro im Spiel: AN" : "Mikro im Spiel: stumm")
+            : (on ? "● Dauersenden: AN" : "Dauersenden: aus");
+        PttLatchToggle.ToolTip = OpenMicMode
+            ? "Tippt die Sprachtaste kurz an – im Spiel (offenes Mikrofon) schaltet das stumm bzw. wieder an."
+            : "Hält die Sprachtaste dauerhaft gedrückt, bis du wieder ausschaltest.";
+        PttLatchToggle.Foreground = on ? System.Windows.Media.Brushes.White : (System.Windows.Media.Brush)FindResource("Fg");
+        PttLatchToggle.Background = on
             ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xC2, 0x3B, 0x32))
             : (System.Windows.Media.Brush)FindResource("Card");
+        PttStateFlip.Visibility = OpenMicMode && PttKey != null ? Visibility.Visible : Visibility.Collapsed;
+        PttLatchMenuItem.Header = OpenMicMode ? "_Mikro im Spiel an/stumm (Sprachtaste antippen)" : "_Dauersenden an/aus (Sprachtaste halten)";
         UpdatePttSummary();
         UpdateStatusOverlay();
     }
@@ -214,7 +224,7 @@ public partial class MainWindow
         var latch = Hotkey.Parse(_settings.PttLatchHotkey);
         PttSummary.Text = key == null
             ? "Keine Sprachtaste eingestellt"
-            : $"Sprachtaste: {key}" + (latch != null ? $" · Umschalten: {latch}" : "");
+            : $"Sprachtaste: {key}" + (latch != null ? $" · Umschalten: {latch}" : "") + (OpenMicMode ? " · Spiel: offenes Mikro" : "");
     }
 
     private void OpenPttSettings_Click(object sender, RoutedEventArgs e) => OpenPttSettings();
@@ -257,6 +267,24 @@ public partial class MainWindow
         PttKeyButton.Content = b?.ToString() ?? "Taste wählen …";
         PttHint.Text = "Noch keine Sprachtaste gewählt – auf den Knopf klicken und dieselbe Taste drücken, die du im Spiel zum Sprechen nutzt.";
         PttHint.Visibility = (_settings.PushToTalkEnabled || _pttLatched) && b == null ? Visibility.Visible : Visibility.Collapsed;
+
+        bool open = OpenMicMode;
+        PttModeHold.IsChecked = !open;
+        PttModeOpenMic.IsChecked = open;
+        PttCheck.IsEnabled = !open;
+        PttCheck.Opacity = open ? 0.5 : 1;
+        PttCheck.Content = open
+            ? "Beim Abspielen von Sounds automatisch drücken (bei offenem Mikrofon nicht nötig)"
+            : "Beim Abspielen von Sounds automatisch drücken";
+        PttLatchLabel.Text = open ? "Mikro an/stumm" : "Dauersenden an/aus";
+        PttModeHint.Text = open
+            ? "Offenes Mikrofon: Stell im Spiel den Sprachchat auf offenes Mikrofon (nanos world: Einstellungen → Audio → „Open Mic“). " +
+              "Dann sendet das Spiel selbst dauerhaft – auch deine Sounds, ohne dass die App etwas drückt. Die Umschalt-Taste tippt die " +
+              "Sprachtaste nur kurz an, das schaltet dich im Spiel stumm bzw. wieder an. Die App kann den Zustand im Spiel nicht auslesen; " +
+              "sie zählt mit (auch wenn du die Taste selbst drückst). Zeigt sie etwas Falsches an, im Soundboard auf ⇄ klicken."
+            : "Dauersenden hält die Sprachtaste gedrückt, bis du es wieder ausschaltest – wie ein offenes Mikrofon. Drückst du die " +
+              "Sprachtaste zwischendurch selbst, läuft es einfach weiter. Als Umschalt-Taste eignet sich z. B. Strg + Alt + eine F-Taste.";
+        UpdateOpenMicWatch();
         UpdatePttLatchUi();
     }
 

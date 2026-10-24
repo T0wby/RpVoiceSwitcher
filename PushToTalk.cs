@@ -99,8 +99,7 @@ public sealed class PushToTalk : IDisposable
     public bool KeepDown()
     {
         if (_held is not Binding b || _keepDownBroken) return false;
-        int vk = b.IsMouse ? (b.MouseButton == 1 ? 0x05 : 0x06) : KeyInterop.VirtualKeyFromKey(b.Key);
-        if ((GetAsyncKeyState(vk) & 0x8000) != 0) { _repressPending = false; return false; }
+        if (IsDown(b)) { _repressPending = false; return false; }
         if (_repressPending)
         {
             // Schon neu gedrückt, aber Windows meldet weiter "oben" (z. B. Spiel läuft als Administrator) –
@@ -114,6 +113,22 @@ public sealed class PushToTalk : IDisposable
     }
 
     private bool _repressPending, _keepDownBroken;
+
+    /// <summary>Ist die Taste/Maustaste gerade gedrückt (egal von wem)?</summary>
+    public static bool IsDown(Binding b)
+    {
+        int vk = b.IsMouse ? (b.MouseButton == 1 ? 0x05 : 0x06) : KeyInterop.VirtualKeyFromKey(b.Key);
+        return (GetAsyncKeyState(vk) & 0x8000) != 0;
+    }
+
+    /// <summary>Taste kurz antippen (runter, kurz warten, wieder los) – für Spiele, in denen sie stumm/an umschaltet.</summary>
+    public async System.Threading.Tasks.Task Tap(Binding b, int holdMs)
+    {
+        if (_held != null) return;
+        Press(b);
+        try { await System.Threading.Tasks.Task.Delay(holdMs); }
+        finally { Release(); }
+    }
 
     /// <summary>Taste wieder los – nur wenn wir sie gedrückt haben.</summary>
     public void Release()

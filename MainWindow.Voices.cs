@@ -204,10 +204,13 @@ public partial class MainWindow
         _status.SetLook(_settings.StatusOverlayScale, _settings.StatusOverlayOpacity);
         var sounds = _settings.StatusOverlayShowSounds ? _overlaySounds : new List<StatusOverlayWindow.SoundLine>();
         _status.SetSounds(sounds);
-        _status.SetTransmitting(_pttLatched);
+        bool openMicKnown = OpenMicMode && PttKey != null;
+        if (openMicKnown) _status.SetTransmitting(_openMicMuted ? "Stumm im Spiel" : "● Mikro im Spiel an", live: !_openMicMuted);
+        else _status.SetTransmitting(_pttLatched ? "● Dauersenden" : null);
+        bool noteworthy = _pttLatched || (openMicKnown && _openMicMuted);
 
         // Optional nur zeigen, wenn ein Effekt aktiv ist (oder ein Sound läuft / Dauersenden an) – beim Verschieben aber immer.
-        if (_settings.StatusOverlayHideNormal && isNormal && !_statusEditing && sounds.Count == 0 && !_pttLatched)
+        if (_settings.StatusOverlayHideNormal && isNormal && !_statusEditing && sounds.Count == 0 && !noteworthy)
         {
             _status.Hide();
             return;
