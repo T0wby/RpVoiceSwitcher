@@ -29,6 +29,7 @@ public static class AppCommands
     public static readonly RoutedUICommand RenameProfile = C("_Umbenennen …", nameof(RenameProfile), K(Key.F2, None, "F2"));
     public static readonly RoutedUICommand DeleteProfile = C("_Löschen …", nameof(DeleteProfile));
     public static readonly RoutedUICommand SelectVoices = C("Stimmen _auswählen", nameof(SelectVoices));
+    public static readonly RoutedUICommand SelectSounds = C("S_ounds auswählen", nameof(SelectSounds));
     public static readonly RoutedUICommand ResetHotkeys = C("Shortcuts _zurücksetzen …", nameof(ResetHotkeys));
 
     // Ansicht

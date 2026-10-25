@@ -58,11 +58,14 @@ public partial class MainWindow
             else voice.HoldText = "Keine Taste";
         }
 
-        foreach (var sound in _sounds)
+        // Nur Sounds dieses Charakters bekommen ihre Shortcuts (die anderen behalten sie, sind aber nicht belegt)
+        foreach (var sound in _allSounds)
         {
             var s = sound;
             var hk = Hotkey.Parse(profile.SoundHotkeys.GetValueOrDefault(s.FileName));
-            s.HotkeyText = hk is Hotkey k ? RegisterToggle(k, () => PlaySound(s)) : "Kein Shortcut";
+            s.HotkeyText = hk is not Hotkey k ? "Kein Shortcut"
+                : profile.ContainsSound(s.FileName) ? RegisterToggle(k, () => PlaySound(s))
+                : k + " (nicht in diesem Charakter)";
         }
     }
 

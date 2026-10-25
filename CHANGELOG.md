@@ -2,6 +2,12 @@
 
 Neueste Version oben. Die App zeigt diese Liste nach einem Update („Was ist neu“) und jederzeit unter *Hilfe → Was ist neu*.
 
+## 1.14.0 – 25.10.2026
+- **Eigenes Soundboard pro Charakter:** Im Soundboard gibt es jetzt „Sounds auswählen“ (auch im Menü Charakter) – genau wie bei den Stimmen. Alle Sounds erscheinen mit Haken; angehakte gehören zum aktiven Charakter, „Alle“ und „Keine“ helfen beim schnellen Umstellen. „Fertig“ zeigt nur noch die Sounds dieses Charakters.
+- Nur die Shortcuts der Sounds des aktiven Charakters sind belegt – die anderen bleiben gespeichert und gelten wieder, sobald du den Sound zurück in den Charakter nimmst.
+- Sounds, die du in der App hinzufügst (Knopf oder Hineinziehen), kommen automatisch zum aktiven Charakter. Neue Charaktere starten ohne Sounds. Bestehende Charaktere behalten zunächst alle Sounds.
+- Die Statusleiste zeigt z. B. „Soundboard: 10 von 17 Sounds“. Ein Sound, der beim Charakterwechsel noch läuft, bleibt in der Status-Anzeige sichtbar.
+
 ## 1.13.0 – 24.10.2026
 - **Sprachtaste nur, solange das Spiel vorne ist:** Dauersenden und das automatische Drücken bei Sounds halten die Taste nur noch, während nanos world im Vordergrund ist. Wechselst du per Alt+Tab in Discord oder den Browser, lässt die App die Taste los und drückt sie beim Zurückwechseln sofort wieder. So landet z. B. Maus 5 nie mehr im Browser, und Windows bleibt bedienbar.
 - Schaltest du Dauersenden in der App selbst ein, zeigt der Knopf „wartet aufs Spiel“ – gedrückt wird, sobald du ins Spiel wechselst. Beim offenen Mikrofon wird das Antippen ebenso nachgeholt, und eigene Tastendrücke zählen nur noch, wenn sie im Spiel landen.

@@ -74,6 +74,20 @@ public sealed class SoundItem : ViewModel
     private string _hotkeyText = "Kein Shortcut";
     public string HotkeyText { get => _hotkeyText; set => Set(ref _hotkeyText, value); }
 
+    // Auswahlmodus "Sounds auswählen": welche Sounds gehören zum Charakter?
+    private bool _inProfile = true;
+    public bool InProfile { get => _inProfile; set => Set(ref _inProfile, value); }
+
+    private bool _selecting;
+    public bool Selecting
+    {
+        get => _selecting;
+        set { Set(ref _selecting, value); Raise(nameof(SelectorVisibility)); Raise(nameof(ControlsVisibility)); }
+    }
+
+    public Visibility SelectorVisibility => Selecting ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility ControlsVisibility => Selecting ? Visibility.Collapsed : Visibility.Visible;
+
     /// <summary>true = Sound läuft durch den aktiven Stimmeffekt (z. B. gedämpft unter der Maske).</summary>
     private bool _throughEffect;
     public bool ThroughEffect { get => _throughEffect; set => Set(ref _throughEffect, value); }

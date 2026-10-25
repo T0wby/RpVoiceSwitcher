@@ -12,7 +12,11 @@ namespace RpVoiceSwitcher;
 // Soundboard: Sounds ins virtuelle Kabel (für andere) und optional zum Mithören
 public partial class MainWindow
 {
+    /// <summary>Angezeigte Sounds: die des aktiven Charakters (beim Auswählen alle).</summary>
     private readonly ObservableCollection<SoundItem> _sounds = new();
+    /// <summary>Alle Sounds im Sound-Ordner.</summary>
+    private readonly List<SoundItem> _allSounds = new();
+    private bool _selectingSounds;
     private readonly SoundEngine _soundEngine = new();
     private FileSystemWatcher? _soundWatcher;
     private readonly DispatcherTimer _soundReloadDebounce = new() { Interval = TimeSpan.FromMilliseconds(500) };
@@ -66,11 +70,11 @@ public partial class MainWindow
 
     private void LoadSounds()
     {
-        _sounds.Clear();
+        _allSounds.Clear();
         try
         {
             foreach (var file in SoundLibrary.Load())
-                _sounds.Add(new SoundItem(file)
+                _allSounds.Add(new SoundItem(file)
                 {
                     ThroughEffect = _settings.SoundsWithEffect.Contains(file.FileName, StringComparer.OrdinalIgnoreCase),
                     Repeat = Math.Max(0, _settings.SoundRepeat.GetValueOrDefault(file.FileName, 1)),
@@ -79,9 +83,103 @@ public partial class MainWindow
         }
         catch (Exception ex) { ShowSoundError("Sound-Ordner konnte nicht gelesen werden: " + ex.Message); }
         // Lautstärke im Hintergrund vormessen, damit schon der erste Druck angeglichen klingt
-        if (_settings.SoundNormalize) SoundLevels.Prepare(_sounds.Select(s => s.File.FullPath));
+        if (_settings.SoundNormalize) SoundLevels.Prepare(_allSounds.Select(s => s.File.FullPath));
+        RefreshSoundList();
         RegisterAllBindings();
+    }
+
+    /// <summary>Zeigt die Sounds des aktiven Charakters – im Auswahlmodus alle mit Haken.</summary>
+    private void RefreshSoundList()
+    {
+        var profile = _settings.Current;
+        _sounds.Clear();
+        foreach (var s in _allSounds)
+        {
+            s.Selecting = _selectingSounds;
+            s.InProfile = profile.ContainsSound(s.FileName);
+            if (_selectingSounds || s.InProfile) _sounds.Add(s);
+        }
+        UpdateSoundHint();
         UpdateSoundStatus();
+    }
+
+    private int ProfileSoundCount => _allSounds.Count(s => _settings.Current.ContainsSound(s.FileName));
+
+    private void UpdateSoundHint()
+    {
+        SelectSoundsButton.Content = _selectingSounds ? "Fertig" : "Sounds auswählen";
+        SelectSoundsAllNone.Visibility = _selectingSounds ? Visibility.Visible : Visibility.Collapsed;
+        SoundHint.Text = _selectingSounds
+            ? $"Hake die Sounds an, die zu „{_settings.Current.Name}“ gehören. Die anderen bleiben im Sound-Ordner und lassen sich jederzeit wieder dazunehmen."
+            : _allSounds.Count > 0 && ProfileSoundCount == 0
+                ? $"„{_settings.Current.Name}“ hat noch keine Sounds – oben auf „Sounds auswählen“ klicken oder Audiodateien hierher ziehen."
+                : "Audiodateien (wav, mp3, m4a, flac …) einfach hierher ziehen. Mit „Durch Stimmeffekt“ klingt ein Sound wie deine Stimme – unter der Maske also auch gedämpft. Ohne Haken hören die anderen ihn unverändert.";
+        SelectSoundsMenuItem.Header = _selectingSounds ? "Sound_auswahl beenden" : "S_ounds auswählen";
+    }
+
+    // ---------- Sounds auswählen (pro Charakter) ----------
+
+    private void SelectSounds_Click(object sender, RoutedEventArgs e) => SetSelectingSounds(!_selectingSounds);
+
+    private void SetSelectingSounds(bool on)
+    {
+        CancelCapture();
+        _selectingSounds = on;
+        RefreshSoundList();
+        if (!on) RegisterAllBindings();
+    }
+
+    private void ProfileSound_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.CheckBox box || box.DataContext is not SoundItem item) return;
+        var profile = _settings.Current;
+        bool want = box.IsChecked == true;
+        if (want == profile.ContainsSound(item.FileName)) return; // nur Anzeige aufgebaut, nichts geändert
+
+        // "Alle Sounds" in eine feste Liste umwandeln, sobald etwas abgewählt wird.
+        if (profile.IncludeAllSounds)
+        {
+            profile.IncludeAllSounds = false;
+            profile.Sounds = _allSounds.Select(s => s.FileName).ToList();
+        }
+
+        profile.Sounds.RemoveAll(s => s.Equals(item.FileName, StringComparison.OrdinalIgnoreCase));
+        if (want) profile.Sounds.Add(item.FileName);
+        item.InProfile = want;
+        _settings.Save();
+        UpdateSoundStatus();
+    }
+
+    /// <summary>Alle an- oder abhaken (im Auswahlmodus).</summary>
+    private void SelectAllSounds(bool all)
+    {
+        var profile = _settings.Current;
+        profile.IncludeAllSounds = false;
+        profile.Sounds = all ? _allSounds.Select(s => s.FileName).ToList() : new List<string>();
+        _settings.Save();
+        RefreshSoundList();
+    }
+
+    private void SelectAllSounds_Click(object sender, RoutedEventArgs e) => SelectAllSounds(true);
+    private void SelectNoSounds_Click(object sender, RoutedEventArgs e) => SelectAllSounds(false);
+
+    /// <summary>Neu hinzugefügte Sounds gehören zum aktiven Charakter (wenn er eine feste Auswahl hat).</summary>
+    private void AddToCurrentProfile(IEnumerable<string> fileNames)
+    {
+        var profile = _settings.Current;
+        if (profile.IncludeAllSounds) return;
+        foreach (var f in fileNames)
+            if (!profile.ContainsSound(f)) profile.Sounds.Add(f);
+        _settings.Save();
+    }
+
+    /// <summary>Import mit Merken, welche Dateien neu dazukamen.</summary>
+    private int ImportSounds(IEnumerable<string> files)
+    {
+        var before = SoundLibrary.Load().Select(f => f.FileName).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        int n = SoundLibrary.Import(files);
+        AddToCurrentProfile(SoundLibrary.Load().Select(f => f.FileName).Where(f => !before.Contains(f)));
+        return n;
     }
 
     private void RestartSoundEngine()
@@ -136,7 +234,7 @@ public partial class MainWindow
         var progress = _soundEngine.GetProgress();
         var byPath = progress.ToDictionary(p => p.Path, StringComparer.OrdinalIgnoreCase);
         var lines = new List<StatusOverlayWindow.SoundLine>();
-        foreach (var s in _sounds)
+        foreach (var s in _allSounds) // auch Sounds anderer Charaktere, die noch laufen
         {
             if (byPath.TryGetValue(s.File.FullPath, out var p))
             {
@@ -195,7 +293,7 @@ public partial class MainWindow
     {
         _settings.SoundNormalize = SoundNormalizeCheck.IsChecked == true;
         _settings.Save();
-        if (_settings.SoundNormalize) SoundLevels.Prepare(_sounds.Select(s => s.File.FullPath));
+        if (_settings.SoundNormalize) SoundLevels.Prepare(_allSounds.Select(s => s.File.FullPath));
     }
 
     // ---------- Umbenennen / Löschen ----------
@@ -214,7 +312,10 @@ public partial class MainWindow
 
             // Shortcuts (in allen Charakteren) und den Effekt-Schalter mitnehmen
             foreach (var p in _settings.Profiles)
+            {
                 if (p.SoundHotkeys.Remove(item.FileName, out var hk)) p.SoundHotkeys[newFile] = hk;
+                if (p.Sounds.RemoveAll(f => f.Equals(item.FileName, StringComparison.OrdinalIgnoreCase)) > 0) p.Sounds.Add(newFile);
+            }
             if (_settings.SoundsWithEffect.RemoveAll(f => f.Equals(item.FileName, StringComparison.OrdinalIgnoreCase)) > 0)
                 _settings.SoundsWithEffect.Add(newFile);
             if (_settings.SoundRepeat.Remove(item.FileName, out int repeat)) _settings.SoundRepeat[newFile] = repeat;
@@ -240,7 +341,11 @@ public partial class MainWindow
         {
             _soundEngine.StopAll();
             SoundLibrary.DeleteToRecycleBin(item.File);
-            foreach (var p in _settings.Profiles) p.SoundHotkeys.Remove(item.FileName);
+            foreach (var p in _settings.Profiles)
+            {
+                p.SoundHotkeys.Remove(item.FileName);
+                p.Sounds.RemoveAll(f => f.Equals(item.FileName, StringComparison.OrdinalIgnoreCase));
+            }
             _settings.SoundsWithEffect.RemoveAll(f => f.Equals(item.FileName, StringComparison.OrdinalIgnoreCase));
             _settings.SoundRepeat.Remove(item.FileName);
             _settings.Save();
@@ -296,7 +401,7 @@ public partial class MainWindow
         if (e.Data.GetData(DataFormats.FileDrop) is not string[] files) return;
         try
         {
-            int n = SoundLibrary.Import(files);
+            int n = ImportSounds(files);
             if (n == 0) ShowSoundError("Keine unterstützten Audiodateien dabei (wav, mp3, m4a, aac, wma, flac, aiff).");
             LoadSounds();
         }

@@ -28,7 +28,7 @@ public static class Diagnostics
         Section("Einstellungen");
         sb.AppendLine($"Stimmen wirken auf: {settings.TargetDevice}");
         sb.AppendLine($"Soundboard spielt auf: {settings.SoundOutputDevice} (Mithören: {(settings.SoundMonitor ? "an" : "aus")})");
-        sb.AppendLine($"Charaktere: {settings.Profiles.Count}, Stimmen im aktiven: {(settings.Current.IncludeAllVoices ? "alle" : settings.Current.Voices.Count.ToString())}");
+        sb.AppendLine($"Charaktere: {settings.Profiles.Count}, Stimmen im aktiven: {(settings.Current.IncludeAllVoices ? "alle" : settings.Current.Voices.Count.ToString())}, Sounds im aktiven: {(settings.Current.IncludeAllSounds ? "alle" : settings.Current.Sounds.Count.ToString())}");
         sb.AppendLine($"Aktive Stimme: {activeVoice}");
         sb.AppendLine($"Notfall-Taste: {Hotkey.Parse(settings.PanicHotkey)?.ToString() ?? "keine"}");
         var mic = DefaultMic.Read(settings.TargetDevice);

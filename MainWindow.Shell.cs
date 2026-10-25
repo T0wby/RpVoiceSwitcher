@@ -35,6 +35,7 @@ public partial class MainWindow
         Bind(AppCommands.RenameProfile, () => RenameProfile_Click(this, Args()));
         Bind(AppCommands.DeleteProfile, () => DeleteProfile_Click(this, Args()), () => _settings.Profiles.Count > 1);
         Bind(AppCommands.SelectVoices, () => { Tabs.SelectedIndex = 0; SelectVoices_Click(this, Args()); });
+        Bind(AppCommands.SelectSounds, () => { Tabs.SelectedIndex = 1; SelectSounds_Click(this, Args()); });
         Bind(AppCommands.ResetHotkeys, () => ResetHotkeys_Click(this, Args()));
         // Ansicht
         Bind(AppCommands.ShowVoices, () => Tabs.SelectedIndex = 0);
@@ -71,6 +72,7 @@ public partial class MainWindow
     {
         if (!ReferenceEquals(e.OriginalSource, CharacterMenu)) return;
         SelectVoicesMenuItem.Header = _selectingVoices ? "Stimmen_auswahl beenden" : "Stimmen _auswählen";
+        SelectSoundsMenuItem.Header = _selectingSounds ? "Sound_auswahl beenden" : "S_ounds auswählen";
 
         // Charakterliste hinter dem Trenner neu aufbauen
         int start = CharacterMenu.Items.IndexOf(CharacterListSeparator) + 1;
@@ -140,7 +142,7 @@ public partial class MainWindow
         if (dlg.ShowDialog(this) != true) return;
         try
         {
-            int n = SoundLibrary.Import(dlg.FileNames);
+            int n = ImportSounds(dlg.FileNames);
             LoadSounds();
             Tabs.SelectedIndex = 1;
             ShowStatusMessage(n == 1 ? "1 Sound hinzugefügt." : $"{n} Sounds hinzugefügt.");
@@ -183,7 +185,9 @@ public partial class MainWindow
 
     private void UpdateSoundStatus()
     {
-        SoundStatusText.Text = _soundEngine.Error != null ? "Soundboard: Fehler" : $"Soundboard: {_sounds.Count} Sounds";
+        int n = ProfileSoundCount;
+        SoundStatusText.Text = _soundEngine.Error != null ? "Soundboard: Fehler"
+            : n == _allSounds.Count ? $"Soundboard: {n} Sounds" : $"Soundboard: {n} von {_allSounds.Count} Sounds";
         SoundStatusText.ToolTip = _soundEngine.Error ?? $"Spielt auf: {_soundEngine.RemoteDeviceName ?? _settings.SoundOutputDevice}";
     }
 

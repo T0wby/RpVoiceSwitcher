@@ -33,6 +33,7 @@ public partial class MainWindow
         CancelCapture();
         bool changed = profile != _settings.Current;
         if (changed && _selectingVoices) SetSelectingVoices(false); // Auswahl gilt nur für den bisherigen Charakter
+        if (changed) _selectingSounds = false;
         _holdHook.ReleaseHeld();
         _holdVoice = null;
         _settings.ActiveProfile = profile.Name;
@@ -40,6 +41,7 @@ public partial class MainWindow
 
         RefreshProfileChips();
         RefreshVoiceList();
+        RefreshSoundList();
         RegisterAllBindings();
 
         EnsureActiveVoiceInProfile();
@@ -81,7 +83,8 @@ public partial class MainWindow
         string? name = AskProfileName("Neuer Charakter", "");
         if (name == null) return;
 
-        _settings.Profiles.Add(new CharacterProfile { Name = name, IncludeAllVoices = false });
+        // Neuer Charakter startet leer – Stimmen und Sounds wählst du für ihn aus
+        _settings.Profiles.Add(new CharacterProfile { Name = name, IncludeAllVoices = false, IncludeAllSounds = false });
         SwitchProfile(name);
         SetSelectingVoices(true); // direkt Stimmen auswählen lassen
         Tabs.SelectedIndex = 0;
@@ -104,7 +107,7 @@ public partial class MainWindow
         if (_settings.Profiles.Count <= 1) return;
         var profile = _settings.Current;
         var answer = MessageBox.Show(this,
-            $"Charakter „{profile.Name}“ mit seiner Stimmenauswahl und allen Shortcuts löschen?\n\nDie Stimmen selbst bleiben erhalten.",
+            $"Charakter „{profile.Name}“ mit seiner Stimmen- und Soundauswahl und allen Shortcuts löschen?\n\nDie Stimmen und Sounds selbst bleiben erhalten.",
             "Charakter löschen", MessageBoxButton.YesNo, MessageBoxImage.Question);
         if (answer != MessageBoxResult.Yes) return;
 

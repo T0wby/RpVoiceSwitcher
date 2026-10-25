@@ -27,9 +27,18 @@ public sealed class CharacterProfile
     /// <summary>Sound-Datei → Shortcut zum Abspielen.</summary>
     public Dictionary<string, string> SoundHotkeys { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>true = alle Sounds im Sound-Ordner gehören dazu (Standard, auch für ältere Einstellungen).</summary>
+    public bool IncludeAllSounds { get; set; } = true;
+
+    /// <summary>Dateinamen der Sounds in diesem Profil (nur relevant, wenn <see cref="IncludeAllSounds"/> false ist).</summary>
+    public List<string> Sounds { get; set; } = new();
+
     public bool ContainsVoice(string fileName) =>
         IncludeAllVoices || VoiceStore.IsNormalFile(fileName) ||
         Voices.Any(v => v.Equals(fileName, StringComparison.OrdinalIgnoreCase));
+
+    public bool ContainsSound(string fileName) =>
+        IncludeAllSounds || Sounds.Any(s => s.Equals(fileName, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>Alle Belegungen dieses Profils, damit eine Taste nirgends doppelt vergeben wird.</summary>
     public IEnumerable<Dictionary<string, string>> AllBindings()
@@ -45,6 +54,7 @@ public sealed class CharacterProfile
         HoldHotkeys = new(HoldHotkeys ?? new(), StringComparer.OrdinalIgnoreCase);
         SoundHotkeys = new(SoundHotkeys ?? new(), StringComparer.OrdinalIgnoreCase);
         Voices ??= new();
+        Sounds ??= new();
         if (string.IsNullOrWhiteSpace(Name)) Name = "Profil";
     }
 }

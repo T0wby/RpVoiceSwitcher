@@ -36,12 +36,13 @@ public sealed class HelpWindow : Window
         ]),
         ("Charaktere",
         [
-            "Jeder Charakter hat seine eigene Stimmenauswahl und eigene Shortcuts. Beim Wechsel sind nur die Tasten des aktiven Charakters belegt.",
+            "Jeder Charakter hat seine eigene Stimmen- und Soundauswahl und eigene Shortcuts. Beim Wechsel sind nur die Tasten des aktiven Charakters belegt.",
             "Wechseln: oben auf den Namen klicken, über das Menü „Charakter“ oder per Rechtsklick auf das Tray-Symbol.",
         ]),
         ("Soundboard",
         [
             "Sounds hören die anderen über dein Mikrofon. „Selbst mithören“ spielt sie zusätzlich auf deinen Kopfhörern.",
+            "Jeder Charakter hat sein eigenes Soundboard: „Sounds auswählen“ zeigt alle Sounds mit Haken – angehakte gehören zum aktiven Charakter, nur ihre Shortcuts sind dann belegt. Sounds, die du in der App hinzufügst, kommen automatisch zum aktiven Charakter. Neue Charaktere starten ohne Sounds.",
             "„Durch Stimmeffekt“: an = der Sound klingt wie deine Stimme (z. B. gedämpft unter der Maske), aus = die anderen hören ihn unverändert.",
             "„Wiederholen“: einmal, mehrmals hintereinander oder endlos (Loop, z. B. für Hintergrundgeräusche).",
             "Läuft ein Sound, stoppt ihn derselbe Shortcut oder ein Klick auf „■ Stoppen“. Fortschritt und Zeit siehst du an der Karte und in der Status-Anzeige.",

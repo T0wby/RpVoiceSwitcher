@@ -28,6 +28,7 @@
                 <MenuItem Command="{x:Static local:AppCommands.DeleteProfile}"/>
                 <Separator/>
                 <MenuItem x:Name="SelectVoicesMenuItem" Command="{x:Static local:AppCommands.SelectVoices}" IsCheckable="False"/>
+                <MenuItem x:Name="SelectSoundsMenuItem" Command="{x:Static local:AppCommands.SelectSounds}" IsCheckable="False"/>
                 <MenuItem Command="{x:Static local:AppCommands.ResetHotkeys}"/>
                 <Separator x:Name="CharacterListSeparator"/>
                 <!-- Hier hängt die App die Charaktere zum Wechseln an -->
@@ -608,7 +609,15 @@
                                         ToolTip="Alle laufenden Sounds sofort beenden (Strg+.)"/>
                                 <Button Content="+ Sounds hinzufügen …" Command="{x:Static local:AppCommands.AddSounds}" Padding="10,5" Margin="0,0,6,8"
                                         ToolTip="Audiodateien auswählen (Strg+Umschalt+O) – oder einfach hierher ziehen"/>
-                                <Button Content="Sound-Ordner" Click="OpenSoundFolder_Click" Padding="10,5" Margin="0,0,0,8"/>
+                                <Button Content="Sound-Ordner" Click="OpenSoundFolder_Click" Padding="10,5" Margin="0,0,6,8"/>
+                                <Button x:Name="SelectSoundsButton" Content="Sounds auswählen" Command="{x:Static local:AppCommands.SelectSounds}" Padding="10,5" Margin="0,0,6,8"
+                                        AutomationProperties.AutomationId="SelectSoundsButton"
+                                        ToolTip="Festlegen, welche Sounds zu diesem Charakter gehören – wie bei den Stimmen"/>
+                                <Button Content="Alle" Click="SelectAllSounds_Click" Padding="10,5" Margin="0,0,6,8"
+                                        Visibility="{Binding Visibility, ElementName=SelectSoundsAllNone}" ToolTip="Alle Sounds zu diesem Charakter nehmen"
+                                        AutomationProperties.AutomationId="SelectAllSounds"/>
+                                <Button x:Name="SelectSoundsAllNone" Content="Keine" Click="SelectNoSounds_Click" Padding="10,5" Margin="0,0,0,8" Visibility="Collapsed"
+                                        ToolTip="Alle Haken entfernen" AutomationProperties.AutomationId="SelectNoSounds"/>
                             </WrapPanel>
                             <WrapPanel>
                                 <TextBlock Text="Lautstärke für andere" Foreground="{StaticResource FgDim}" VerticalAlignment="Center" Margin="0,0,8,8"/>
@@ -653,7 +662,12 @@
                                     <Border Background="{StaticResource Card}" CornerRadius="8" Padding="12,10" Margin="0,0,8,8" Width="220">
                                         <StackPanel>
                                             <DockPanel Margin="0,0,0,8">
-                                                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top" Margin="6,0,0,0">
+                                                <CheckBox DockPanel.Dock="Left" Visibility="{Binding SelectorVisibility}" IsChecked="{Binding InProfile, Mode=TwoWay}"
+                                                          Checked="ProfileSound_Click" Unchecked="ProfileSound_Click" VerticalAlignment="Center" Margin="0,0,8,0"
+                                                          AutomationProperties.Name="{Binding Name, StringFormat=Gehört zum Charakter: {0}}"
+                                                          ToolTip="Gehört zu diesem Charakter"/>
+                                                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top" Margin="6,0,0,0"
+                                                            Visibility="{Binding ControlsVisibility}">
                                                     <Button Content="&#xE70F;" FontFamily="Segoe MDL2 Assets" Click="RenameSound_Click" Padding="7,4" Margin="0,0,3,0"
                                                             ToolTip="Sound umbenennen" AutomationProperties.Name="Sound umbenennen"/>
                                                     <Button Content="&#xE74D;" FontFamily="Segoe MDL2 Assets" Click="DeleteSound_Click" Padding="7,4"
@@ -671,7 +685,7 @@
                                                              Background="{StaticResource Line}" Foreground="{StaticResource Accent}" BorderThickness="0"
                                                              AutomationProperties.Name="Fortschritt"/>
                                             </DockPanel>
-                                            <DockPanel Margin="0,0,0,6">
+                                            <DockPanel Margin="0,0,0,6" Visibility="{Binding ControlsVisibility}">
                                                 <TextBlock Text="Wiederholen" Foreground="{StaticResource FgDim}" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                                 <ComboBox ItemsSource="{x:Static local:SoundItem.RepeatChoices}" DisplayMemberPath="Label" SelectedValuePath="Value"
                                                           SelectedValue="{Binding Repeat, Mode=TwoWay}" SelectionChanged="SoundRepeat_Changed"
@@ -679,8 +693,9 @@
                                                           ToolTip="Einmal, mehrmals hintereinander oder endlos. Läuft der Sound, stoppt ihn derselbe Shortcut (oder ein zweiter Klick)."/>
                                             </DockPanel>
                                             <CheckBox Content="Durch Stimmeffekt" IsChecked="{Binding ThroughEffect, Mode=TwoWay}" Click="SoundEffect_Click"
+                                                      Visibility="{Binding ControlsVisibility}"
                                                       Margin="0,0,0,6" ToolTip="An: Der Sound bekommt denselben Effekt wie deine Stimme. Aus: Die anderen hören ihn unverändert."/>
-                                            <DockPanel>
+                                            <DockPanel Visibility="{Binding ControlsVisibility}">
                                                 <Button DockPanel.Dock="Right" Content="✕" Click="ClearSoundHotkey_Click" Padding="8,4" Margin="4,0,0,0" ToolTip="Shortcut entfernen"/>
                                                 <Button Content="{Binding HotkeyText}" Click="SoundHotkey_Click" Padding="8,4"
                                                         ToolTip="Klicken und Tastenkombination drücken. Entf = löschen, Esc = abbrechen."/>
