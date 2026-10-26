@@ -44,6 +44,13 @@ public sealed class StatusOverlayWindow : Window
     /// <summary>Doppelklick im Bearbeitungsmodus = fertig.</summary>
     public event Action? EditFinished;
 
+    private bool _closed;
+    protected override void OnClosed(EventArgs e)
+    {
+        _closed = true;
+        base.OnClosed(e);
+    }
+
     public StatusOverlayWindow()
     {
         WindowStyle = WindowStyle.None;
@@ -200,6 +207,7 @@ public sealed class StatusOverlayWindow : Window
     /// <summary>Zeigt die Anzeige an der gespeicherten Position (oder oben links, falls keine gespeichert ist).</summary>
     public void ShowAt(double? left, double? top)
     {
+        if (_closed) return; // beim Beenden schon geschlossen – WPF kann ein geschlossenes Fenster nicht wieder zeigen
         var area = SystemParameters.WorkArea;
         Left = left ?? area.Left + 16;
         Top = top ?? area.Top + 16;

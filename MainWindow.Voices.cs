@@ -174,6 +174,7 @@ public partial class MainWindow
 
     private void UpdateStatusOverlay()
     {
+        if (_exiting) return;
         if (!_settings.ShowStatusOverlay)
         {
             if (_status != null)

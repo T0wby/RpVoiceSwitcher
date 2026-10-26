@@ -263,7 +263,8 @@ public partial class MainWindow : Window
     protected override void OnClosing(CancelEventArgs e)
     {
         // Im Bearbeitungsmodus wäre die Anzeige anklickbar und würde Klicks im Spiel abfangen.
-        SetStatusEditMode(false);
+        // Beim Beenden ist die Anzeige schon zu – dann nichts mehr daran ändern.
+        if (!_exiting) SetStatusEditMode(false);
         CancelCapture();
         SaveWindowPlacement();
 

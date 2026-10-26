@@ -2,6 +2,9 @@
 
 Neueste Version oben. Die App zeigt diese Liste nach einem Update („Was ist neu“) und jederzeit unter *Hilfe → Was ist neu*.
 
+## 1.15.1 – 26.10.2026
+- **Keine Fehlermeldung mehr beim Beenden:** Bei eingeschalteter Status-Anzeige meldete „Beenden“ (Strg+Q, Datei- oder Tray-Menü, auch beim Installieren eines Updates) „Da ist etwas schiefgegangen: Visibility kann nicht festgelegt … werden“. Die App versuchte, die schon geschlossene Anzeige noch einmal einzublenden.
+
 ## 1.15.0 – 26.10.2026
 - **Rundgang durch die App:** *Hilfe → Rundgang durch die App* führt in 13 Schritten durch Charaktere, Stimmen, Shortcuts, Soundboard, Lautstärke, Sprachtaste, Extras und Hilfe. Der erklärte Bereich wird im Fenster hervorgehoben, der Rest abgedunkelt. Weiter mit →, Enter oder Leertaste, zurück mit ←, beenden mit Esc oder ✕.
 - Nach dem Einrichtungs-Assistenten startet der Rundgang einmal von selbst.

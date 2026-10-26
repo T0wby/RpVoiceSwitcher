@@ -70,8 +70,17 @@ public sealed class OverlayWindow : Window
         };
     }
 
+    private bool _closed;
+    protected override void OnClosed(EventArgs e)
+    {
+        _closed = true;
+        _hideTimer.Stop();
+        base.OnClosed(e);
+    }
+
     public void Flash(string message)
     {
+        if (_closed) return; // App wird gerade beendet
         _hideTimer.Stop();
         BeginAnimation(OpacityProperty, null);
         Opacity = 1;
