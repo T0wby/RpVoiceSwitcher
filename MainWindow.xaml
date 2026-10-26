@@ -59,8 +59,9 @@
                 <MenuItem Command="{x:Static local:AppCommands.OpenRecording}"/>
                 <MenuItem Command="{x:Static local:AppCommands.OpenPlayback}"/>
             </MenuItem>
-            <MenuItem Header="_Hilfe">
+            <MenuItem x:Name="HelpMenu" Header="_Hilfe">
                 <MenuItem Command="{x:Static local:AppCommands.Help}"/>
+                <MenuItem Command="{x:Static local:AppCommands.Tour}"/>
                 <MenuItem Command="{x:Static local:AppCommands.SetupWizard}"/>
                 <Separator/>
                 <MenuItem Command="{x:Static local:AppCommands.ReportProblem}"/>
@@ -73,7 +74,7 @@
         </Menu>
 
         <!-- ===== Statusleiste ===== -->
-        <StatusBar DockPanel.Dock="Bottom">
+        <StatusBar x:Name="MainStatusBar" DockPanel.Dock="Bottom">
             <StatusBarItem DockPanel.Dock="Right">
                 <TextBlock>
                     <Hyperlink x:Name="SetupStatusLink" Click="SetupWarning_Click" ToolTip="Zum Tab „Einrichtung“">
@@ -289,15 +290,19 @@
                                                 <ColumnDefinition Width="Auto"/>
                                                 <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
                                             <TextBlock Text="Spiel (Programm)" Style="{StaticResource SettingsLabel}"/>
-                                            <TextBox x:Name="PttGameBox" Grid.Column="1" Width="220" Padding="6,4" VerticalContentAlignment="Center" Margin="0,0,4,0"
+                                            <TextBox x:Name="PttGameBox" Grid.Column="1" Width="220" Padding="6,4" VerticalContentAlignment="Center" VerticalAlignment="Center" Margin="0,0,4,0"
                                                      LostFocus="PttGameBox_LostFocus" KeyDown="PttGameBox_KeyDown"
                                                      AutomationProperties.AutomationId="PttGameBox" AutomationProperties.Name="Spiel (Programm)"
                                                      ToolTip="Programmname des Spiels ohne .exe – nanos world: NanosWorld-Win64-Shipping. Leer = nanos world."/>
-                                            <Button x:Name="PttGameDetect" Grid.Column="2" Content="Erkennen …" Click="PttGameDetect_Click" Padding="10,4"
+                                            <Button x:Name="PttGameDetect" Grid.Column="2" Content="Erkennen …" Click="PttGameDetect_Click" Padding="10,4" VerticalAlignment="Center"
                                                     AutomationProperties.AutomationId="PttGameDetect"
                                                     ToolTip="Klicken und dann innerhalb von 5 Sekunden ins Spiel wechseln – die App übernimmt das Programm im Vordergrund."/>
-                                            <TextBlock x:Name="PttGameStatus" Grid.Column="3" Foreground="{StaticResource FgDim}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="10,0,0,0"
+                                            <TextBlock x:Name="PttGameStatus" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" Foreground="{StaticResource FgDim}" FontSize="12" TextWrapping="Wrap" Margin="0,4,0,0"
                                                        AutomationProperties.AutomationId="PttGameStatus"/>
                                         </Grid>
                                         <CheckBox x:Name="PttRefreshCheck" Content="Dauersenden alle 45 Sekunden kurz auffrischen" Checked="PttRefresh_Click" Unchecked="PttRefresh_Click" Margin="0,0,0,6"
@@ -513,7 +518,7 @@
                 <DockPanel AllowDrop="True" Drop="Voices_Drop" DragOver="Voices_DragOver" Background="Transparent">
                     <Border DockPanel.Dock="Top" Padding="20,12,20,6">
                         <StackPanel>
-                            <WrapPanel>
+                            <WrapPanel x:Name="VoiceToolbar">
                                 <Button Content="+ Neue Stimme" Command="{x:Static local:AppCommands.NewVoice}" Padding="10,4" Margin="0,0,6,6"
                                         ToolTip="Leere Stimme anlegen (Strg+N). Stimmen-Dateien (.txt) kannst du auch einfach hierher ziehen."/>
                                 <Button x:Name="SelectVoicesButton" Content="Stimmen auswählen" Command="{x:Static local:AppCommands.SelectVoices}" Padding="10,4" Margin="0,0,6,6"
@@ -607,7 +612,7 @@
                 <DockPanel AllowDrop="True" Drop="Sounds_Drop" DragOver="Sounds_DragOver" Background="Transparent">
                     <Border DockPanel.Dock="Top" Padding="20,12,20,6">
                         <StackPanel>
-                            <WrapPanel>
+                            <WrapPanel x:Name="SoundToolbar">
                                 <Button Content="■  Alle stoppen" Command="{x:Static local:AppCommands.StopSounds}" Padding="12,5" Margin="0,0,6,8"
                                         ToolTip="Alle laufenden Sounds sofort beenden (Strg+.)"/>
                                 <Button Content="+ Sounds hinzufügen …" Command="{x:Static local:AppCommands.AddSounds}" Padding="10,5" Margin="0,0,6,8"
@@ -622,6 +627,7 @@
                                 <Button x:Name="SelectSoundsAllNone" Content="Keine" Click="SelectNoSounds_Click" Padding="10,5" Margin="0,0,0,8" Visibility="Collapsed"
                                         ToolTip="Alle Haken entfernen" AutomationProperties.AutomationId="SelectNoSounds"/>
                             </WrapPanel>
+                            <StackPanel x:Name="SoundVolumeRows">
                             <WrapPanel>
                                 <TextBlock Text="Lautstärke für andere" Foreground="{StaticResource FgDim}" VerticalAlignment="Center" Margin="0,0,8,8"/>
                                 <Slider x:Name="SoundVolumeSlider" Width="180" Minimum="0" Maximum="2" VerticalAlignment="Center" Margin="0,0,6,8"
@@ -638,7 +644,8 @@
                                 <CheckBox x:Name="SoundNormalizeCheck" Content="Lautstärke angleichen" Click="SoundNormalize_Click" VerticalAlignment="Center" Margin="0,0,18,8"
                                           ToolTip="Bringt jeden Sound automatisch auf volle Lautstärke – leise Dateien gehen im Sprachchat sonst unter."/>
                             </WrapPanel>
-                            <WrapPanel>
+                            </StackPanel>
+                            <WrapPanel x:Name="PttRow">
                                 <Button x:Name="PttLatchToggle" Content="Dauersenden: aus" Click="PttLatchToggle_Click" Padding="12,4" MinWidth="150" VerticalAlignment="Center" Margin="0,0,12,8"
                                         AutomationProperties.AutomationId="PttLatchToggle"
                                         ToolTip="Hält die Sprachtaste des Spiels dauerhaft gedrückt – du sendest dann ständig wie mit offenem Mikrofon. Nochmal = wieder Push-to-Talk. Die Notfall-Taste schaltet es auch aus."/>

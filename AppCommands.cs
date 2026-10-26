@@ -56,5 +56,6 @@ public static class AppCommands
     public static readonly RoutedUICommand ReportProblem = C("_Problem melden …", nameof(ReportProblem));
     public static readonly RoutedUICommand CopyDiagnostics = C("_Diagnose kopieren", nameof(CopyDiagnostics));
     public static readonly RoutedUICommand CheckUpdates = C("Nach _Updates suchen …", nameof(CheckUpdates));
+    public static readonly RoutedUICommand Tour = C("_Rundgang durch die App", nameof(Tour));
     public static readonly RoutedUICommand About = C("_Info über RP Voice Switcher", nameof(About));
 }

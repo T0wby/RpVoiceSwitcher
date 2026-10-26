@@ -110,6 +110,7 @@ public partial class MainWindow
 
     private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
     {
+        if (HandleTourKey(e)) { e.Handled = true; return; }
         if (_capture == null) return;
         e.Handled = true;
 

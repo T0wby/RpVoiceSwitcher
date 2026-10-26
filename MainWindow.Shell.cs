@@ -60,6 +60,7 @@ public partial class MainWindow
         Bind(AppCommands.WhatsNew, () => ChangelogWindow.ShowAll(this));
         Bind(AppCommands.CopyDiagnostics, CopyDiagnostics);
         Bind(AppCommands.About, ShowAbout);
+        Bind(AppCommands.Tour, StartTour);
 
         _statusMessageTimer.Tick += (_, _) => { _statusMessageTimer.Stop(); _statusMessage = null; UpdateStatusBar(); };
         RestoreWindowPlacement();

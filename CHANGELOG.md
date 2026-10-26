@@ -2,6 +2,11 @@
 
 Neueste Version oben. Die App zeigt diese Liste nach einem Update („Was ist neu“) und jederzeit unter *Hilfe → Was ist neu*.
 
+## 1.15.0 – 26.10.2026
+- **Rundgang durch die App:** *Hilfe → Rundgang durch die App* führt in 13 Schritten durch Charaktere, Stimmen, Shortcuts, Soundboard, Lautstärke, Sprachtaste, Extras und Hilfe. Der erklärte Bereich wird im Fenster hervorgehoben, der Rest abgedunkelt. Weiter mit →, Enter oder Leertaste, zurück mit ←, beenden mit Esc oder ✕.
+- Nach dem Einrichtungs-Assistenten startet der Rundgang einmal von selbst.
+- Einstellungen → Sprachtaste im Spiel: Der Status des Spiels („läuft gerade nicht“ …) steht jetzt unter dem Programmnamen statt daneben und wird nicht mehr abgeschnitten.
+
 ## 1.14.1 – 26.10.2026
 - **Dauersenden hört nicht mehr unbemerkt auf:** nanos world (Unreal Engine) „vergisst“ eine gehaltene Sprachtaste, wenn das Spiel den Fokus zurückbekommt oder Chat bzw. Menü schließt – Windows meldet die Taste weiter als gedrückt, das Spiel sendet aber nicht mehr. Die App frischt die Taste deshalb jetzt auf:
   - nach dem Zurückwechseln ins Spiel erst nach einem kurzen Moment drücken, wenn das Spiel den Fokuswechsel verarbeitet hat,

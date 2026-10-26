@@ -99,6 +99,8 @@ public sealed class AppSettings
     public bool SetupWizardDone { get; set; }
     public int SetupWizardStep { get; set; }
     public bool OpenWizardAfterRestart { get; set; }
+    /// <summary>Rundgang durch die App schon einmal gezeigt.</summary>
+    public bool TourSeen { get; set; }
 
     /// <summary>Kabel als Windows-Standardmikrofon halten (stellt es zurück, wenn ein anderes Programm umstellt).</summary>
     public bool KeepCableDefaultMic { get; set; }

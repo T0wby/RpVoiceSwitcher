@@ -12,6 +12,7 @@ Windows-Desktop-App (WPF, .NET 10). Die Effekte macht [Equalizer APO](https://so
 2. Beim ersten Start öffnet sich der **Einrichtungs-Assistent**. Er führt Schritt für Schritt durch alles Weitere – auch wenn noch gar nichts eingerichtet ist:
    VB-CABLE installieren → Equalizer APO installieren und an „CABLE Output“ hängen → Zugriff freigeben → Neustart → Mikrofon per „Abhören“ ins Kabel leiten → Wiedergabegerät prüfen → ausprobieren → im Spiel und in Discord „CABLE Output“ als Mikrofon wählen.
    Jeder Schritt prüft selbst, ob er erledigt ist. Später jederzeit wieder unter *Hilfe → Einrichtungs-Assistent*.
+3. Danach zeigt der **Rundgang** Schritt für Schritt, wo was in der App ist – jederzeit wieder unter *Hilfe → Rundgang durch die App*.
 
 Updates findet die App selbst (abschaltbar) – oder *Hilfe → Nach Updates suchen*. Nach einem Update zeigt sie einmal, was neu ist; alle Änderungen stehen unter *Hilfe → Was ist neu* und in der [CHANGELOG.md](CHANGELOG.md).
 

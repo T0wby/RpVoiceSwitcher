@@ -63,7 +63,12 @@ public partial class MainWindow
                 _settings.Save();
                 RunSetupCheck();
             }));
-        _wizard.Closed += (_, _) => { _wizard = null; RunSetupCheck(); };
+        _wizard.Closed += (_, _) =>
+        {
+            _wizard = null;
+            RunSetupCheck();
+            if (_settings.SetupWizardDone) MaybeStartTourAfterWizard(); // Einrichtung fertig → einmal den Rundgang anbieten
+        };
         _wizard.Show();
     }
 
