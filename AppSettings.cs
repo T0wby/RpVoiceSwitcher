@@ -133,6 +133,11 @@ public sealed class AppSettings
     public bool PttOnlyInGame { get; set; } = true;
     /// <summary>Prozessname des Spiels ohne ".exe" (Standard: nanos world).</summary>
     public string PttGameProcess { get; set; } = "NanosWorld-Win64-Shipping";
+    /// <summary>
+    /// Dauersenden alle n Sekunden kurz (60 ms) auffrischen, falls das Spiel die gehaltene Taste "vergessen" hat
+    /// (0 = aus). Unreal-Spiele wie nanos world tun das z. B. nach Menüs oder Fokuswechseln.
+    /// </summary>
+    public int PttRefreshSeconds { get; set; } = 45;
 
     /// <summary>Sounds, die durch den aktiven Stimmeffekt laufen sollen (Standard: ohne Effekt).</summary>
     public List<string> SoundsWithEffect { get; set; } = new();

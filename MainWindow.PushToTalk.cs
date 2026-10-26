@@ -155,6 +155,8 @@ public partial class MainWindow
             PttLog($"gedrückt ({b}, {why})");
         }
         else PttLog($"wartet aufs Spiel ({b}, {why}) – {GameProcessName} ist nicht im Vordergrund");
+        ResetPttRefresh();
+        _pttTickFront = _ptt.IsHeld;
         if (!_pttKeepDownWired)
         {
             _pttKeepDownWired = true;
@@ -164,28 +166,111 @@ public partial class MainWindow
         UpdatePttLatchUi();
     }
 
+    // ---------- Auffrischen ----------
+    // Spiele mit Unreal Engine (z. B. nanos world) "vergessen" gehaltene Tasten, wenn sie den Fokus zurückbekommen
+    // oder Chat/Menü schließen. Windows meldet die Taste dann weiter als gedrückt – das Spiel sendet aber nicht mehr,
+    // und von außen sieht man nichts. Deshalb: nach dem Zurückwechseln kurz warten, nach Enter/Esc/Tab im Spiel die
+    // Taste einmal kurz loslassen und neu drücken, und bei Dauersenden regelmäßig auffrischen.
+
+    /// <summary>So lange nach dem Wechsel ins Spiel warten, bevor gedrückt wird (Spiel verarbeitet sonst den Fokuswechsel danach).</summary>
+    private const int GameFrontSettleMs = 300;
+    /// <summary>Nach Enter/Esc/Tab so lange warten, dann auffrischen (Chat/Menü ist dann zu).</summary>
+    private const int FlushKeyRefreshMs = 250;
+    /// <summary>So lange ist die Taste beim Auffrischen los – ein Bild im Spiel reicht, mehr hört man nicht.</summary>
+    private const int RefreshGapMs = 60;
+
+    private bool _pttTickFront;
+    private long _pttPressAfter, _pttRefreshAt = -1, _pttRepressAt = -1, _pttNextPeriodic = -1;
+    private bool _flushKeyDown, _keepDownBrokenLogged;
+    private string _refreshWhy = "";
+
+    private void ResetPttRefresh()
+    {
+        _pttPressAfter = 0;
+        _pttRefreshAt = _pttRepressAt = -1;
+        _flushKeyDown = _keepDownBrokenLogged = false;
+        _pttNextPeriodic = _settings.PttRefreshSeconds > 0 ? Environment.TickCount64 + _settings.PttRefreshSeconds * 1000L : -1;
+    }
+
+    private static bool IsKeyDown(int vk) => (GetAsyncKeyState(vk) & 0x8000) != 0;
+
     private void PttTick()
     {
         if (_pttWant is not PushToTalk.Binding b) { _pttKeepDown.Stop(); return; }
-        bool ok = GameAllowsPtt();
-        if (ok && !_ptt.IsHeld)
+        long now = Environment.TickCount64;
+        bool front = GameAllowsPtt();
+
+        if (!front)
+        {
+            _pttTickFront = false;
+            _pttRefreshAt = _pttRepressAt = -1;
+            if (_ptt.IsHeld)
+            {
+                _ptt.Release();
+                PttLog("losgelassen (Spiel nicht mehr im Vordergrund)");
+                UpdatePttLatchUi();
+            }
+            return;
+        }
+        if (!_pttTickFront)
+        {
+            // gerade ins Spiel zurückgekehrt: erst drücken, wenn das Spiel den Fokuswechsel verarbeitet hat
+            _pttTickFront = true;
+            _pttPressAfter = now + (GameGateOn ? GameFrontSettleMs : 0);
+        }
+        if (now < _pttPressAfter) return;
+
+        // Auffrischen, zweiter Teil: Taste wieder drücken
+        if (_pttRepressAt >= 0)
+        {
+            if (now < _pttRepressAt) return;
+            _pttRepressAt = -1;
+            _ptt.Press(b);
+            _keepDownBrokenLogged = false;
+            PttLog($"aufgefrischt ({_refreshWhy})");
+            return;
+        }
+
+        if (!_ptt.IsHeld)
         {
             _ptt.Press(b);
+            _keepDownBrokenLogged = false;
             PttLog("gedrückt (Spiel wieder im Vordergrund)");
             UpdatePttLatchUi();
+            return;
         }
-        else if (!ok && _ptt.IsHeld)
+
+        // Enter/Esc/Tab im Spiel (Chat, Menü, Liste) → danach auffrischen
+        bool flushKey = IsKeyDown(0x0D) || IsKeyDown(0x1B) || IsKeyDown(0x09);
+        if (_flushKeyDown && !flushKey) { _pttRefreshAt = now + FlushKeyRefreshMs; _refreshWhy = "nach Enter/Esc/Tab im Spiel"; }
+        _flushKeyDown = flushKey;
+        if (_pttLatched && _pttNextPeriodic >= 0 && now >= _pttNextPeriodic && _pttRefreshAt < 0)
         {
-            _ptt.Release();
-            PttLog("losgelassen (Spiel nicht mehr im Vordergrund)");
-            UpdatePttLatchUi();
+            _pttRefreshAt = now; _refreshWhy = "regelmäßig";
         }
-        else if (_ptt.IsHeld && _ptt.KeepDown()) PttLog("wieder gedrückt (war selbst losgelassen)");
+        if (_pttRefreshAt >= 0 && now >= _pttRefreshAt && !flushKey)
+        {
+            // Auffrischen, erster Teil: kurz loslassen
+            _pttRefreshAt = -1;
+            if (_settings.PttRefreshSeconds > 0) _pttNextPeriodic = now + _settings.PttRefreshSeconds * 1000L;
+            _ptt.Release();
+            _pttRepressAt = now + RefreshGapMs;
+            return;
+        }
+
+        if (_ptt.KeepDown()) PttLog("wieder gedrückt (war selbst losgelassen)");
+        else if (_ptt.KeepDownBroken && !_keepDownBrokenLogged)
+        {
+            _keepDownBrokenLogged = true;
+            PttLog("Windows meldet die Taste trotz Drücken weiter als losgelassen – Auffrischen versucht es gleich erneut");
+            _pttRefreshAt = now + 1000; _refreshWhy = "Taste kam nicht an";
+        }
     }
 
     private void ReleasePtt(string why)
     {
         _pttKeepDown.Stop();
+        _pttRefreshAt = _pttRepressAt = -1;
         bool wanted = _pttWant != null;
         _pttWant = null;
         if (_ptt.IsHeld)

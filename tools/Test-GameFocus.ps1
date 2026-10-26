@@ -76,7 +76,7 @@ $f = New-Object Windows.Forms.Form; $f.Text = 'RPVS Fake Game'; $f.Width = 420; 
 [void]$f.ShowDialog()
 '@
 
-function Write-TestSettings([bool]$onlyInGame, [bool]$openMic) {
+function Write-TestSettings([bool]$onlyInGame, [bool]$openMic, [int]$refresh = 0) {
     $j = Get-Content $realSettings -Raw | ConvertFrom-Json
     $p0 = $j.Profiles[0]
     $p0.IncludeAllVoices = $true
@@ -85,7 +85,7 @@ function Write-TestSettings([bool]$onlyInGame, [bool]$openMic) {
     $j.Profiles = @($p0); $j.ActiveProfile = $p0.Name
     $extra = @{ SoundMonitor = $false; SoundVolume = 1.0; SoundNormalize = $true; SoundFolder = $soundDir
                 PushToTalkEnabled = $true; PushToTalkKey = 'Key|F13'; GameOpenMic = $openMic
-                PttOnlyInGame = $onlyInGame; PttGameProcess = 'FakeGame'
+                PttOnlyInGame = $onlyInGame; PttGameProcess = 'FakeGame'; PttRefreshSeconds = $refresh
                 PttLatchHotkey = 'Control, Alt|F10'; PanicHotkey = 'None|Pause'
                 ShowOverlay = $false; PlaySound = $false; CheckForUpdates = $false; ShowStatusOverlay = $false
                 SetupWizardDone = $true; SoundsWithEffect = @(); SoundRepeat = [pscustomobject]@{}; LastSeenVersion = '99.0.0' }
@@ -124,8 +124,13 @@ try {
     $okApp = Front $appWnd; Start-Sleep -m 200
     $t = ToggleName $win
     Check ("App vorne ({0}): F13 losgelassen, Knopf '{1}'" -f $okApp, $t) ($okApp -and -not (F13Down) -and $t -like '*wartet aufs Spiel*')
-    [void](Front $gameWnd); Start-Sleep -m 200
-    Check ("Zurueck ins Spiel: F13 wieder gedrueckt, Knopf '{0}'" -f (ToggleName $win)) ((F13Down) -and (ToggleName $win) -notlike '*wartet*')
+    [void](Front $gameWnd); Start-Sleep -m 120
+    $early = F13Down
+    Start-Sleep -m 450
+    Check ("Zurueck ins Spiel: erst kurz warten ({0}), dann wieder gedrueckt, Knopf '{1}'" -f (-not $early), (ToggleName $win)) ((-not $early) -and (F13Down) -and (ToggleName $win) -notlike '*wartet*')
+    # Enter im Spiel (Chat auf/zu) -> Taste wird einmal kurz losgelassen und neu gedrueckt
+    $r = Watch 900 { Key 0x0D; Start-Sleep -m 80; Key 0x0D -Up }
+    Check ("Nach Enter im Spiel aufgefrischt ({0}x neu gedrueckt, am Ende gedrueckt: {1})" -f $r.Downs, $r.EndDown) ($r.Downs -eq 1 -and $r.EndDown)
     Combo 0x79; Start-Sleep -m 500
     Check 'Dauersenden aus: F13 los' (-not (F13Down))
 
@@ -133,7 +138,7 @@ try {
     [void](Front $appWnd)
     $r = Watch 500 { Combo 0x7A }
     Check ("Sound ausserhalb des Spiels: F13 nicht gedrueckt ({0}x)" -f $r.Downs) ($r.Downs -eq 0 -and -not $r.EndDown)
-    [void](Front $gameWnd); Start-Sleep -m 150
+    [void](Front $gameWnd); Start-Sleep -m 500
     $mid = F13Down
     Start-Sleep 2
     Check ("Ins Spiel gewechselt waehrend des Sounds: F13 gedrueckt ({0}), danach los ({1})" -f $mid, -not (F13Down)) ($mid -and -not (F13Down))
@@ -142,7 +147,7 @@ try {
     [void](Front $appWnd)
     Combo 0x79; Start-Sleep -m 500
     $before = F13Down
-    [void](Front $gameWnd); Start-Sleep -m 200
+    [void](Front $gameWnd); Start-Sleep -m 500
     Check ("In der App eingeschaltet: erst nicht ({0}), im Spiel dann gedrueckt ({1})" -f $before, (F13Down)) (-not $before -and (F13Down))
     Key 0x13; Start-Sleep -m 60; Key 0x13 -Up; Start-Sleep -m 500
     Check 'Notfall-Taste beendet es auch hier' (-not (F13Down))
@@ -176,6 +181,20 @@ try {
     Check ("Haken aus (gespeichert: {0}): drueckt auch mit App vorne ({1})" -f $saved, (F13Down)) (-not $saved -and (F13Down))
     Combo 0x79; Start-Sleep -m 500
     Check 'Und laesst wieder los' (-not (F13Down))
+    Stop-Process -Id $p.Id; Start-Sleep -m 500
+
+    "=== Dauersenden regelmaessig auffrischen (Test: alle 2 s) ==="
+    Write-TestSettings $true $false 2
+    $p = Start-App
+    $win = MainWin $p
+    [void](Front $gameWnd); Start-Sleep -m 500
+    Combo 0x79; Start-Sleep -m 600
+    $r = Watch 4500 $null
+    Check ("Innerhalb von 4,5 s zweimal aufgefrischt ({0}x), danach gedrueckt ({1})" -f $r.Downs, $r.EndDown) ($r.Downs -ge 2 -and $r.EndDown)
+    Combo 0x79; Start-Sleep -m 500
+    Check 'Aus: F13 los' (-not (F13Down))
+    $log = Get-Content "$env:LOCALAPPDATA\RpVoiceSwitcher\sprachtaste-test.log" -Encoding UTF8 | Select-Object -Last 15
+    Check 'Protokoll nennt das Auffrischen' (@($log | Where-Object { $_ -like '*aufgefrischt (regelm*' }).Count -ge 2)
     Stop-Process -Id $p.Id; Start-Sleep -m 500
 
     "=== Offenes Mikrofon: nur im Spiel ==="

@@ -114,6 +114,9 @@ public sealed class PushToTalk : IDisposable
 
     private bool _repressPending, _keepDownBroken;
 
+    /// <summary>Neu gedrückt, aber Windows meldet weiter "oben" – KeepDown hat bis zum nächsten Drücken aufgegeben.</summary>
+    public bool KeepDownBroken => _keepDownBroken;
+
     /// <summary>Ist die Taste/Maustaste gerade gedrückt (egal von wem)?</summary>
     public static bool IsDown(Binding b)
     {

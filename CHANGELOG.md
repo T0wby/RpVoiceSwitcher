@@ -2,6 +2,13 @@
 
 Neueste Version oben. Die App zeigt diese Liste nach einem Update („Was ist neu“) und jederzeit unter *Hilfe → Was ist neu*.
 
+## 1.14.1 – 26.10.2026
+- **Dauersenden hört nicht mehr unbemerkt auf:** nanos world (Unreal Engine) „vergisst“ eine gehaltene Sprachtaste, wenn das Spiel den Fokus zurückbekommt oder Chat bzw. Menü schließt – Windows meldet die Taste weiter als gedrückt, das Spiel sendet aber nicht mehr. Die App frischt die Taste deshalb jetzt auf:
+  - nach dem Zurückwechseln ins Spiel erst nach einem kurzen Moment drücken, wenn das Spiel den Fokuswechsel verarbeitet hat,
+  - nach Enter, Esc oder Tab im Spiel einmal kurz (60 ms) loslassen und neu drücken,
+  - bei Dauersenden zusätzlich alle 45 Sekunden (Einstellungen → Sprachtaste im Spiel, abschaltbar).
+- Das Protokoll der Sprachtaste vermerkt jedes Auffrischen und meldet, wenn Windows eine gedrückte Taste nicht annimmt.
+
 ## 1.14.0 – 25.10.2026
 - **Eigenes Soundboard pro Charakter:** Im Soundboard gibt es jetzt „Sounds auswählen“ (auch im Menü Charakter) – genau wie bei den Stimmen. Alle Sounds erscheinen mit Haken; angehakte gehören zum aktiven Charakter, „Alle“ und „Keine“ helfen beim schnellen Umstellen. „Fertig“ zeigt nur noch die Sounds dieses Charakters.
 - Nur die Shortcuts der Sounds des aktiven Charakters sind belegt – die anderen bleiben gespeichert und gelten wieder, sobald du den Sound zurück in den Charakter nimmst.

@@ -300,6 +300,9 @@
                                             <TextBlock x:Name="PttGameStatus" Grid.Column="3" Foreground="{StaticResource FgDim}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="10,0,0,0"
                                                        AutomationProperties.AutomationId="PttGameStatus"/>
                                         </Grid>
+                                        <CheckBox x:Name="PttRefreshCheck" Content="Dauersenden alle 45 Sekunden kurz auffrischen" Checked="PttRefresh_Click" Unchecked="PttRefresh_Click" Margin="0,0,0,6"
+                                                  AutomationProperties.AutomationId="PttRefreshCheck"
+                                                  ToolTip="Manche Spiele (z. B. nanos world) „vergessen“ die gehaltene Sprachtaste nach Menüs oder Fokuswechseln – dann sendest du plötzlich nicht mehr. Die App lässt die Taste deshalb regelmäßig für 60 ms los und drückt sie neu. Nach Enter, Esc und Tab im Spiel frischt sie immer auf."/>
                                         <CheckBox x:Name="PttCheck" Content="Beim Abspielen von Sounds automatisch drücken" Click="PttCheck_Click" Margin="0,4,0,0"
                                                   ToolTip="Die App drückt die Sprachtaste kurz vor jedem Sound und lässt sie kurz danach wieder los – sonst hört im Spiel niemand den Sound."/>
                                         <TextBlock x:Name="PttHint" Foreground="#E5C07A" TextWrapping="Wrap" Margin="0,6,0,0" Visibility="Collapsed"/>

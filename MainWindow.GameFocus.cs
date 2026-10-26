@@ -95,6 +95,8 @@ public partial class MainWindow
     private void UpdateGameUi()
     {
         PttOnlyInGameCheck.IsChecked = _settings.PttOnlyInGame;
+        PttRefreshCheck.IsChecked = _settings.PttRefreshSeconds > 0;
+        PttRefreshCheck.IsEnabled = !OpenMicMode;
         if (!PttGameBox.IsKeyboardFocusWithin) PttGameBox.Text = _settings.PttGameProcess ?? "";
         PttGameBox.IsEnabled = PttGameDetect.IsEnabled = _settings.PttOnlyInGame;
         if (!_gameStatusWired)
@@ -128,6 +130,16 @@ public partial class MainWindow
         _settings.Save();
         PttLog(on ? "nur im Spiel: an" : "nur im Spiel: aus");
         UpdateGameUi();
+    }
+
+    private void PttRefresh_Click(object sender, RoutedEventArgs e)
+    {
+        bool on = PttRefreshCheck.IsChecked == true;
+        if (on == _settings.PttRefreshSeconds > 0) return;
+        _settings.PttRefreshSeconds = on ? 45 : 0;
+        _settings.Save();
+        _pttNextPeriodic = on ? Environment.TickCount64 + 45_000 : -1;
+        PttLog(on ? "regelmäßiges Auffrischen: an" : "regelmäßiges Auffrischen: aus");
     }
 
     private void PttGameBox_LostFocus(object sender, RoutedEventArgs e) => SaveGameProcess(PttGameBox.Text);
