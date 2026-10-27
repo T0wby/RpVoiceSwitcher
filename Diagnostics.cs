@@ -33,6 +33,7 @@ public static class Diagnostics
         sb.AppendLine($"Notfall-Taste: {Hotkey.Parse(settings.PanicHotkey)?.ToString() ?? "keine"}");
         var mic = DefaultMic.Read(settings.TargetDevice);
         sb.AppendLine($"Windows-Standardmikrofon: {mic.DefaultName ?? "?"} / Kommunikation: {mic.CommsName ?? "?"} (Kabel halten: {(settings.KeepCableDefaultMic ? "an" : "aus")})");
+        Safe(() => sb.AppendLine($"Abhören: {MicListen.Describe()} (automatisch neu starten: {(settings.AutoFixListen ? "an" : "aus")})"));
         sb.AppendLine($"Sprachtaste: {PushToTalk.Binding.Parse(settings.PushToTalkKey)?.ToString() ?? "keine"} (bei Sounds: {(settings.PushToTalkEnabled ? "an" : "aus")}), Dauersenden-Taste: {Hotkey.Parse(settings.PttLatchHotkey)?.ToString() ?? "keine"}, Spiel: {(settings.GameOpenMic ? "offenes Mikrofon (Taste antippen)" : "Push-to-Talk (Taste halten)")}, nur im Spiel: {(settings.PttOnlyInGame ? settings.PttGameProcess : "aus")}");
         sb.AppendLine($"Stimmen-Ordner: {store?.VoicesDir ?? "(Equalizer APO nicht gefunden)"}");
         sb.AppendLine($"Sound-Ordner: {SoundLibrary.Folder}");
@@ -66,6 +67,9 @@ public static class Diagnostics
                 ? string.Join(Environment.NewLine, File.ReadLines(store.MainConfigFile).Take(40))
                 : "(fehlt)"));
         }
+
+        Section("Abhören – letzte automatische Neustarts");
+        sb.AppendLine(MicListen.ReadRecentLog());
 
         Section("Letzte Fehler");
         sb.AppendLine(ErrorLog.ReadRecent());

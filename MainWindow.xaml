@@ -397,6 +397,11 @@
                                         <TextBlock Style="{StaticResource SettingsHint}" Margin="24,3,0,0"
                                                    Text="Für Spiele ohne eigene Mikrofon-Auswahl (z. B. Steam-Sprachchat, nanos world) – die nehmen einfach den Windows-Standard."/>
                                         <TextBlock x:Name="DefaultMicText" Style="{StaticResource SettingsHint}" Margin="24,2,0,0"/>
+                                        <CheckBox x:Name="AutoFixListenCheck" Content="„Abhören“ automatisch neu starten, wenn es hängt" Click="AutoFixListen_Click" Margin="0,12,0,0"
+                                                  AutomationProperties.AutomationId="AutoFixListenCheck"
+                                                  ToolTip="Windows leitet dein Mikrofon per „Abhören“ ins Kabel. Das bleibt gelegentlich hängen (nach Standby, USB-Wacklern, Hersteller-Apps): Alles ist richtig eingestellt, aber im Kabel kommt nichts an. Die App merkt das am Pegel und schaltet Abhören dann kurz aus und wieder an."/>
+                                        <TextBlock Style="{StaticResource SettingsHint}" Margin="24,3,0,0"
+                                                   Text="Die App vergleicht nur Pegel (Mikrofon gegen Kabel) – sie nimmt nichts auf."/>
                                     </StackPanel>
                                 </Border>
 

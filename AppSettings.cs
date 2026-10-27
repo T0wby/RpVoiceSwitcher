@@ -147,6 +147,9 @@ public sealed class AppSettings
     /// </summary>
     public bool PttLatchResume { get; set; }
 
+    /// <summary>Windows-„Abhören“ (Mikrofon → Kabel) automatisch neu starten, wenn es hängt.</summary>
+    public bool AutoFixListen { get; set; } = true;
+
     /// <summary>Sounds, die durch den aktiven Stimmeffekt laufen sollen (Standard: ohne Effekt).</summary>
     public List<string> SoundsWithEffect { get; set; } = new();
 

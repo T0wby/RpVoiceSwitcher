@@ -185,7 +185,21 @@ public static class SetupChecker
                              "Sobald es wieder verbunden ist, aktualisiert sich diese Prüfung von selbst.",
                 });
             else if (toCable.Count == 1)
-                results.Add(new CheckResult { Title = "Mikrofon ins Kabel weitergeleitet", State = CheckState.Ok, Detail = $"{toCable[0].Name} → {cableIn.Name}" });
+            {
+                string micId = "{0.0.1.00000000}." + toCable[0].Guid;
+                results.Add(new CheckResult
+                {
+                    Title = "Mikrofon ins Kabel weitergeleitet",
+                    State = CheckState.Ok,
+                    Detail = $"{toCable[0].Name} → {cableIn.Name}. Kommt trotzdem nichts im Kabel an, hängt „Abhören“ – „Neu starten“ schaltet es kurz aus und wieder an.",
+                    FixLabel = "Neu starten",
+                    Fix = () =>
+                    {
+                        MicListen.Log($"Neustart ({toCable[0].Name}): von Hand in der Einrichtung");
+                        if (MicListen.Restart(micId) is string error) throw new InvalidOperationException(error);
+                    },
+                });
+            }
             else if (toCable.Count > 1)
                 results.Add(new CheckResult
                 {

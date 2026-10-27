@@ -2,6 +2,11 @@
 
 Neueste Version oben. Die App zeigt diese Liste nach einem Update („Was ist neu“) und jederzeit unter *Hilfe → Was ist neu*.
 
+## 1.17.0 – 27.10.2026
+- **Hängendes „Abhören“ wird automatisch behoben:** Windows leitet dein Mikrofon per „Abhören“ ins Kabel. Das bleibt gelegentlich hängen (nach Standby, USB-Wacklern, Hersteller-Apps wie Shure MOTIV) – alles ist richtig eingestellt, aber deine Stimme kommt nicht mehr im Kabel an, nur noch das Soundboard. Die App merkt das jetzt, indem sie den Pegel deines Mikrofons mit dem der Weiterleitung vergleicht (sie nimmt nichts auf), und schaltet Abhören dann kurz aus und wieder an. Abschaltbar unter Einstellungen → Geräte. Schaltest du Abhören selbst aus, bleibt es aus.
+- Extras → Einrichtung: „Neu starten“ beim Mikrofon schaltet Abhören von Hand neu.
+- Die Diagnose zeigt, ob die Weiterleitung läuft, und die letzten automatischen Neustarts.
+
 ## 1.16.0 – 27.10.2026
 - **Dauersenden geht nur noch aus, wenn du es ausschaltest:** per Umschalt-Taste, Knopf, Notfall-Taste oder indem du die App beendest.
   - „Alle Sounds stoppen“ (Strg+.) hat bisher auch Dauersenden beendet – jetzt stoppt es nur die Sounds.

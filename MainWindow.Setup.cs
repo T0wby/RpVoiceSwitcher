@@ -50,6 +50,7 @@ public partial class MainWindow
         _deviceDebounce.Tick += (_, _) =>
         {
             _deviceDebounce.Stop();
+            InvalidateListenWatch();
             EnforceDefaultMic();
             UpdateDefaultMicText();
             RunSetupCheck();

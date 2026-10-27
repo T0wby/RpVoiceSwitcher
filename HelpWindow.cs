@@ -63,6 +63,7 @@ public sealed class HelpWindow : Window
             "Fenster schließen (Strg+W) lässt die App im Infobereich weiterlaufen – die Shortcuts bleiben aktiv. Beenden: Strg+Q.",
             "Starke Rauschunterdrückung (z. B. Krisp in Discord) kann Effekte abschwächen.",
             "Kein Effekt im Steam-Sprachchat (z. B. nanos world)? Steam nimmt das Windows-Standardmikrofon. Extras → Einrichtung stellt „CABLE Output“ per Klick als Standard ein; springt es zurück, unter Einstellungen → Geräte „Kabel als Windows-Standardmikrofon halten“ anhaken.",
+            "Kommt deine Stimme gar nicht mehr im Kabel an (Soundboard schon)? Dann hängt Windows-„Abhören“. Die App erkennt das am Pegel und startet es von selbst neu (Einstellungen → Geräte, abschaltbar); von Hand: Extras → Einrichtung → „Neu starten“ beim Mikrofon.",
             "Kein Effekt im Spiel, obwohl die Stimme aktiv ist? Dann hat das Spiel das Kabel vermutlich „exklusiv“ geöffnet – Extras → Einrichtung schaltet den Exklusivmodus ab.",
             "Klappt etwas nicht: Hilfe → Problem melden kopiert eine Diagnose und öffnet GitHub zum Einfügen.",
         ]),

@@ -22,6 +22,7 @@ Updates findet die App selbst (abschaltbar) – oder *Hilfe → Nach Updates suc
 - Kein Effekt im Spiel, obwohl die Stimme aktiv ist? Meist hat das Spiel das Mikrofon „exklusiv“ geöffnet – die Einrichtung schaltet den Exklusivmodus an „CABLE Output“ ab.
 - Kein Effekt im Steam-Sprachchat (z. B. nanos world)? Steam nimmt das Windows-Standardmikrofon – die Einrichtung setzt „CABLE Output“ per Klick als Standard, und *Einstellungen → Geräte → Kabel als Windows-Standardmikrofon halten* verhindert, dass andere Programme es zurückstellen.
 - Sounds kommen im Sprachchat nicht an? Lautstärke für andere hochdrehen (bis 200 %) – und bei Spielen mit Push-to-Talk (z. B. nanos world) unter *Einstellungen → Sprachtaste im Spiel* dieselbe Taste wie im Spiel wählen und „Beim Abspielen von Sounds automatisch drücken“ anhaken (oder „Dauersenden“ nutzen).
+- Stimme kommt gar nicht mehr im Kabel an, das Soundboard aber schon? Dann hängt Windows-„Abhören“ – die App startet es von selbst neu (oder *Extras → Einrichtung → „Neu starten“*).
 - Sonst: *Hilfe → Problem melden* kopiert eine Diagnose und öffnet ein [GitHub-Issue](https://github.com/T0wby/RpVoiceSwitcher/issues/new?template=problem.yml) zum Einfügen.
 
 ## Funktionen

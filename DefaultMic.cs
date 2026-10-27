@@ -53,14 +53,14 @@ public static class DefaultMic
         catch (Exception ex) { return ex.Message; }
     }
 
-    private enum ERole { Console = 0, Multimedia = 1, Communications = 2 }
+    internal enum ERole { Console = 0, Multimedia = 1, Communications = 2 }
 
     // Nicht offiziell dokumentiert, aber seit Windows 7 stabil – so stellen auch die Windows-Soundeinstellungen um.
     [ComImport, Guid("870af99c-171d-4f9e-af0d-e63df40c2bc9")]
-    private class PolicyConfigClient { }
+    internal class PolicyConfigClient { }
 
     [ComImport, Guid("f8679f50-850a-41cf-9c72-430f290290c8"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    private interface IPolicyConfig
+    internal interface IPolicyConfig
     {
         [PreserveSig] int GetMixFormat([MarshalAs(UnmanagedType.LPWStr)] string id, IntPtr format);
         [PreserveSig] int GetDeviceFormat([MarshalAs(UnmanagedType.LPWStr)] string id, int defaultFormat, IntPtr format);

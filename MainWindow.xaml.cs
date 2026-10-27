@@ -94,6 +94,7 @@ public partial class MainWindow : Window
         RunSetupCheck();
         WatchDevices();
         InitDefaultMic();
+        InitListenWatch();
         _initializing = false;
 
         Loaded += (_, _) => { MaybeShowWizardOnStart(); MaybeShowWhatsNew(); };
@@ -297,6 +298,7 @@ public partial class MainWindow : Window
         _soundReloadDebounce.Stop();
         _statusMessageTimer.Stop();
         _deviceDebounce.Stop();
+        _listenTimer.Stop();
         _deviceWatcher?.Dispose();
         _holdHook.Dispose();
         _hotkeys.Dispose();
