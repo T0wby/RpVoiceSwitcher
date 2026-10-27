@@ -284,6 +284,9 @@ public partial class MainWindow : Window
         if (!e.Cancel && !_exiting) ExitApp();
     }
 
+    /// <summary>Beim Beenden Dauersenden für den nächsten Start merken (nur beim Update-Neustart, nicht beim bewussten Beenden).</summary>
+    private bool _keepLatchOnExit;
+
     private void ExitApp()
     {
         if (_exiting) return;
@@ -297,7 +300,7 @@ public partial class MainWindow : Window
         _deviceWatcher?.Dispose();
         _holdHook.Dispose();
         _hotkeys.Dispose();
-        ReleasePttNow();
+        ReleasePttNow(keepResume: _keepLatchOnExit);
         _soundEngine.Dispose();
         _tray.Visible = false;
         _tray.Dispose();

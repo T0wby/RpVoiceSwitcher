@@ -136,9 +136,9 @@ public partial class MainWindow
     {
         bool on = PttRefreshCheck.IsChecked == true;
         if (on == _settings.PttRefreshSeconds > 0) return;
-        _settings.PttRefreshSeconds = on ? 45 : 0;
+        _settings.PttRefreshSeconds = on ? DefaultPttRefreshSeconds : 0;
         _settings.Save();
-        _pttNextPeriodic = on ? Environment.TickCount64 + 45_000 : -1;
+        RestartPeriodicRefresh(Environment.TickCount64);
         PttLog(on ? "regelmäßiges Auffrischen: an" : "regelmäßiges Auffrischen: aus");
     }
 

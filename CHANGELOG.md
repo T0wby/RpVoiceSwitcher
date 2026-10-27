@@ -2,6 +2,15 @@
 
 Neueste Version oben. Die App zeigt diese Liste nach einem Update („Was ist neu“) und jederzeit unter *Hilfe → Was ist neu*.
 
+## 1.16.0 – 27.10.2026
+- **Dauersenden geht nur noch aus, wenn du es ausschaltest:** per Umschalt-Taste, Knopf, Notfall-Taste oder indem du die App beendest.
+  - „Alle Sounds stoppen“ (Strg+.) hat bisher auch Dauersenden beendet – jetzt stoppt es nur die Sounds.
+  - Nach einem Update oder Absturz läuft Dauersenden beim nächsten Start von selbst weiter (gedrückt wird wie immer erst, wenn das Spiel vorne ist).
+- **Auffrischen, wenn im Spiel ein Menü auf- oder zugeht:** nanos world setzt gehaltene Tasten zurück, wenn es zwischen Spiel und Menü (Inventar, Interaktion, Handy …) umschaltet – egal mit welcher Taste. Die App erkennt das am Mauszeiger (erscheint/verschwindet, wird gefangen/freigegeben), ohne deine Tasten mitzulesen, und drückt die Sprachtaste danach kurz neu. Ebenso, wenn ein anderes Fenster des Spiels nach vorne kommt.
+- Regelmäßiges Auffrischen jetzt alle 20 statt 45 Sekunden – ein Aussetzer dauert höchstens so lange.
+- Nach dem Zurückwechseln ins Spiel frischt die App nicht mehr direkt hinterher noch einmal auf.
+- Das Protokoll der Sprachtaste nennt den Grund jedes Auffrischens (z. B. „Mauszeiger im Spiel verschwunden – Menü zu“).
+
 ## 1.15.1 – 26.10.2026
 - **Keine Fehlermeldung mehr beim Beenden:** Bei eingeschalteter Status-Anzeige meldete „Beenden“ (Strg+Q, Datei- oder Tray-Menü, auch beim Installieren eines Updates) „Da ist etwas schiefgegangen: Visibility kann nicht festgelegt … werden“. Die App versuchte, die schon geschlossene Anzeige noch einmal einzublenden.
 

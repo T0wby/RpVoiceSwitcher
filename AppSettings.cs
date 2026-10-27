@@ -139,7 +139,13 @@ public sealed class AppSettings
     /// Dauersenden alle n Sekunden kurz (60 ms) auffrischen, falls das Spiel die gehaltene Taste "vergessen" hat
     /// (0 = aus). Unreal-Spiele wie nanos world tun das z. B. nach Menüs oder Fokuswechseln.
     /// </summary>
-    public int PttRefreshSeconds { get; set; } = 45;
+    public int PttRefreshSeconds { get; set; } = MainWindow.DefaultPttRefreshSeconds;
+
+    /// <summary>
+    /// Dauersenden war an, als die App zuletzt lief, und wurde nicht bewusst ausgeschaltet (z. B. Update, Absturz) –
+    /// beim nächsten Start läuft es weiter. Ausschalten: Umschalt-Taste, Notfall-Taste oder die App beenden.
+    /// </summary>
+    public bool PttLatchResume { get; set; }
 
     /// <summary>Sounds, die durch den aktiven Stimmeffekt laufen sollen (Standard: ohne Effekt).</summary>
     public List<string> SoundsWithEffect { get; set; } = new();
@@ -207,6 +213,7 @@ public sealed class AppSettings
         foreach (var p in s.Profiles) p.Normalize();
         s.SoundRepeat = new(s.SoundRepeat ?? new(), StringComparer.OrdinalIgnoreCase);
         s.SoundsWithEffect ??= new();
+        if (s.PttRefreshSeconds == 45) s.PttRefreshSeconds = MainWindow.DefaultPttRefreshSeconds; // alter Standard bis 1.15
         if (!s.Profiles.Any(p => p.Name.Equals(s.ActiveProfile, StringComparison.OrdinalIgnoreCase)))
             s.ActiveProfile = s.Profiles[0].Name;
 

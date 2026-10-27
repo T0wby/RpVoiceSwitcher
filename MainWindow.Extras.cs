@@ -329,6 +329,7 @@ public partial class MainWindow
             UpdateStatusText.Text = "Update wird installiert …";
             // /SILENT zeigt nur den Fortschritt; der Installer schließt diese App und startet sie danach wieder.
             Process.Start(new ProcessStartInfo(installer, "/SILENT /SUPPRESSMSGBOXES /NORESTART") { UseShellExecute = true });
+            _keepLatchOnExit = true; // Dauersenden läuft nach dem Update weiter
             ExitApp();
         }
         catch (Exception ex)

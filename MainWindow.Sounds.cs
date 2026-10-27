@@ -285,7 +285,10 @@ public partial class MainWindow
     private void StopAllSounds()
     {
         _soundEngine.StopAll();
-        ReleasePttNow();
+        // Nur die Sounds stoppen – Dauersenden läuft weiter (aus nur per Umschalt-Taste oder Notfall-Taste)
+        _pttPending.Clear();
+        _pttReleaseTimer.Stop();
+        if (!_pttLatched) ReleasePtt("alle Sounds gestoppt");
         UpdateSoundPlayingState();
     }
 

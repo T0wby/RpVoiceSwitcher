@@ -60,6 +60,7 @@ public partial class MainWindow
             if (!_pttLatched && !_soundEngine.AnyPlaying && _pttPending.Count == 0) ReleasePtt("Sound zu Ende");
         };
         UpdatePushToTalkUi();
+        Dispatcher.InvokeAsync(ResumeLatchAfterRestart, DispatcherPriority.ApplicationIdle);
     }
 
     /// <summary>
@@ -119,15 +120,46 @@ public partial class MainWindow
         if (!_pttReleaseTimer.IsEnabled) _pttReleaseTimer.Start();
     }
 
-    /// <summary>Sofort loslassen und Dauersenden beenden (Notfall-Taste, Beenden).</summary>
-    private void ReleasePttNow()
+    /// <summary>
+    /// Sofort loslassen und Dauersenden beenden (Notfall-Taste, Beenden, Sprachtaste ändern).
+    /// keepResume: Dauersenden beim nächsten Start fortsetzen (Update-Neustart).
+    /// </summary>
+    private void ReleasePttNow(bool keepResume = false)
     {
         _pttPending.Clear();
         _pttReleaseTimer.Stop();
         bool wasLatched = _pttLatched;
         _pttLatched = false;
         ReleasePtt("sofort");
+        if (!keepResume) RememberLatch(false);
         if (wasLatched) UpdatePttLatchUi();
+    }
+
+    /// <summary>Merkt sich, ob Dauersenden an ist – damit es nach einem Update oder Absturz weiterläuft.</summary>
+    private void RememberLatch(bool on)
+    {
+        if (_settings.PttLatchResume == on) return;
+        _settings.PttLatchResume = on;
+        _settings.Save();
+    }
+
+    /// <summary>Beim Start: War Dauersenden vor einem Update/Absturz an, läuft es weiter (gedrückt erst, wenn das Spiel vorne ist).</summary>
+    private void ResumeLatchAfterRestart()
+    {
+        if (!_settings.PttLatchResume || _pttLatched) return;
+        // Testläufe arbeiten mit einer Kopie deiner Einstellungen – dort nur fortsetzen, wenn der Test es ausdrücklich will
+        if (IsTestRun && Environment.GetEnvironmentVariable("RPVS_TEST_RESUME") != "1") return;
+        if (OpenMicMode || PttKey is not PushToTalk.Binding b || !GameGateOn)
+        {
+            // Ohne „nur im Spiel“ würde die Taste sofort in Windows hängen – dann lieber nicht von selbst
+            RememberLatch(false);
+            PttLog("Dauersenden nach dem Neustart nicht fortgesetzt (offenes Mikrofon, keine Sprachtaste oder „nur im Spiel“ aus)");
+            return;
+        }
+        _pttLatched = true;
+        UpdatePttLatchUi();
+        PressPtt(b, "Dauersenden nach Neustart fortgesetzt");
+        FlashOverlay("Dauersenden läuft weiter – war vor dem Neustart an");
     }
 
     /// <summary>
@@ -178,21 +210,57 @@ public partial class MainWindow
     private const int FlushKeyRefreshMs = 250;
     /// <summary>So lange ist die Taste beim Auffrischen los – ein Bild im Spiel reicht, mehr hört man nicht.</summary>
     private const int RefreshGapMs = 60;
+    /// <summary>Nach dem Auf-/Zugehen eines Menüs im Spiel (Mauszeiger) so lange warten, bis es sich beruhigt hat, dann auffrischen.</summary>
+    private const int MenuRefreshMs = 250;
+    /// <summary>Standard für das regelmäßige Auffrischen bei Dauersenden.</summary>
+    internal const int DefaultPttRefreshSeconds = 20;
 
     private bool _pttTickFront;
     private long _pttPressAfter, _pttRefreshAt = -1, _pttRepressAt = -1, _pttNextPeriodic = -1;
     private bool _flushKeyDown, _keepDownBrokenLogged;
     private string _refreshWhy = "";
+    /// <summary>Zuletzt gesehener Zustand des Mauszeigers (Bit 1 = sichtbar, Bit 2 = ins Fenster gesperrt), -1 = noch keiner.</summary>
+    private int _pttCursorMode = -1;
+    /// <summary>Zuletzt gesehenes Vordergrundfenster des Spiels.</summary>
+    private IntPtr _pttFrontWindow;
 
     private void ResetPttRefresh()
     {
         _pttPressAfter = 0;
         _pttRefreshAt = _pttRepressAt = -1;
         _flushKeyDown = _keepDownBrokenLogged = false;
-        _pttNextPeriodic = _settings.PttRefreshSeconds > 0 ? Environment.TickCount64 + _settings.PttRefreshSeconds * 1000L : -1;
+        _pttCursorMode = -1;
+        _pttFrontWindow = IntPtr.Zero;
+        RestartPeriodicRefresh(Environment.TickCount64);
     }
 
+    private void RestartPeriodicRefresh(long now) =>
+        _pttNextPeriodic = _settings.PttRefreshSeconds > 0 ? now + _settings.PttRefreshSeconds * 1000L : -1;
+
     private static bool IsKeyDown(int vk) => (GetAsyncKeyState(vk) & 0x8000) != 0;
+
+    // Menüs im Spiel erkennen, ohne Tasten mitzulesen: Unreal blendet für Menüs, Inventar, Chat usw. den Mauszeiger
+    // ein und gibt ihn frei – im Spiel selbst ist er versteckt und ins Fenster gesperrt. Genau bei diesem Umschalten
+    // setzt Unreal alle gehaltenen Tasten zurück.
+    [StructLayout(LayoutKind.Sequential)] private struct CursorInfo { public int Size; public int Flags; public IntPtr Cursor; public int X, Y; }
+    [StructLayout(LayoutKind.Sequential)] private struct ClipRect { public int Left, Top, Right, Bottom; }
+    [DllImport("user32.dll")] private static extern bool GetCursorInfo(ref CursorInfo info);
+    [DllImport("user32.dll")] private static extern bool GetClipCursor(out ClipRect rect);
+    [DllImport("user32.dll")] private static extern int GetSystemMetrics(int index);
+
+    /// <summary>Bit 1 = Mauszeiger sichtbar, Bit 2 = Mauszeiger in einen Bereich gesperrt (Spiel hat die Maus gefangen).</summary>
+    private static int CursorMode()
+    {
+        int mode = 0;
+        var info = new CursorInfo { Size = Marshal.SizeOf<CursorInfo>() };
+        if (GetCursorInfo(ref info) && (info.Flags & 1) != 0 && info.Cursor != IntPtr.Zero) mode |= 1;
+        if (GetClipCursor(out var clip))
+        {
+            int x = GetSystemMetrics(76), y = GetSystemMetrics(77), w = GetSystemMetrics(78), h = GetSystemMetrics(79);
+            if (clip.Left > x || clip.Top > y || clip.Right < x + w || clip.Bottom < y + h) mode |= 2;
+        }
+        return mode;
+    }
 
     private void PttTick()
     {
@@ -204,6 +272,8 @@ public partial class MainWindow
         {
             _pttTickFront = false;
             _pttRefreshAt = _pttRepressAt = -1;
+            _pttCursorMode = -1;
+            _pttFrontWindow = IntPtr.Zero;
             if (_ptt.IsHeld)
             {
                 _ptt.Release();
@@ -235,9 +305,34 @@ public partial class MainWindow
         {
             _ptt.Press(b);
             _keepDownBrokenLogged = false;
+            _pttRefreshAt = -1;
+            RestartPeriodicRefresh(now); // gerade frisch gedrückt – nicht gleich wieder auffrischen
             PttLog("gedrückt (Spiel wieder im Vordergrund)");
             UpdatePttLatchUi();
             return;
+        }
+
+        // Menü im Spiel auf/zu (Mauszeiger erscheint/verschwindet, Maus gefangen/frei) → danach auffrischen.
+        // Mehrere Wechsel kurz hintereinander schieben das Auffrischen nur nach hinten.
+        // Nur, wenn die App weiß, welches Programm das Spiel ist – sonst würde jeder Fensterwechsel in Windows zählen.
+        if (GameGateOn)
+        {
+            int cursor = CursorMode();
+            if (_pttCursorMode >= 0 && cursor != _pttCursorMode)
+            {
+                _pttRefreshAt = now + MenuRefreshMs;
+                _refreshWhy = (cursor & 1) != 0 ? "Mauszeiger im Spiel aufgetaucht – Menü auf" : "Mauszeiger im Spiel verschwunden – Menü zu";
+            }
+            _pttCursorMode = cursor;
+
+            // Anderes Fenster des Spiels vorne (z. B. Dialog, neu erzeugtes Spielfenster) → auffrischen
+            var fg = GetForegroundWindow();
+            if (_pttFrontWindow != IntPtr.Zero && fg != _pttFrontWindow)
+            {
+                _pttRefreshAt = now + MenuRefreshMs;
+                _refreshWhy = "anderes Fenster des Spiels im Vordergrund";
+            }
+            _pttFrontWindow = fg;
         }
 
         // Enter/Esc/Tab im Spiel (Chat, Menü, Liste) → danach auffrischen
@@ -252,7 +347,7 @@ public partial class MainWindow
         {
             // Auffrischen, erster Teil: kurz loslassen
             _pttRefreshAt = -1;
-            if (_settings.PttRefreshSeconds > 0) _pttNextPeriodic = now + _settings.PttRefreshSeconds * 1000L;
+            RestartPeriodicRefresh(now);
             _ptt.Release();
             _pttRepressAt = now + RefreshGapMs;
             return;
@@ -297,6 +392,7 @@ public partial class MainWindow
         if (OpenMicMode) { await ToggleOpenMic(b); return; }
 
         _pttLatched = !_pttLatched;
+        RememberLatch(_pttLatched);
         UpdatePttLatchUi();
         if (_pttLatched)
         {
